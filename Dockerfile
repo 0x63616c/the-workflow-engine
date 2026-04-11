@@ -11,9 +11,8 @@ RUN bun install --frozen-lockfile
 FROM deps AS web-build
 WORKDIR /app
 COPY libs/shared libs/shared
-COPY apps/api/src/trpc/routers apps/api/src/trpc/routers
-COPY apps/api/src/trpc/init.ts apps/api/src/trpc/init.ts
-COPY apps/api/src/trpc/context.ts apps/api/src/trpc/context.ts
+COPY apps/api/src apps/api/src
+COPY apps/api/tsconfig.json apps/api/
 COPY apps/web apps/web
 COPY tsconfig.json ./
 RUN cd apps/web && bun run build
