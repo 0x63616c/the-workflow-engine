@@ -15,10 +15,12 @@ Decisions made autonomously (not specified in alignment doc):
 - **Grid layout**: CSS Grid, 2 columns, `gap-4`, with `p-6` page padding. On the 4:3 iPad Pro 12.9" (2732x2048 logical 1366x1024), this gives two comfortable columns.
 - **Widget list**: 6 placeholder widgets in this order: Clock (shows current time summary), Weather, Lights, Music, Calendar, Notifications. Each shows a static placeholder value (e.g., "72F", "3 on", "Not playing", "No events", "None").
 - **Clock widget in hub**: The clock widget is a smaller summary card showing the current time, not the full art clock. Tapping it also returns to the full clock view.
-- **Tap-to-return detection**: An `onClick` handler on the hub container. If the click target is the container itself (not a widget card), it triggers return to clock. Uses `e.target === e.currentTarget` check on the grid wrapper's parent.
+- **Tap-to-return detection**: An `onClick` handler on the outermost hub container div. Widget cards use `e.stopPropagation()` in their own `onClick` to prevent the hub container's handler from firing. Any click that reaches the hub container (grid gaps, padding areas, any non-card space) triggers return to clock. This is robust because it does not rely on target comparison, which fails when clicks land on grid gap elements that are children of the container.
 - **Swipe detection**: Reuses the existing `useSwipe` hook with `onSwipeRight` to return to clock.
 - **Hub header**: No header or title bar. The grid starts from the top with padding. Keeps it minimal and art-forward.
-- **Touch feedback**: No ripple or press effects on placeholder widgets. They are non-interactive placeholders. Only the clock widget card is tappable (returns to clock).
+- **Touch feedback**: No ripple or press effects on placeholder widgets. They are non-interactive placeholders. Only the clock widget card is tappable (returns to clock). All placeholder widget cards still call `e.stopPropagation()` on click to prevent the hub container from catching the click and returning to clock.
+- **Clock widget value format**: The clock widget in the hub uses `useCurrentTime` and `formatTime` from the art-clock module to display the current time as e.g. "2:45 PM" (hours, colon, minutes, space, period).
+- **data-testid attributes**: All key elements get `data-testid` for testability: `data-testid="clock-layer"` on the clock wrapper, `data-testid="hub-layer"` on the hub wrapper, `data-testid="widget-grid"` on the grid element, `data-testid="widget-card-{id}"` on each widget card (e.g. `widget-card-clock`, `widget-card-weather`), `data-testid="hub-container"` on the outermost hub click target.
 
 ## Architecture
 
@@ -117,6 +119,7 @@ function HomePage() {
     <div className="relative h-full">
       {/* Clock layer */}
       <div
+        data-testid="clock-layer"
         className="absolute inset-0 transition-opacity duration-500"
         style={{
           opacity: view === "clock" ? 1 : 0,
@@ -129,6 +132,7 @@ function HomePage() {
 
       {/* Hub layer */}
       <div
+        data-testid="hub-layer"
         className="absolute inset-0 transition-opacity duration-500"
         style={{
           opacity: view === "hub" ? 1 : 0,
@@ -148,29 +152,34 @@ The grid container with all three return-to-clock mechanisms:
 
 - `useSwipe` with `onSwipeRight` to return to clock
 - `useIdleTimeout` with 45s timeout to return to clock
-- `onClick` on the outer container (checking `e.target === e.currentTarget`) to return to clock
+- `onClick` on the outermost hub container div to return to clock. Widget cards call `e.stopPropagation()` to prevent this from firing when a card is tapped.
 
 ```typescript
 const IDLE_TIMEOUT_MS = 45_000;
 
-const WIDGETS = [
-  { id: "clock", icon: Clock, title: "Clock", value: "" },  // value filled dynamically
+const PLACEHOLDER_WIDGETS = [
+  { id: "clock", icon: Clock, title: "Clock" },              // value rendered dynamically via useCurrentTime + formatTime
   { id: "weather", icon: CloudSun, title: "Weather", value: "72\u00b0F" },
   { id: "lights", icon: Lightbulb, title: "Lights", value: "3 on" },
   { id: "music", icon: Music, title: "Music", value: "Not playing" },
   { id: "calendar", icon: Calendar, title: "Calendar", value: "No events" },
   { id: "notifications", icon: Bell, title: "Notifications", value: "None" },
-] as const;
+];
 ```
 
-The grid wrapper div gets the swipe ref and the click handler. The grid itself is a CSS grid with `grid-cols-2 gap-4 p-6`.
+The clock widget's value is computed dynamically: it calls `useCurrentTime(CLOCK_UPDATE_INTERVAL_MS)` and `formatTime()` (both imported from `@/components/art-clock/art-clock`) to render the current time as e.g. "2:45 PM" (`${hours}:${minutes} ${period}`).
 
-When the clock widget card is tapped, it also returns to the full clock view.
+The outermost div (`data-testid="hub-container"`) gets the `onClick` handler that calls `setView("clock")`. Inside it, a div with `ref` for swipe detection wraps the CSS grid (`data-testid="widget-grid"`, `grid-cols-2 gap-4 p-6`).
+
+Each `WidgetCard` receives `data-testid="widget-card-{id}"` and calls `e.stopPropagation()` on click so the hub container handler does not fire.
+
+When the clock widget card is tapped, it calls `setView("clock")` (and stopPropagation prevents double-handling).
 
 ### 5. WidgetCard (`components/hub/widget-card.tsx`)
 
 ```typescript
 interface WidgetCardProps {
+  id: string;
   icon: LucideIcon;
   title: string;
   value: string;
@@ -187,11 +196,12 @@ Layout:
 +---------------------------+
 ```
 
-- Container: `bg-card border border-border rounded-xl p-6`
+- Container: `bg-card border border-border rounded-xl p-6`, with `data-testid="widget-card-{id}"`
+- **All cards** call `e.stopPropagation()` on click to prevent the hub container's return-to-clock handler from firing
 - Icon: 20px, `text-muted-foreground`
 - Title: `text-sm font-[300] text-muted-foreground`, inline with icon, `ml-2`
 - Value: `text-2xl font-[200] text-foreground mt-3`
-- If `onClick` is provided, the card gets `cursor-pointer` and an `onClick` handler
+- If `onClick` is provided, the card gets `cursor-pointer` and calls `onClick` after stopPropagation
 
 ### 6. ArtClock Changes
 
@@ -218,6 +228,7 @@ No changes to the ArtClock component itself. The tap handler is on the parent wr
 | File | Change |
 |------|--------|
 | `src/routes/index.tsx` | Replace simple ArtClock render with dual-layer clock/hub layout |
+| `src/__tests__/home-page.test.tsx` | Update existing tests to work with new dual-layer structure. Tests currently assert clock renders directly. After changes, clock is behind `data-testid="clock-layer"` with opacity 1 in default state. Update selectors accordingly. Tests should verify: clock content visible in default state, hub layer exists with opacity 0. |
 
 ### No Changes
 
@@ -248,24 +259,34 @@ Use `vi.useFakeTimers()` and `vi.advanceTimersByTime()`.
 
 ### Unit Tests: WidgetCard (`__tests__/widget-card.test.tsx`)
 
-- **Renders icon, title, and value**: Pass props, verify text content
-- **Calls onClick when clicked**: Pass onClick mock, click card, verify called
-- **No cursor-pointer without onClick**: Render without onClick, verify no cursor-pointer class
+- **Renders icon, title, and value**: Pass props, verify text content via `getByText`
+- **Calls onClick when clicked**: Pass onClick mock, click card via `getByTestId("widget-card-test")`, verify called
+- **Stops propagation on click**: Click card, verify `stopPropagation` was called (or parent onClick not called)
+- **No cursor-pointer without onClick**: Render without onClick, verify no cursor-pointer class on `getByTestId`
 
 ### Unit Tests: WidgetGrid (`__tests__/widget-grid.test.tsx`)
 
-- **Renders all 6 widget cards**: Check for all widget titles
-- **Renders placeholder values**: Check for "72F", "3 on", etc.
+- **Renders all 6 widget cards**: Check `getByTestId("widget-card-clock")`, `getByTestId("widget-card-weather")`, etc.
+- **Renders placeholder values**: Check for "72\u00b0F", "3 on", etc. via `getByText`
+- **Renders clock widget with current time**: Use fake timers, verify clock card shows formatted time (e.g. "2:23 PM")
 
 ### Integration Tests: HomePage Hub (`__tests__/home-page-hub.test.tsx`)
 
-- **Initially shows clock**: Clock layer has opacity 1, hub layer has opacity 0
-- **Tap clock opens hub**: Click on clock layer, verify hub layer opacity becomes 1
-- **Tap empty space in hub returns to clock**: Click hub container (not a card), verify clock layer opacity becomes 1
-- **Auto-return after timeout**: Open hub, advance timers by 45000ms, verify clock layer restored
-- **Clock widget tap returns to clock**: Open hub, click clock widget card, verify clock layer restored
+- **Initially shows clock**: `getByTestId("clock-layer")` has `style.opacity === "1"`, `getByTestId("hub-layer")` has `style.opacity === "0"`
+- **Tap clock opens hub**: Click `getByTestId("clock-layer")`, verify `getByTestId("hub-layer")` opacity becomes `"1"`
+- **Tap hub container returns to clock**: Set store to hub view, click `getByTestId("hub-container")`, verify `getByTestId("clock-layer")` opacity becomes `"1"`
+- **Tap widget card does NOT return to clock**: Set store to hub view, click `getByTestId("widget-card-weather")`, verify view is still `"hub"` (stopPropagation works)
+- **Auto-return after timeout**: Set store to hub, advance timers by 45000ms, verify clock layer restored
+- **Clock widget tap returns to clock**: Set store to hub, click `getByTestId("widget-card-clock")`, verify clock layer opacity becomes `"1"`
 
-These tests use the Zustand store directly to verify state changes, and render the full HomePage to test the integration.
+### Existing Tests: HomePage (`__tests__/home-page.test.tsx`)
+
+Update existing tests to account for the new dual-layer structure:
+- Clock text ("2", "23", "PM", date) is still rendered and findable via `getByText`, since the clock layer is mounted with opacity 1 in default state
+- Existing assertions should continue to pass with minimal changes (the clock content is in the DOM regardless of opacity)
+- If any selector breaks due to the wrapper div change, update to use `getByTestId("clock-layer")` + `within()` from testing-library
+
+These tests use `data-testid` selectors for reliable element access and the Zustand store to verify state changes.
 
 ## E2E Verification Plan
 
