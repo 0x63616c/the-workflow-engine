@@ -24,12 +24,10 @@
     "@trpc/server": "^11.0.0",
     "drizzle-orm": "^0.40.0",
     "inngest": "^3.0.0",
-    "ws": "^8.18.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {
     "@types/bun": "^1.2.0",
-    "@types/ws": "^8.5.0",
     "drizzle-kit": "^0.31.0",
     "typescript": "^5.8.0",
     "vitest": "^3.1.0"

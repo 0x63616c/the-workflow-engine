@@ -1,9 +1,7 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { applyWSSHandler } from "@trpc/server/adapters/ws";
 import { serve } from "inngest/bun";
-import { WebSocketServer } from "ws";
 
-import { EFFECTIVE_PORT, WS_PORT } from "./env";
+import { EFFECTIVE_PORT } from "./env";
 import { inngest } from "./inngest/client";
 import { createContext } from "./trpc/context";
 import { appRouter } from "./trpc/routers";
@@ -35,8 +33,4 @@ const server = Bun.serve({
   },
 });
 
-const wss = new WebSocketServer({ port: WS_PORT });
-applyWSSHandler({ wss, router: appRouter, createContext });
-
 console.log(`API: http://localhost:${server.port}`);
-console.log(`WS:  ws://localhost:${WS_PORT}`);

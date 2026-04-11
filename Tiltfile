@@ -2,7 +2,6 @@ port_offset = int(os.getenv("PORT_OFFSET", "0"))
 
 port_web = 4200 + port_offset
 port_api = 4201 + port_offset
-port_ws = 4202 + port_offset
 port_inngest = 8288 + port_offset
 
 os.putenv("INNGEST_PORT", str(port_inngest))
@@ -20,7 +19,6 @@ local_resource(
     resource_deps=["inngest"],
     links=[
         link("http://localhost:%d" % port_api, "API"),
-        link("ws://localhost:%d" % port_ws, "WebSocket"),
     ],
 )
 

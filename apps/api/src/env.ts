@@ -11,4 +11,3 @@ const envSchema = z.object({
 
 export const env = envSchema.parse(process.env);
 export const EFFECTIVE_PORT = env.PORT + env.PORT_OFFSET;
-export const WS_PORT = EFFECTIVE_PORT + 1;
