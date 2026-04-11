@@ -57,10 +57,12 @@ jobs:
       - name: Resolve homelab via Tailscale IP
         run: echo "100.78.116.17 homelab" | sudo tee -a /etc/hosts
 
-      - name: Add homelab to known_hosts
+      - name: Configure SSH known hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan homelab >> ~/.ssh/known_hosts
+          echo "Host homelab
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null" >> ~/.ssh/config
 
       - name: Install Kamal
         run: gem install kamal
