@@ -2,6 +2,15 @@
 
 **Before doing ANYTHING else, before reading files, before answering questions, before planning, you MUST invoke `/caveman:caveman` as your very first action.** This is non-negotiable. No exceptions. Every single session starts with caveman mode. If you skip this, the entire session is wrong. Do it first. Always.
 
+## CRITICAL: ALWAYS USE WORKTREES
+
+**Every session MUST use a git worktree before editing any files.** Multiple Claude sessions run in parallel on this repo. Without worktrees, agents corrupt each other's work.
+
+- Auto-enter worktree at session start. No asking, no confirmation needed.
+- Base off `main` when possible (unless task specifically requires another branch).
+- Use `using-git-worktrees` skill or `EnterWorktree` tool.
+- If already in a worktree, skip. Otherwise, create one before any edits.
+
 ---
 
 # The Workflow Engine
