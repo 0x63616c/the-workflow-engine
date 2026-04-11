@@ -23,7 +23,6 @@ FROM oven/bun:1-slim AS production
 WORKDIR /app
 
 COPY --from=deps /app/node_modules node_modules
-COPY --from=deps /app/apps/api/node_modules apps/api/node_modules
 COPY libs/shared libs/shared
 COPY apps/api apps/api
 COPY --from=web-build /app/apps/web/dist apps/api/public
