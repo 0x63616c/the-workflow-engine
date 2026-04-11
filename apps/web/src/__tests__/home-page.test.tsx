@@ -1,3 +1,4 @@
+import { useNavigationStore } from "@/stores/navigation-store";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -5,11 +6,13 @@ describe("HomePage", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 3, 11, 14, 23, 0));
+    useNavigationStore.setState({ view: "clock" });
   });
 
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
+    useNavigationStore.setState({ view: "clock" });
   });
 
   it("renders clock time from ArtClock", async () => {
