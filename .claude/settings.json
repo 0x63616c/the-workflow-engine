@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "CMD=$(jq -r '.tool_input.command' < /dev/stdin); case \"$CMD\" in *'git checkout -b '*|*'git switch -c '*|*'git switch --create '*) echo 'BLOCK: Do not create branches directly. Use a worktree instead (EnterWorktree tool or using-git-worktrees skill).' >&2; exit 2;; esac"
+            "command": "CMD=$(jq -r '.tool_input.command' < /dev/stdin); case \"$CMD\" in *'git checkout -b '*|*'git switch -c '*|*'git switch --create '*) echo 'BLOCK: Do not create branches directly. Pull latest main first (git pull), then use a worktree (EnterWorktree tool or using-git-worktrees skill).' >&2; exit 2;; esac"
           }
         ]
       }
