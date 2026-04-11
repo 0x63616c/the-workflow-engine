@@ -1,12 +1,7 @@
-import { trpc } from "@/lib/trpc";
-
-const HEALTH_POLL_INTERVAL_MS = 15_000;
+import { useBuildHash } from "@/hooks/use-build-hash";
 
 export function ConnectionStatus() {
-  const { status } = trpc.health.buildHash.useQuery(undefined, {
-    refetchInterval: HEALTH_POLL_INTERVAL_MS,
-    retry: false,
-  });
+  const { status } = useBuildHash();
 
   if (status !== "error") return null;
 
