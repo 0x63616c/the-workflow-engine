@@ -12,6 +12,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-GB", {
   weekday: "long",
   day: "numeric",
   month: "short",
+  year: "2-digit",
 });
 
 export function formatDate(date: Date): string {
