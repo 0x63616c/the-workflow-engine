@@ -65,7 +65,7 @@ jobs:
             UserKnownHostsFile /dev/null" >> ~/.ssh/config
 
       - name: Install Kamal
-        run: gem install kamal
+        run: sudo gem install kamal
 
       - name: Deploy with Kamal
         env:
