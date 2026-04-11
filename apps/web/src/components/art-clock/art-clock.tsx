@@ -25,7 +25,6 @@ export function ArtClock() {
   const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
   const { hours, minutes, period } = formatTime(now);
   const dateStr = formatDate(now);
-  const progress = now.getSeconds() / 60;
 
   return (
     <div className="flex h-full flex-col items-center justify-center">
@@ -35,13 +34,6 @@ export function ArtClock() {
         <span>{minutes}</span>
         <span className="ml-2 text-[6rem] font-[200] text-muted-foreground">{period}</span>
       </div>
-      <div
-        className="mt-2 h-[1px] w-[12rem] origin-left bg-foreground"
-        style={{
-          transform: `scaleX(${progress})`,
-          transition: progress === 0 ? "none" : "transform 1s linear",
-        }}
-      />
       <div className="mt-4 text-lg font-[300] tracking-[0.25em] text-muted-foreground">
         {dateStr}
       </div>

@@ -74,20 +74,6 @@ describe("ArtClock", () => {
     expect(colon).toBeInTheDocument();
   });
 
-  it("renders minute progress bar", () => {
-    render(<ArtClock />);
-    const bar = document.querySelector(".origin-left.bg-foreground");
-    expect(bar).toBeInTheDocument();
-    expect((bar as HTMLElement).style.transform).toBe("scaleX(0)");
-  });
-
-  it("progress bar advances with seconds", () => {
-    vi.setSystemTime(new Date(2026, 3, 11, 14, 23, 30));
-    render(<ArtClock />);
-    const bar = document.querySelector(".origin-left.bg-foreground");
-    expect((bar as HTMLElement).style.transform).toBe("scaleX(0.5)");
-  });
-
   it("renders formatted date", () => {
     render(<ArtClock />);
     expect(screen.getByText("SATURDAY, 11 APR 26")).toBeInTheDocument();
