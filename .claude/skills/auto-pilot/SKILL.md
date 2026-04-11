@@ -9,7 +9,7 @@ description: "ONLY invoke when user explicitly types /auto-pilot. Never auto-tri
 This skill ONLY activates when the user explicitly types `/auto-pilot`. Do NOT auto-trigger on phrases like "build me", "just do it", "e2e", or similar. The user must explicitly invoke `/auto-pilot`.
 </TRIGGER-RULE>
 
-Fully autonomous build pipeline. Single prompt -> finished implementation with spec, plan, code, tests, E2E proof, PR. Zero human-in-the-loop.
+Autonomous build pipeline. Single prompt -> finished implementation with spec, plan, code, tests, E2E proof, PR. Human-in-the-loop ONLY during alignment phase, then full auto.
 
 **You are orchestrator.** Stay lean, dispatch agents per phase, keep main context clean. You do NOT do work yourself. You coordinate.
 
@@ -28,10 +28,10 @@ This applies to ALL agents: architect, spec-reviewer, planner, plan-reviewer, im
 ## The Pipeline
 
 ```
-Setup -> Architect -> Spec Review -> Planner -> Plan Review -> Implement (TDD) -> Code Review -> E2E Verify -> PR
+Setup -> Alignment (INTERACTIVE) -> Architect -> Spec Review -> Planner -> Plan Review -> Implement (TDD) -> Code Review -> E2E Verify -> PR
 ```
 
-Each phase is a separate agent. Artifacts flow between phases via committed files.
+The Alignment phase is the ONLY interactive phase. User validates direction before full autonomy kicks in. After alignment, all phases are autonomous agents. Artifacts flow between phases via committed files.
 
 ## Orchestrator State Machine
 
@@ -49,14 +49,15 @@ Create these tasks at startup with TaskCreate, then set up blockedBy dependencie
 | # | Subject | Active Form | Blocked By |
 |---|---------|-------------|------------|
 | 1 | Setup worktree and team | Setting up workspace | - |
-| 2 | Design spec | Designing feature | 1 |
-| 3 | Review spec | Reviewing spec | 2 |
-| 4 | Write implementation plan | Writing plan | 3 |
-| 5 | Review plan | Reviewing plan | 4 |
-| 6 | Implement with TDD | Implementing | 5 |
-| 7 | Code review | Reviewing code | 6 |
-| 8 | E2E verification | Verifying end-to-end | 7 |
-| 9 | Create PR | Creating pull request | 8 |
+| 2 | Align with user | Aligning on direction | 1 |
+| 3 | Design spec | Designing feature | 2 |
+| 4 | Review spec | Reviewing spec | 3 |
+| 5 | Write implementation plan | Writing plan | 4 |
+| 6 | Review plan | Reviewing plan | 5 |
+| 7 | Implement with TDD | Implementing | 6 |
+| 8 | Code review | Reviewing code | 7 |
+| 9 | E2E verification | Verifying end-to-end | 8 |
+| 10 | Create PR | Creating pull request | 9 |
 
 ## Process
 
@@ -72,15 +73,68 @@ Create these tasks at startup with TaskCreate, then set up blockedBy dependencie
    ```
    TeamCreate({ team_name: "auto-pilot-<feature>", description: "Autonomous build: <feature>" })
    ```
-4. Create all 9 tasks with TaskCreate, set up blockedBy chains
+4. Create all 10 tasks with TaskCreate, set up blockedBy chains
 5. Mark task 1 completed
 6. All agents work from the worktree directory
 
-### Phase 1: Architect
+### Phase 1: Alignment (INTERACTIVE)
 
-Mark task 2 `in_progress`. Spawn the **architect** agent.
+<HARD-GATE>
+This is the ONLY interactive phase. Do NOT skip it. Do NOT auto-decide on the user's behalf. The entire point is to get human validation before going autonomous.
+</HARD-GATE>
 
-Replaces interactive brainstorming. Makes autonomous decisions based on codebase context.
+Mark task 2 `in_progress`. **YOU (the orchestrator) do this phase yourself. No agent.**
+
+Quick alignment: explore codebase, present direction, get approval. 2-3 rounds max.
+
+**Step 1: Explore** (silent, no output to user yet)
+- Read project structure, existing patterns, related code
+- Identify key decisions that need to be made
+- Think about 2-3 approaches
+
+**Step 2: Present alignment to user**
+
+Use AskUserQuestion with this structure:
+
+```
+## What I'm Building
+[1-2 sentences: plain English description of what the feature does]
+
+## Approach
+[Recommended approach with brief justification]
+
+## Key Decisions
+[2-4 bullet points of the most impactful choices. These are the things that would be wrong if you picked incorrectly.]
+
+## Scope
+[What's IN and what's explicitly OUT]
+```
+
+Provide 2-3 approach options if there's a real architectural choice. If approach is obvious, present one with key decisions as the options instead.
+
+**Step 3: Incorporate feedback**
+
+User may:
+- Approve as-is -> proceed
+- Adjust scope/approach -> update your understanding, re-present if major change
+- Add requirements -> incorporate, re-present
+
+**Step 4: Capture alignment**
+
+Save approved direction to a brief alignment doc that gets passed to architect:
+```
+docs/auto-pilot/alignment/{DATETIME}-{FEATURE}-alignment.md
+```
+
+Contains: approved approach, key decisions (with user's choices), scope, constraints. This doc is the architect's source of truth.
+
+Mark task 2 `completed`.
+
+### Phase 2: Architect
+
+Mark task 3 `in_progress`. Spawn the **architect** agent.
+
+Designs from alignment doc. Does NOT make major directional decisions. Those were settled in alignment.
 
 ```
 Agent({
@@ -93,15 +147,17 @@ Agent({
 })
 ```
 
-**Architect must NOT ask questions.** Explores, decides, documents. Ambiguous? Pick simpler option, document assumption.
+**Architect must NOT ask questions.** Works from alignment doc. For details not covered by alignment, pick simpler option and document assumption.
+
+**Architect must NOT contradict alignment decisions.** Alignment doc is source of truth for approach, scope, and key decisions. Architect fills in implementation details only.
 
 **Spec MUST include E2E Verification Plan.** Architect decides at design time how feature gets verified beyond unit tests.
 
-On success: mark task 2 `completed`.
+On success: mark task 3 `completed`.
 
-### Phase 2: Spec Review
+### Phase 3: Spec Review
 
-Mark task 3 `in_progress`. Spawn the **spec-reviewer** agent.
+Mark task 4 `in_progress`. Spawn the **spec-reviewer** agent.
 
 ```
 Agent({
@@ -116,11 +172,11 @@ Agent({
 
 **Issues found:** Send back to architect via SendMessage. Architect fixes, re-commits. Re-dispatch reviewer. Max 2 cycles, then proceed.
 
-**Approved:** Mark task 3 `completed`.
+**Approved:** Mark task 4 `completed`.
 
-### Phase 3: Planner
+### Phase 4: Planner
 
-Mark task 4 `in_progress`. Spawn the **planner** agent.
+Mark task 5 `in_progress`. Spawn the **planner** agent.
 
 ```
 Agent({
@@ -133,11 +189,11 @@ Agent({
 })
 ```
 
-On success: mark task 4 `completed`.
+On success: mark task 5 `completed`.
 
-### Phase 4: Plan Review
+### Phase 5: Plan Review
 
-Mark task 5 `in_progress`. Spawn the **plan-reviewer** agent.
+Mark task 6 `in_progress`. Spawn the **plan-reviewer** agent.
 
 ```
 Agent({
@@ -152,11 +208,11 @@ Agent({
 
 **If issues found:** Send back to planner via SendMessage. Max 2 review cycles.
 
-**If approved:** Mark task 5 `completed`.
+**If approved:** Mark task 6 `completed`.
 
-### Phase 5: Implementation
+### Phase 6: Implementation
 
-Mark task 6 `in_progress`. Spawn the **implementer-lead** agent.
+Mark task 7 `in_progress`. Spawn the **implementer-lead** agent.
 
 Controller from subagent-driven-development. Reads plan, extracts tasks. Per task dispatches: implementer -> spec reviewer -> code quality reviewer.
 
@@ -175,11 +231,11 @@ Agent({
 
 **TDD mandatory for every implementer subagent.** Implementer-lead prompt includes TDD Iron Law passed to each implementer.
 
-On success: mark task 6 `completed`.
+On success: mark task 7 `completed`.
 
-### Phase 6: Code Review
+### Phase 7: Code Review
 
-Mark task 7 `in_progress`. Spawn the **final-reviewer** agent.
+Mark task 8 `in_progress`. Spawn the **final-reviewer** agent.
 
 ```
 Agent({
@@ -194,15 +250,15 @@ Agent({
 
 **Critical issues:** Send back to implementer-lead. Max 1 fix cycle.
 
-**Approved or minor only:** Mark task 7 `completed`.
+**Approved or minor only:** Mark task 8 `completed`.
 
-### Phase 7: E2E Verification
+### Phase 8: E2E Verification
 
 <HARD-GATE>
 Do NOT skip this phase. Tests passing is NOT proof that the software works. The app must be started, interacted with, and verified to behave correctly before any PR is created. No exceptions.
 </HARD-GATE>
 
-Mark task 8 `in_progress`. Spawn the **e2e-verifier** agent.
+Mark task 9 `in_progress`. Spawn the **e2e-verifier** agent.
 
 ```
 Agent({
@@ -217,9 +273,9 @@ Agent({
 
 **FAIL:** Send details back to implementer-lead. Re-run E2E. Max 2 cycles. Still failing? Report to user, leave worktree intact.
 
-**PASS:** Mark task 8 `completed`.
+**PASS:** Mark task 9 `completed`.
 
-### Phase 8: Create PR
+### Phase 9: Create PR
 
 <HARD-GATE>
 Do NOT create a PR unless ALL of these are true:
@@ -230,7 +286,7 @@ Do NOT create a PR unless ALL of these are true:
 If any of these are not satisfied, STOP and report to the user.
 </HARD-GATE>
 
-Mark task 9 `in_progress`. Spawn the **pr-author** agent.
+Mark task 10 `in_progress`. Spawn the **pr-author** agent.
 
 ```
 Agent({
@@ -243,9 +299,9 @@ Agent({
 })
 ```
 
-On success: mark task 9 `completed`.
+On success: mark task 10 `completed`.
 
-### Phase 9: Post-PR Review Check
+### Phase 10: Post-PR Review Check
 
 <HARD-GATE>
 After the PR is created and CI passes, you MUST read the CI review comments:
@@ -264,11 +320,17 @@ Shutdown all teammates. Report the PR URL to the user.
 ### Architect Prompt
 
 ```
-You are an autonomous software architect. Your job is to design a feature from a single prompt, with zero human interaction.
+You are an autonomous software architect. Your job is to design a feature from an alignment doc that was already approved by the user.
 
 ## The Request
 
 {USER_PROMPT}
+
+## Alignment Doc (USER-APPROVED, DO NOT CONTRADICT)
+
+Read: {ALIGNMENT_PATH}
+
+This doc contains the user's approved: approach, key decisions, scope, and constraints. You MUST follow these decisions. Do NOT override, reinterpret, or "improve" them. Your job is to fill in implementation details, not revisit direction.
 
 ## Your Environment
 
@@ -276,18 +338,20 @@ Working directory: {WORKTREE_PATH}
 
 ## Your Process
 
-1. Explore the codebase thoroughly. Understand:
+1. Read the alignment doc FIRST. Internalize approved decisions.
+
+2. Explore the codebase thoroughly. Understand:
    - Project structure, tech stack, patterns
    - Existing code conventions and style
    - Related features or code that this touches
    - Test patterns used
 
-2. Make all design decisions autonomously. For each ambiguity:
+3. For implementation details NOT covered by alignment:
    - Pick the simpler option
    - Document the assumption in the spec
    - Prefer approaches consistent with existing patterns
 
-3. Design the feature:
+4. Design the feature:
    - Architecture and components
    - Data flow and interfaces
    - Error handling strategy
@@ -340,7 +404,8 @@ How errors are handled at each layer.
 ## Rules
 - Do NOT ask questions. Decide and document.
 - Do NOT implement anything. Design only.
-- Keep it focused. YAGNI ruthlessly.
+- Do NOT contradict the alignment doc. It is the user's approved direction.
+- Keep it focused. YAGNI ruthlessly. If it's not in the alignment doc's scope, it's out.
 - Follow existing codebase patterns.
 - The spec must be detailed enough that an engineer with zero context can implement it.
 - The E2E verification plan must be concrete enough that an agent can execute it without interpretation.
@@ -355,26 +420,35 @@ How errors are handled at each layer.
 ### Spec Reviewer Prompt
 
 ```
-You are reviewing a design spec for completeness and implementability.
+You are reviewing a design spec for completeness, implementability, and alignment compliance. You are a STRICT reviewer. Your job is to catch bad ideas and wrong decisions BEFORE they get implemented.
 
 Spec file: {SPEC_PATH}
+Alignment doc: {ALIGNMENT_PATH}
 
 ## What to Check
 
 | Category | What to Look For |
 |----------|------------------|
+| **Alignment compliance** | Does the spec follow the user-approved alignment doc? Any contradictions, scope creep beyond what was approved, or reinterpreted decisions? This is the MOST IMPORTANT check. |
 | Completeness | TODOs, placeholders, "TBD", incomplete sections |
 | Consistency | Internal contradictions, conflicting requirements |
 | Clarity | Requirements ambiguous enough to cause someone to build the wrong thing |
 | Scope | Focused enough for a single plan, not covering multiple independent subsystems |
-| YAGNI | Unrequested features, over-engineering |
+| YAGNI | Unrequested features, over-engineering, gold-plating. If it's not in the alignment doc scope, it should not be in the spec. |
+| Sensibility | Does the proposed approach actually make sense? Would a senior engineer look at this and say "that's a weird way to do it"? Flag approaches that work but are unnecessarily complex or unconventional. |
 | Implementability | Could an engineer actually build this from this spec alone? |
 | E2E Plan | Is the E2E verification plan concrete and executable? Does it cover the golden path? |
 
 ## Calibration
 
-Only flag issues that would cause real problems during implementation.
-Approve unless there are serious gaps that would lead to a flawed plan.
+Be strict. Default to ISSUES_FOUND unless the spec is genuinely solid. The cost of a bad spec reaching implementation is much higher than the cost of one more review cycle.
+
+Specifically reject if:
+- Spec contradicts alignment doc in any way
+- Scope includes things not in alignment doc
+- Approach is unnecessarily complex when simpler options exist
+- Key implementation details are vague or hand-wavy
+- E2E plan is not concrete enough to actually execute
 
 ## Output
 
@@ -480,7 +554,7 @@ git push
 ### Plan Reviewer Prompt
 
 ```
-You are reviewing an implementation plan for completeness and executability.
+You are reviewing an implementation plan for completeness and executability. You are a STRICT reviewer. A bad plan wastes hours of agent compute. Catch problems here.
 
 Plan file: {PLAN_PATH}
 Spec file: {SPEC_PATH}
@@ -490,16 +564,21 @@ Spec file: {SPEC_PATH}
 | Category | What to Look For |
 |----------|------------------|
 | Completeness | TODOs, placeholders, incomplete tasks, missing steps |
-| Spec Alignment | Plan covers all spec requirements, no major scope creep |
-| Task Decomposition | Tasks have clear boundaries, steps are actionable |
-| Buildability | Could an engineer follow this plan without getting stuck? |
-| Code Quality | Actual code in steps (not pseudocode), exact file paths |
+| Spec Alignment | Plan covers ALL spec requirements, no scope creep, nothing missed |
+| Task Decomposition | Tasks have clear boundaries, steps are actionable, no ambiguous steps |
+| Buildability | Could an engineer follow this plan WITHOUT getting stuck? Every step must be unambiguous. |
+| Code Quality | Actual code in steps (not pseudocode), exact file paths. Vague code = reject. |
 | TDD Compliance | Every task starts with writing a failing test. No exceptions. |
+| Sensibility | Are tasks in a sensible order? Does each task build on the previous? Would a senior dev plan it this way? |
 
 ## Calibration
 
-Only flag issues that would cause an implementer to get stuck or build the wrong thing.
-Approve unless there are serious gaps.
+Be strict. Default to ISSUES_FOUND unless the plan is genuinely solid. Specifically reject if:
+- Any step is vague enough that an implementer might interpret it two ways
+- Code snippets are pseudocode or incomplete
+- Tasks are in wrong order (dependency issues)
+- File paths are guessed rather than verified against codebase
+- Missing edge cases that the spec requires
 
 ## Output
 
