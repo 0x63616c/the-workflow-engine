@@ -1,0 +1,2 @@
+# CI destination: inherits everything from deploy.yml
+# Exists so Kamal reads .kamal/secrets.ci (env vars) instead of .kamal/secrets (1Password)
