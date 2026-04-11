@@ -5,7 +5,7 @@ description: Use when completing tasks, implementing major features, or before m
 
 # Requesting Code Review
 
-Dispatch superpowers:code-reviewer subagent to catch issues before they cascade. The reviewer gets precisely crafted context for evaluation — never your session's history. This keeps the reviewer focused on the work product, not your thought process, and preserves your own context for continued work.
+Dispatch superpowers:code-reviewer subagent to catch issues before they cascade. Reviewer gets precisely crafted context, never your session history. Keeps reviewer focused on work product, preserves your context for coordination.
 
 **Core principle:** Review early, review often.
 
@@ -34,7 +34,7 @@ HEAD_SHA=$(git rev-parse HEAD)
 Use Task tool with superpowers:code-reviewer type, fill template at `code-reviewer.md`
 
 **Placeholders:**
-- `{WHAT_WAS_IMPLEMENTED}` - What you just built
+- `{WHAT_WAS_IMPLEMENTED}` - What you built
 - `{PLAN_OR_REQUIREMENTS}` - What it should do
 - `{BASE_SHA}` - Starting commit
 - `{HEAD_SHA}` - Ending commit
@@ -44,14 +44,12 @@ Use Task tool with superpowers:code-reviewer type, fill template at `code-review
 - Fix Critical issues immediately
 - Fix Important issues before proceeding
 - Note Minor issues for later
-- Push back if reviewer is wrong (with reasoning)
+- Push back if reviewer wrong (with reasoning)
 
 ## Example
 
 ```
-[Just completed Task 2: Add verification function]
-
-You: Let me request code review before proceeding.
+[Completed Task 2: Add verification function]
 
 BASE_SHA=$(git log --oneline | grep "Task 1" | head -1 | awk '{print $1}')
 HEAD_SHA=$(git rev-parse HEAD)
@@ -61,7 +59,6 @@ HEAD_SHA=$(git rev-parse HEAD)
   PLAN_OR_REQUIREMENTS: Task 2 from docs/superpowers/plans/deployment-plan.md
   BASE_SHA: a7981ec
   HEAD_SHA: 3df7661
-  DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
 
 [Subagent returns]:
   Strengths: Clean architecture, real tests
@@ -70,24 +67,15 @@ HEAD_SHA=$(git rev-parse HEAD)
     Minor: Magic number (100) for reporting interval
   Assessment: Ready to proceed
 
-You: [Fix progress indicators]
+[Fix progress indicators]
 [Continue to Task 3]
 ```
 
 ## Integration with Workflows
 
-**Subagent-Driven Development:**
-- Review after EACH task
-- Catch issues before they compound
-- Fix before moving to next task
-
-**Executing Plans:**
-- Review after each batch (3 tasks)
-- Get feedback, apply, continue
-
-**Ad-Hoc Development:**
-- Review before merge
-- Review when stuck
+**Subagent-Driven Development:** Review after EACH task
+**Executing Plans:** Review after each batch (3 tasks)
+**Ad-Hoc Development:** Review before merge, review when stuck
 
 ## Red Flags
 
@@ -99,7 +87,7 @@ You: [Fix progress indicators]
 
 **If reviewer wrong:**
 - Push back with technical reasoning
-- Show code/tests that prove it works
+- Show code/tests proving it works
 - Request clarification
 
 See template at: requesting-code-review/code-reviewer.md

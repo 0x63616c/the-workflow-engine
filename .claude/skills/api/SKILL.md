@@ -55,7 +55,7 @@ export const myRouter = router({
 });
 ```
 
-2. Register it in `src/trpc/routers/index.ts`:
+2. Register in `src/trpc/routers/index.ts`:
 
 ```ts
 import { myRouter } from "./my-router";
@@ -68,7 +68,7 @@ export const appRouter = router({
 
 ## Drizzle ORM
 
-Schema is in `src/db/schema.ts` using `drizzle-orm/sqlite-core`.
+Schema in `src/db/schema.ts` using `drizzle-orm/sqlite-core`.
 
 ```ts
 import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
@@ -89,7 +89,7 @@ bun run db:push       # Push directly (dev only, no migration file)
 
 ## Inngest Functions
 
-Define functions in `src/inngest/functions/`. Register them in `server.ts` by adding to the `functions` array in the `serve()` call.
+Define in `src/inngest/functions/`. Register in `server.ts` by adding to `functions` array in `serve()` call.
 
 ```ts
 import { inngest } from "../client";
@@ -105,11 +105,11 @@ export const processWorkflow = inngest.createFunction(
 
 ## Integration Plugins
 
-The `Integration` interface in `src/integrations/types.ts` defines the plugin contract:
+`Integration` interface in `src/integrations/types.ts` defines plugin contract:
 
 - `init()`: Setup/auth
 - `getState()`: Current state snapshot
-- `execute(command, params)`: Run a command
+- `execute(command, params)`: Run command
 - `subscribe?(callback)`: Optional event subscription, returns unsubscribe fn
 
 ## Import Boundaries
@@ -128,16 +128,16 @@ Routers must not import db or integrations directly. Business logic goes in `ser
 
 ## Environment
 
-Env vars are validated in `src/env.ts`. Never read `process.env` directly elsewhere. See `.env.example` for available variables.
+Env vars validated in `src/env.ts`. Never read `process.env` directly elsewhere. See `.env.example` for available variables.
 
 Key exports: `env` (parsed object), `EFFECTIVE_PORT` (PORT + PORT_OFFSET), `WS_PORT` (EFFECTIVE_PORT + 1).
 
 ## Testing
 
-- Tests use Vitest (runs in Node, not Bun).
-- `bun:sqlite` is aliased to a mock in `vitest.config.ts` so the import chain resolves.
-- Use `appRouter.createCaller({} as never)` for endpoints that don't need context (like health).
-- For endpoints that use db, provide a real or mocked context.
+- Vitest (runs in Node, not Bun).
+- `bun:sqlite` aliased to mock in `vitest.config.ts` so import chain resolves.
+- `appRouter.createCaller({} as never)` for endpoints needing no context (like health).
+- For endpoints using db, provide real or mocked context.
 
 ## Commands
 

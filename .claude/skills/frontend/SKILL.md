@@ -27,15 +27,15 @@ apps/web/src/
 
 ## Routing
 
-Routes live in `src/routes/`. The TanStack Router Vite plugin auto-generates `routeTree.gen.ts` on dev/build. Do not hand-edit that file.
+Routes in `src/routes/`. TanStack Router Vite plugin auto-generates `routeTree.gen.ts` on dev/build. Never hand-edit that file.
 
-- `__root.tsx` is the root layout. Wrap providers here.
+- `__root.tsx` = root layout. Wrap providers here.
 - `index.tsx` maps to `/`.
-- Nested routes: `workflows/index.tsx` maps to `/workflows`, `workflows/$id.tsx` maps to `/workflows/:id`.
+- Nested: `workflows/index.tsx` → `/workflows`, `workflows/$id.tsx` → `/workflows/:id`.
 
 ## tRPC Client
 
-The tRPC client is configured in `src/lib/trpc.ts` using `@trpc/react-query`. It uses `splitLink` to route subscriptions over SSE and queries/mutations over HTTP batch.
+Configured in `src/lib/trpc.ts` using `@trpc/react-query`. Uses `splitLink` to route subscriptions over SSE, queries/mutations over HTTP batch.
 
 ```tsx
 import { trpc } from "../lib/trpc";
@@ -44,11 +44,11 @@ import { trpc } from "../lib/trpc";
 const { data } = trpc.health.ping.useQuery();
 ```
 
-The API type comes from `@repo/api/trpc` (workspace import). The web app proxies `/trpc` to the API via Vite config.
+API type from `@repo/api/trpc` (workspace import). Web app proxies `/trpc` to API via Vite config.
 
 ## Zustand Stores
 
-Create stores in `src/stores/`. Use the slice pattern for complex state.
+Create in `src/stores/`. Use slice pattern for complex state.
 
 ```ts
 import { create } from "zustand";
@@ -66,17 +66,17 @@ export const useCounterStore = create<CounterStore>((set) => ({
 
 ## Styling
 
-- Tailwind v4: configuration is in `globals.css` using `@theme`, not `tailwind.config.js`.
-- Theme tokens: `--color-background`, `--color-foreground`, `--color-primary`, etc. defined in `src/styles/globals.css`.
-- Use `cn()` from `src/lib/utils.ts` for conditional class merging (clsx + tailwind-merge).
-- Add shadcn components with: `bunx shadcn@latest add <component> --cwd apps/web`
+- Tailwind v4: config in `globals.css` using `@theme`, not `tailwind.config.js`.
+- Theme tokens: `--color-background`, `--color-foreground`, `--color-primary`, etc. in `src/styles/globals.css`.
+- `cn()` from `src/lib/utils.ts` for conditional class merging (clsx + tailwind-merge).
+- Add shadcn components: `bunx shadcn@latest add <component> --cwd apps/web`
 
 ## Testing
 
-- Test files go in `src/__tests__/`.
-- Use Vitest + `@testing-library/react`.
-- The test environment is jsdom (configured in `vitest.config.ts`).
-- Run tests: `bun run test` from `apps/web/`.
+- Test files in `src/__tests__/`.
+- Vitest + `@testing-library/react`.
+- jsdom environment (configured in `vitest.config.ts`).
+- Run: `bun run test` from `apps/web/`.
 
 ## Commands
 
@@ -91,6 +91,6 @@ bun run lint:fix   # Biome
 ## Rules
 
 - Never hand-edit `routeTree.gen.ts`.
-- Imports from `@repo/shared` are allowed. Imports from `@repo/api/trpc` are allowed (type-only for AppRouter).
-- Do not import API internals (db, services, inngest) from the web app.
-- Use `bun` / `bunx`, never `npm` / `npx`.
+- `@repo/shared` imports allowed. `@repo/api/trpc` allowed (type-only for AppRouter).
+- No importing API internals (db, services, inngest) from web app.
+- `bun` / `bunx` only, never `npm` / `npx`.

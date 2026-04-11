@@ -7,9 +7,9 @@ description: Use when dispatching any agent that will write code, implement feat
 
 ## Overview
 
-Safe defaults for spawning code-writing agents. Every agent gets its own git worktree, uses sonnet, and gets an isolated port set so multiple agents can run dev stacks simultaneously without conflict.
+Safe defaults for spawning code-writing agents. Each agent gets own git worktree, uses sonnet, gets isolated port set so multiple agents run dev stacks simultaneously without conflict.
 
-**Core principle:** Agents sharing a repo directory will destroy each other's work. Always isolate.
+**Core principle:** Agents sharing repo directory will destroy each other's work. Always isolate.
 
 ## Required Parameters
 
@@ -25,14 +25,14 @@ Agent({
 })
 ```
 
-Missing any of these causes real problems:
-- No `isolation: "worktree"` = agents share directory, fight over branches, corrupt working tree
-- No `model: "sonnet"` = wastes money on opus for routine implementation
-- No `run_in_background` = blocks the coordinator
+Missing any causes real problems:
+- No `isolation: "worktree"` = agents share dir, fight over branches, corrupt working tree
+- No `model: "sonnet"` = wastes money on opus for routine impl
+- No `run_in_background` = blocks coordinator
 
 ## Port Isolation
 
-Each agent needs its own dev stack ports. Assign in offsets of 10:
+Each agent needs own dev stack ports. Assign in offsets of 10:
 
 | Stack | API_PORT | INNGEST_PORT | UI_PORT | TILT_PORT | DB_PATH |
 |-------|----------|--------------|---------|-----------|---------|
@@ -92,7 +92,7 @@ API_PORT=30X1 INNGEST_PORT=82X8 UI_PORT=51X3 DB_PATH=./data/workflow-aX.db tilt 
 
 ## Verification & Screenshots
 
-Every agent MUST verify its work before creating the PR. Include this in every prompt:
+Every agent MUST verify before creating PR. Include in every prompt:
 
 ```
 ## Verification
@@ -134,14 +134,14 @@ SendMessage({ to: "<agent-id>", summary: "shutdown", message: { type: "shutdown_
 
 ## Merge Order Matters
 
-When running parallel agents that touch overlapping files (schema, routes, types), merge them sequentially and rebase later PRs onto main after each merge. Merging all at once causes conflicts.
+Parallel agents touching overlapping files: merge sequentially, rebase later PRs onto main after each merge. Merging all at once causes conflicts.
 
 **Recommended merge order:**
-1. Infrastructure/tooling PRs first (pre-commit hooks, CI fixes)
-2. Backend PRs next (schema changes, API, executor)
-3. UI PRs last (they depend on backend types/APIs)
+1. Infrastructure/tooling PRs first
+2. Backend PRs next (schema, API, executor)
+3. UI PRs last (depend on backend types/APIs)
 
-After merging one, dispatch a rebase agent for the next:
+After merging one, dispatch rebase agent for next:
 ```
 Agent({
   description: "Rebase PR #N onto main",
@@ -153,13 +153,13 @@ Agent({
 
 ## Biome Lint
 
-Always run `bunx biome check src/` (not `.`). Running on `.` will scan agent worktree directories that have their own biome.json and fail.
+Run `bunx biome check src/` (not `.`). Running on `.` scans agent worktree dirs with own biome.json and fails.
 
 ## Common Mistakes
 
 | Mistake | Consequence |
 |---------|-------------|
-| No worktree | Agents share directory, switch branches under each other |
+| No worktree | Agents share dir, switch branches under each other |
 | No port isolation | tilt up fails, agents can't test |
 | Too broad scope | Agents edit same files, merge conflicts |
 | Not pushing often | Work lost if agent killed |

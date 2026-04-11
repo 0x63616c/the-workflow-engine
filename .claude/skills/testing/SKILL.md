@@ -2,7 +2,7 @@
 
 ## Test Runner
 
-Both apps use Vitest (`bun run test` in each app directory). The root `bun run test` runs tests across all workspaces.
+Both apps use Vitest (`bun run test` in each app dir). Root `bun run test` runs all workspaces.
 
 ## API Tests
 
@@ -23,13 +23,13 @@ describe("my router", () => {
 });
 ```
 
-- For endpoints that don't need db, pass `{} as never` as context.
-- For endpoints that need db, create a test SQLite database or mock the context.
-- `bun:sqlite` is aliased to a mock in `vitest.config.ts` so imports resolve in Node.
+- No db needed: pass `{} as never` as context.
+- Needs db: create test SQLite DB or mock context.
+- `bun:sqlite` aliased to mock in `vitest.config.ts` so imports resolve in Node.
 
 **API test caveats:**
 - Vitest runs in Node, not Bun. Bun-specific APIs (`Bun.serve`, `bun:sqlite`) need mocks.
-- The `__mocks__/bun-sqlite.ts` provides a stub `Database` class for import resolution.
+- `__mocks__/bun-sqlite.ts` provides stub `Database` class for import resolution.
 
 ## Frontend Tests
 
@@ -50,14 +50,14 @@ describe("MyComponent", () => {
 });
 ```
 
-- Environment is jsdom (configured in `apps/web/vitest.config.ts`).
-- `@testing-library/jest-dom` matchers are available via `src/test-setup.ts`.
-- For components that use tRPC hooks, wrap in the tRPC + QueryClient providers or mock the hooks.
+- jsdom environment (configured in `apps/web/vitest.config.ts`).
+- `@testing-library/jest-dom` matchers via `src/test-setup.ts`.
+- Components using tRPC hooks: wrap in tRPC + QueryClient providers or mock hooks.
 
 ## TDD Workflow
 
-1. Write a failing test (red).
-2. Implement the minimum code to pass (green).
+1. Write failing test (red).
+2. Implement minimum code to pass (green).
 3. Refactor while keeping tests green.
 4. Run `bun run test` to verify.
 
@@ -70,19 +70,18 @@ agent-browser                          # Interactive mode
 agent-browser "navigate to localhost:4200 and verify the page loads"
 ```
 
-For screenshot verification without stealing focus:
+Screenshot verification without stealing focus:
 - Get window IDs via Swift/CoreGraphics (not osascript UI scripting).
-- Capture with `screencapture -x -l <windowID>` to avoid stealing focus.
-- Save screenshots to `docs/screenshots/` in the repo.
+- Capture with `screencapture -x -l <windowID>`.
+- Save to `docs/screenshots/` in repo.
 
 ## Import Boundary Tests
 
-Run from repo root:
 ```bash
 bun run check:boundaries
 ```
 
-This verifies that API layers respect their import rules (db, services, routers, inngest, integrations). See `scripts/check-boundaries.ts` for the full rule set.
+Verifies API layers respect import rules. See `scripts/check-boundaries.ts` for full rule set.
 
 ## Running All Checks
 
