@@ -16,7 +16,7 @@ proxy:
 
 registry:
   server: ghcr.io
-  username: 0x63616c
+  username: "0x63616c"
   password:
     - KAMAL_REGISTRY_PASSWORD
 
