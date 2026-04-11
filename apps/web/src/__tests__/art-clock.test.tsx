@@ -3,28 +3,28 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("formatTime", () => {
-  it("formats afternoon time correctly", () => {
+  it("formats afternoon time as 12h with PM", () => {
     const date = new Date(2026, 3, 11, 14, 5);
     const result = formatTime(date);
-    expect(result).toEqual({ hours: "14", minutes: "05" });
+    expect(result).toEqual({ hours: "2", minutes: "05", period: "PM" });
   });
 
-  it("does not add leading zero to single-digit hours", () => {
+  it("formats morning time with AM", () => {
     const date = new Date(2026, 3, 11, 9, 30);
     const result = formatTime(date);
-    expect(result).toEqual({ hours: "9", minutes: "30" });
+    expect(result).toEqual({ hours: "9", minutes: "30", period: "AM" });
   });
 
-  it("formats midnight as 0:00", () => {
+  it("formats midnight as 12:00 AM", () => {
     const date = new Date(2026, 3, 11, 0, 0);
     const result = formatTime(date);
-    expect(result).toEqual({ hours: "0", minutes: "00" });
+    expect(result).toEqual({ hours: "12", minutes: "00", period: "AM" });
   });
 
-  it("pads single-digit minutes with leading zero", () => {
+  it("formats noon as 12:03 PM", () => {
     const date = new Date(2026, 3, 11, 12, 3);
     const result = formatTime(date);
-    expect(result).toEqual({ hours: "12", minutes: "03" });
+    expect(result).toEqual({ hours: "12", minutes: "03", period: "PM" });
   });
 });
 
@@ -55,7 +55,12 @@ describe("ArtClock", () => {
 
   it("renders hours", () => {
     render(<ArtClock />);
-    expect(screen.getByText("14")).toBeInTheDocument();
+    expect(screen.getByText("2")).toBeInTheDocument();
+  });
+
+  it("renders AM/PM period", () => {
+    render(<ArtClock />);
+    expect(screen.getByText("PM")).toBeInTheDocument();
   });
 
   it("renders minutes", () => {
