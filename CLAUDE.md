@@ -43,6 +43,7 @@ Wall-mounted iPad Pro smart home panel. Living art, controls home.
 
 ### Native Shell
 
+- **Currently running as PWA** on iPad (Capacitor native shell planned for later)
 - **Capacitor** wraps the PWA in a native iOS shell (WKWebView)
 - Enables native API access (screen brightness, camera, haptics) via JS-to-native bridge
 - Produces a real `.ipa` with bundle ID for Single App Mode kiosk
