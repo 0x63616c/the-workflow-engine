@@ -1,3 +1,12 @@
+pre-push:
+  commands:
+    no-push-main:
+      run: |
+        branch=$(git rev-parse --abbrev-ref HEAD)
+        if [ "$branch" = "main" ]; then
+          echo "ERROR: Direct push to main blocked. Use a PR." && exit 1
+        fi
+
 pre-commit:
   parallel: true
   commands:
