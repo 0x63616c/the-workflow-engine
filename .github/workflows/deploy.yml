@@ -67,17 +67,17 @@ jobs:
       - name: Install Kamal
         run: sudo gem install kamal
 
-      - name: Write CI secrets for Kamal
-        run: |
-          cat > .kamal/secrets <<'SECRETS'
-          KAMAL_REGISTRY_PASSWORD=$KAMAL_REGISTRY_PASSWORD
-          INNGEST_EVENT_KEY=$INNGEST_EVENT_KEY
-          INNGEST_SIGNING_KEY=$INNGEST_SIGNING_KEY
-          SECRETS
-
-      - name: Deploy with Kamal
+      - name: Write Kamal secrets for CI
         env:
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           INNGEST_EVENT_KEY: ${{ secrets.INNGEST_EVENT_KEY }}
           INNGEST_SIGNING_KEY: ${{ secrets.INNGEST_SIGNING_KEY }}
+        run: |
+          cat > .kamal/secrets << EOF
+          KAMAL_REGISTRY_PASSWORD=$KAMAL_REGISTRY_PASSWORD
+          INNGEST_EVENT_KEY=$INNGEST_EVENT_KEY
+          INNGEST_SIGNING_KEY=$INNGEST_SIGNING_KEY
+          EOF
+
+      - name: Deploy with Kamal
         run: kamal deploy
