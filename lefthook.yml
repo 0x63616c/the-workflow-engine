@@ -21,6 +21,16 @@ pre-commit:
       run: bunx vitest run --changed
     boundaries:
       run: bun run check:boundaries
+    swiftformat:
+      glob: "*.swift"
+      run: swiftformat {staged_files}
+      stage_fixed: true
+    plist-lint:
+      glob: "*.plist"
+      run: |
+        for f in {staged_files}; do
+          plutil -lint "$f" || exit 1
+        done
     no-env:
       glob: ".env*"
       exclude_tags:
