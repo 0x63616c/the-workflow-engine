@@ -1,164 +1,153 @@
----
-name: api
-description: Guide for working on the tRPC API backend in apps/api (routers, services, database, Inngest, import boundaries)
-user_invocable: false
----
+# API Skill (apps/api)
 
-# API Development (apps/api)
+## Stack
 
-## tRPC Routers
+- Runtime: Bun
+- Framework: tRPC v11 (fetch adapter for HTTP, ws adapter for WebSocket)
+- Database: SQLite via Drizzle ORM (`drizzle-orm/bun-sqlite`)
+- Background jobs: Inngest
+- Validation: Zod
+- Env config: Validated via Zod in `src/env.ts`
 
-Create new routers in `src/trpc/routers/<name>.ts`, then merge into the root router in `src/trpc/routers/index.ts`.
+## Directory Layout
+
+```
+apps/api/src/
+  server.ts              HTTP + WS server entry point
+  env.ts                 Environment config (Zod-validated)
+  db/
+    client.ts            Drizzle client instance
+    schema.ts            Drizzle table definitions
+  trpc/
+    init.ts              tRPC initialization (router, publicProcedure)
+    context.ts           Request context (db instance)
+    routers/
+      index.ts           Root router (merges sub-routers)
+      health.ts          Health check router
+  inngest/
+    client.ts            Inngest client instance
+    functions/           Inngest function definitions (empty)
+  integrations/
+    types.ts             Integration plugin interface
+  services/              Business logic layer (empty)
+  __tests__/             Test files
+  __mocks__/             Vitest mocks (bun:sqlite stub)
+```
+
+## Adding a tRPC Router
+
+1. Create `src/trpc/routers/<name>.ts`:
 
 ```ts
-// src/trpc/routers/notifications.ts
 import { z } from "zod";
 import { publicProcedure, router } from "../init";
-import { NotificationService } from "../../services/notifications";
 
-export const notificationRouter = router({
+export const myRouter = router({
   list: publicProcedure.query(async ({ ctx }) => {
-    return NotificationService.list(ctx.db);
+    // ctx.db is the Drizzle instance
+    return [];
   }),
-  dismiss: publicProcedure
-    .input(z.object({ id: z.string() }))
+  create: publicProcedure
+    .input(z.object({ name: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
-      return NotificationService.dismiss(ctx.db, input.id);
+      // ...
     }),
 });
 ```
 
-Register in the root router:
+2. Register it in `src/trpc/routers/index.ts`:
 
 ```ts
-// src/trpc/routers/index.ts
-import { notificationRouter } from "./notifications";
+import { myRouter } from "./my-router";
 
 export const appRouter = router({
   health: healthRouter,
-  notifications: notificationRouter,
+  my: myRouter,
 });
 ```
 
-Routers are thin wrappers. Business logic goes in services.
+## Drizzle ORM
 
-## Services
-
-Services live in `src/services/` and contain all business logic. They receive the DB instance as a parameter (no global imports of the db client).
-
-```ts
-// src/services/notifications.ts
-import { eq } from "drizzle-orm";
-import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
-import { notifications } from "../db/schema";
-import type * as schema from "../db/schema";
-
-export const NotificationService = {
-  async list(db: BunSQLiteDatabase<typeof schema>) {
-    return db.select().from(notifications).all();
-  },
-  async dismiss(db: BunSQLiteDatabase<typeof schema>, id: string) {
-    return db.delete(notifications).where(eq(notifications.id, id));
-  },
-};
-```
-
-## Database (Drizzle ORM + SQLite)
-
-Schema defined in `src/db/schema.ts` using `drizzle-orm/sqlite-core`.
+Schema is in `src/db/schema.ts` using `drizzle-orm/sqlite-core`.
 
 ```ts
 import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-export const notifications = sqliteTable("notifications", {
-  id: text().primaryKey(),
-  title: text().notNull(),
-  body: text(),
+export const widgets = sqliteTable("widgets", {
+  id: text().primaryKey(),   // TypeID string
+  name: text().notNull(),
   createdAt: int({ mode: "timestamp" }).notNull(),
 });
 ```
 
-After schema changes:
-
+After modifying schema:
 ```bash
-bun run db:generate   # Generate migration files
+bun run db:generate   # Generate migration SQL
 bun run db:migrate    # Apply migrations
-bun run db:push       # Push directly (dev only, skips migration file)
+bun run db:push       # Push directly (dev only, no migration file)
 ```
 
 ## Inngest Functions
 
-Background/async work uses Inngest. Functions live in `src/inngest/functions/`.
+Define functions in `src/inngest/functions/`. Register them in `server.ts` by adding to the `functions` array in the `serve()` call.
 
 ```ts
-// src/inngest/functions/poll-ha.ts
 import { inngest } from "../client";
-import { HAService } from "../../services/home-assistant";
 
-export const pollHomeAssistant = inngest.createFunction(
-  { id: "poll-home-assistant" },
-  { cron: "*/30 * * * * *" },
-  async ({ step }) => {
-    await step.run("fetch-states", async () => {
-      return HAService.fetchStates();
-    });
+export const processWorkflow = inngest.createFunction(
+  { id: "process-workflow" },
+  { event: "workflow/submitted" },
+  async ({ event, step }) => {
+    // ...
   },
 );
 ```
 
-Register in the `functions` array in `src/server.ts`:
+## Integration Plugins
 
-```ts
-const inngestHandler = serve({
-  client: inngest,
-  functions: [pollHomeAssistant],
-});
-```
+The `Integration` interface in `src/integrations/types.ts` defines the plugin contract:
 
-## Import Boundaries (CRITICAL)
+- `init()`: Setup/auth
+- `getState()`: Current state snapshot
+- `execute(command, params)`: Run a command
+- `subscribe?(callback)`: Optional event subscription, returns unsubscribe fn
 
-These are strictly enforced. Violations will be caught by lint/pre-commit hooks.
+## Import Boundaries
 
-| Layer | Can import from | Cannot import from |
-|---|---|---|
-| `db/` | `drizzle-orm`, `bun:sqlite` | tRPC, Inngest, services, HTTP |
-| `services/` | `db/`, `integrations/types` | tRPC, Inngest, HTTP |
-| `trpc/routers/` | `services/`, `trpc/init`, `trpc/context` | `db/` directly, Inngest |
-| `inngest/functions/` | `services/`, `inngest/client` | `db/` directly, tRPC |
-| `integrations/` | shared types only | everything else |
+Enforced by `scripts/check-boundaries.ts`. Run with `bun run check:boundaries` from repo root.
 
-Dependencies point inward: infrastructure -> services -> domain. Never reverse.
+| Layer | May import |
+|---|---|
+| `db/` | `drizzle-orm`, `bun:sqlite`, `@repo/shared`, relative |
+| `services/` | `db/`, `integrations/types`, `@repo/shared`, relative |
+| `trpc/routers/` | `services/`, `@repo/shared`, `@trpc/*`, `zod`, `../init`, `../context` |
+| `inngest/functions/` | `services/`, `@repo/shared`, `inngest`, `../client` |
+| `integrations/` | `@repo/shared`, own files |
+
+Routers must not import db or integrations directly. Business logic goes in `services/`.
 
 ## Environment
 
-Env vars validated via Zod in `src/env.ts`. Never read `process.env` directly. Import from `env.ts`:
+Env vars are validated in `src/env.ts`. Never read `process.env` directly elsewhere. See `.env.example` for available variables.
 
-```ts
-import { env, EFFECTIVE_PORT } from "./env";
-```
-
-`PORT_OFFSET` enables multiple instances (worktrees) to run simultaneously without port conflicts.
+Key exports: `env` (parsed object), `EFFECTIVE_PORT` (PORT + PORT_OFFSET), `WS_PORT` (EFFECTIVE_PORT + 1).
 
 ## Testing
 
-Use `createCaller` for router-level tests:
-
-```ts
-import { createCaller } from "../trpc/routers";
-
-const caller = createCaller({ db: testDb });
-const result = await caller.health.ping();
-expect(result.status).toBe("ok");
-```
+- Tests use Vitest (runs in Node, not Bun).
+- `bun:sqlite` is aliased to a mock in `vitest.config.ts` so the import chain resolves.
+- Use `appRouter.createCaller({} as never)` for endpoints that don't need context (like health).
+- For endpoints that use db, provide a real or mocked context.
 
 ## Commands
 
 ```bash
-bun run dev         # Start API on port 4201 (hot-reload)
-bun run db:generate # Generate Drizzle migration files
-bun run db:migrate  # Apply pending migrations
-bun run db:push     # Push schema directly (dev only)
-bun run db:studio   # Open Drizzle Studio
-bun run test        # Run Vitest
-bun run lint:fix    # Biome lint + auto-fix
+bun run dev           # Bun --watch on port 4201
+bun run test          # Vitest
+bun run typecheck     # tsc --noEmit
+bun run lint:fix      # Biome
+bun run db:generate   # Generate Drizzle migrations
+bun run db:migrate    # Apply migrations
+bun run db:push       # Push schema (dev only)
+bun run db:studio     # Drizzle Studio
 ```

@@ -1,103 +1,96 @@
----
-name: frontend
-description: Guide for working on the React PWA frontend in apps/web (routing, components, state, styling, testing)
-user_invocable: false
----
+# Frontend Skill (apps/web)
 
-# Frontend Development (apps/web)
+## Stack
+
+- React 19, TypeScript, Vite
+- TanStack Router (file-based routing via Vite plugin)
+- TanStack Query + tRPC React Query for server state
+- Zustand for client state (stores in `src/stores/`)
+- Tailwind CSS v4, shadcn/ui (style: new-york, base: neutral)
+- Icons: `lucide-react`
+- Fonts: Geist (`geist` package)
+- Testing: Vitest + Testing Library
+
+## Directory Layout
+
+```
+apps/web/src/
+  routes/         File-based routes (TanStack Router)
+  components/ui/  shadcn/ui primitives
+  components/     App-level components
+  hooks/          Custom React hooks
+  stores/         Zustand stores
+  lib/            Utilities (trpc client, cn helper)
+  styles/         globals.css, theme.ts
+  __tests__/      Test files
+```
 
 ## Routing
 
-TanStack Router with file-based routing via the Vite plugin. Add new routes as files in `src/routes/`.
+Routes live in `src/routes/`. The TanStack Router Vite plugin auto-generates `routeTree.gen.ts` on dev/build. Do not hand-edit that file.
 
-- `src/routes/__root.tsx` - root layout
-- `src/routes/index.tsx` - home route (`/`)
-- `src/routes/settings.tsx` - `/settings`
-- `src/routes/settings/general.tsx` - `/settings/general`
-
-`routeTree.gen.ts` is auto-generated on dev/build. Do not hand-edit it. It is committed to git.
-
-## Components
-
-**shadcn/ui** (style: new-york, base: neutral). Install new components:
-
-```bash
-bunx shadcn@latest add <component-name>
-```
-
-Components land in `src/components/ui/`. Do not edit these directly unless customising.
-
-Custom components go in `src/components/` (not inside `ui/`).
-
-## Styling
-
-**Tailwind CSS v4** with CSS-first configuration. Theme tokens live in `@theme` blocks inside `src/styles/globals.css`. There is no `tailwind.config.ts`.
-
-```css
-@theme {
-  --color-primary: oklch(0.7 0.15 200);
-}
-```
-
-Use Tailwind utility classes. For dark mode, the app runs on a wall-mounted iPad, so design for OLED black backgrounds.
-
-## State Management
-
-- **Server state**: TanStack Query via tRPC hooks (see `src/lib/trpc.ts`)
-- **Client state**: Zustand stores in `src/stores/`, export typed hooks
-
-```ts
-// src/stores/theme.ts
-import { create } from "zustand";
-
-interface ThemeStore {
-  mode: "light" | "dark";
-  setMode: (mode: "light" | "dark") => void;
-}
-
-export const useThemeStore = create<ThemeStore>((set) => ({
-  mode: "dark",
-  setMode: (mode) => set({ mode }),
-}));
-```
+- `__root.tsx` is the root layout. Wrap providers here.
+- `index.tsx` maps to `/`.
+- Nested routes: `workflows/index.tsx` maps to `/workflows`, `workflows/$id.tsx` maps to `/workflows/:id`.
 
 ## tRPC Client
 
-Import the typed client from `src/lib/trpc.ts`. Use TanStack Query hooks for data fetching:
+The tRPC client is configured in `src/lib/trpc.ts` using `@trpc/react-query`. It uses `splitLink` to route subscriptions over SSE and queries/mutations over HTTP batch.
 
-```ts
-import { trpc } from "@/lib/trpc";
+```tsx
+import { trpc } from "../lib/trpc";
 
+// In a component:
 const { data } = trpc.health.ping.useQuery();
 ```
 
-## Icons
+The API type comes from `@repo/api/trpc` (workspace import). The web app proxies `/trpc` to the API via Vite config.
 
-Use `lucide-react` for all icons:
+## Zustand Stores
 
-```ts
-import { Settings } from "lucide-react";
-```
-
-## Import Alias
-
-`@/` maps to `src/`. Always use it:
+Create stores in `src/stores/`. Use the slice pattern for complex state.
 
 ```ts
-import { Button } from "@/components/ui/button";
+import { create } from "zustand";
+
+interface CounterStore {
+  count: number;
+  increment: () => void;
+}
+
+export const useCounterStore = create<CounterStore>((set) => ({
+  count: 0,
+  increment: () => set((s) => ({ count: s.count + 1 })),
+}));
 ```
+
+## Styling
+
+- Tailwind v4: configuration is in `globals.css` using `@theme`, not `tailwind.config.js`.
+- Theme tokens: `--color-background`, `--color-foreground`, `--color-primary`, etc. defined in `src/styles/globals.css`.
+- Use `cn()` from `src/lib/utils.ts` for conditional class merging (clsx + tailwind-merge).
+- Add shadcn components with: `bunx shadcn@latest add <component> --cwd apps/web`
 
 ## Testing
 
-- **Unit/component tests**: Vitest + @testing-library/react, co-located in `src/__tests__/`
-- **E2E/visual**: Run `bun run dev` and use browser automation to verify visually
-- Always verify UI changes visually after implementing them
+- Test files go in `src/__tests__/`.
+- Use Vitest + `@testing-library/react`.
+- The test environment is jsdom (configured in `vitest.config.ts`).
+- Run tests: `bun run test` from `apps/web/`.
 
 ## Commands
 
 ```bash
-bun run dev        # Start dev server on port 4200
+bun run dev        # Vite dev server on port 4200
 bun run build      # Type-check + production build
-bun run test       # Run Vitest
-bun run lint:fix   # Biome lint + auto-fix
+bun run test       # Vitest
+bun run typecheck  # tsc --noEmit
+bun run lint:fix   # Biome
 ```
+
+## Rules
+
+- Never hand-edit `routeTree.gen.ts`.
+- Imports from `@repo/shared` are allowed. Imports from `@repo/api/trpc` are allowed (type-only for AppRouter).
+- Do not import API internals (db, services, inngest) from the web app.
+- Use `bun` / `bunx`, never `npm` / `npx`.

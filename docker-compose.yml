@@ -1,10 +1,11 @@
 services:
   inngest:
     image: inngest/inngest
+    command: inngest dev -u http://host.docker.internal:4201/api/inngest --no-discovery --no-poll
     ports:
       - "${INNGEST_PORT:-8288}:8288"
     environment:
       - INNGEST_EVENT_KEY=${INNGEST_EVENT_KEY:-local-dev-event-key-00000000}
       - INNGEST_SIGNING_KEY=${INNGEST_SIGNING_KEY:-signing-key-0000000000000000}
-    volumes:
-      - ./.inngest:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

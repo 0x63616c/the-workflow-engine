@@ -24,7 +24,10 @@
       ".tilt",
       "coverage",
       ".claude/settings.json",
-      ".claude/settings.local.json"
+      ".claude/settings.local.json",
+      ".claude/skills/brainstorming",
+      ".claude/skills/writing-skills",
+      ".claude/skills/systematic-debugging"
     ]
   }
 }

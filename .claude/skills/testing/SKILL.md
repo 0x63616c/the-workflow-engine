@@ -1,115 +1,94 @@
----
-name: testing
-description: Guide for test-driven development workflow covering API tests, frontend tests, and E2E visual verification
-user_invocable: false
----
+# Testing Skill
 
-# Testing Workflow
+## Test Runner
 
-## TDD Cycle
+Both apps use Vitest (`bun run test` in each app directory). The root `bun run test` runs tests across all workspaces.
 
-Every feature follows red/green/refactor:
+## API Tests
 
-1. **Red**: Write a failing test that describes the expected behavior
-2. **Green**: Write the minimum code to make the test pass
-3. **Refactor**: Clean up while keeping tests green
+Location: `apps/api/src/__tests__/`
 
-No task is "done" until tests pass AND visual verification confirms the feature works.
-
-## API Testing
-
-### Router tests (unit)
-
-Use `createCaller` to test tRPC routers without HTTP:
+**Pattern: tRPC createCaller**
 
 ```ts
 import { describe, expect, it } from "vitest";
 import { appRouter } from "../trpc/routers";
-import { createContext } from "../trpc/context";
 
-describe("health router", () => {
-  it("returns ok status", async () => {
-    const caller = appRouter.createCaller(createContext());
-    const result = await caller.health.ping();
-    expect(result.status).toBe("ok");
+describe("my router", () => {
+  it("does something", async () => {
+    const caller = appRouter.createCaller({} as never);
+    const result = await caller.my.list();
+    expect(result).toEqual([]);
   });
 });
 ```
 
-### Integration tests
+- For endpoints that don't need db, pass `{} as never` as context.
+- For endpoints that need db, create a test SQLite database or mock the context.
+- `bun:sqlite` is aliased to a mock in `vitest.config.ts` so imports resolve in Node.
 
-Use `fetch` or `curl` against a running server for full-stack validation:
+**API test caveats:**
+- Vitest runs in Node, not Bun. Bun-specific APIs (`Bun.serve`, `bun:sqlite`) need mocks.
+- The `__mocks__/bun-sqlite.ts` provides a stub `Database` class for import resolution.
 
-```ts
-const res = await fetch("http://localhost:4201/trpc/health.ping");
-const json = await res.json();
-expect(json.result.data.status).toBe("ok");
-```
+## Frontend Tests
 
-### Service tests
+Location: `apps/web/src/__tests__/`
 
-Test services directly with a test DB instance:
+**Pattern: Testing Library + Vitest**
 
-```ts
-import { Database } from "bun:sqlite";
-import { drizzle } from "drizzle-orm/bun-sqlite";
-import * as schema from "../db/schema";
-
-const testDb = drizzle({ client: new Database(":memory:"), schema });
-// Run migrations on testDb, then test service methods
-```
-
-## Frontend Testing
-
-### Component tests (Vitest + Testing Library)
-
-```ts
-import { render, screen } from "@testing-library/react";
+```tsx
 import { describe, expect, it } from "vitest";
-import { MyComponent } from "../components/MyComponent";
+import { render, screen } from "@testing-library/react";
+import { MyComponent } from "../components/my-component";
 
 describe("MyComponent", () => {
-  it("renders the title", () => {
-    render(<MyComponent title="Hello" />);
+  it("renders text", () => {
+    render(<MyComponent />);
     expect(screen.getByText("Hello")).toBeInTheDocument();
   });
 });
 ```
 
-### Visual verification (E2E)
+- Environment is jsdom (configured in `apps/web/vitest.config.ts`).
+- `@testing-library/jest-dom` matchers are available via `src/test-setup.ts`.
+- For components that use tRPC hooks, wrap in the tRPC + QueryClient providers or mock the hooks.
 
-After any UI change, run the dev server and verify visually:
+## TDD Workflow
 
-```bash
-bun run dev  # Start on port 4200
-```
+1. Write a failing test (red).
+2. Implement the minimum code to pass (green).
+3. Refactor while keeping tests green.
+4. Run `bun run test` to verify.
 
-Use browser automation (`agent-browser` CLI) to navigate and verify. Never skip this step for UI work.
+## Browser Testing
 
-## Test File Location
-
-Tests are co-located with source in `src/__tests__/` directories:
-
-```
-apps/api/src/__tests__/health.test.ts
-apps/web/src/__tests__/App.test.tsx
-```
-
-## Running Tests
+For E2E and visual verification, use `agent-browser` (installed locally, do not use bunx).
 
 ```bash
-# Per app
-cd apps/api && bun run test
-cd apps/web && bun run test
-
-# Watch mode (during development)
-cd apps/api && bun run test -- --watch
+agent-browser                          # Interactive mode
+agent-browser "navigate to localhost:4200 and verify the page loads"
 ```
 
-## What "Done" Means
+For screenshot verification without stealing focus:
+- Get window IDs via Swift/CoreGraphics (not osascript UI scripting).
+- Capture with `screencapture -x -l <windowID>` to avoid stealing focus.
+- Save screenshots to `docs/screenshots/` in the repo.
 
-1. All unit tests pass (`bun run test`)
-2. Linting passes (`bun run lint:fix`)
-3. TypeScript compiles (`tsc --noEmit`)
-4. For UI: visually verified in browser
-5. For API: tested with curl/fetch against running server
+## Import Boundary Tests
+
+Run from repo root:
+```bash
+bun run check:boundaries
+```
+
+This verifies that API layers respect their import rules (db, services, routers, inngest, integrations). See `scripts/check-boundaries.ts` for the full rule set.
+
+## Running All Checks
+
+```bash
+bun run typecheck          # Type-check all workspaces
+bun run lint               # Biome lint all files
+bun run test               # Vitest in all workspaces
+bun run check:boundaries   # Import boundary enforcement
+```
