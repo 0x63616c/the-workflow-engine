@@ -114,10 +114,10 @@ bun run lint:fix    # Run Biome lint and auto-fix
 
 - **TDD always.** Red/green cycle. Write failing test first, implement, refactor.
 - **Vitest** for unit + integration tests (API services, frontend components).
-- **agent-browser** for E2E and manual visual verification after every UI task.
-- No task is "done" until tests pass AND agent-browser confirms visually.
+- **Browser automation** (agent-browser CLI or equivalent) for E2E and manual visual verification after every UI task.
+- No task is "done" until tests pass AND browser automation confirms visually.
 - API tests: hit real endpoints (SQLite in-memory for test DB).
-- Frontend tests: Vitest + Testing Library for units, agent-browser for flows.
+- Frontend tests: Vitest + Testing Library for units, browser automation for flows.
 
 ## Architecture Principles
 
