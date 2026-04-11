@@ -26,13 +26,13 @@ export interface ThemePalette {
   };
 }
 
-interface ThemeState {
+export interface ThemeState {
   palettes: Record<string, ThemePalette>;
   activePaletteId: string;
   transitionDuration_MS: number;
 }
 
-interface ThemeActions {
+export interface ThemeActions {
   setActivePalette: (id: string) => void;
   registerPalette: (palette: ThemePalette) => void;
   getActivePalette: () => ThemePalette;
