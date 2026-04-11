@@ -530,7 +530,7 @@ cd apps/web && git add src/components/art-clock/art-clock.tsx src/__tests__/art-
 Create `apps/web/src/__tests__/theme-provider.test.tsx`:
 
 ```typescript
-import { render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { ThemeProvider } from "@/components/theme-provider";
 import { useThemeStore, MIDNIGHT_PALETTE } from "@/stores/theme-store";
@@ -593,7 +593,7 @@ describe("ThemeProvider", () => {
     expect(screen.getByTestId("child")).toBeInTheDocument();
   });
 
-  it("updates CSS variables when palette changes", () => {
+  it("updates CSS variables when palette changes", async () => {
     const dawnPalette: ThemePalette = {
       id: "dawn",
       name: "Dawn",
@@ -626,13 +626,16 @@ describe("ThemeProvider", () => {
       </ThemeProvider>
     );
 
-    // Register and switch to dawn palette
-    useThemeStore.getState().registerPalette(dawnPalette);
-    useThemeStore.getState().setActivePalette("dawn");
+    // Register and switch to dawn palette inside act() to flush React updates
+    act(() => {
+      useThemeStore.getState().registerPalette(dawnPalette);
+      useThemeStore.getState().setActivePalette("dawn");
+    });
 
-    // Re-render triggers useEffect
-    // Need to wait for React to process the store update
-    expect(document.documentElement.style.getPropertyValue("--color-background")).toBe("#1a1a2e");
+    // Wait for useEffect to apply CSS variables after re-render
+    await waitFor(() => {
+      expect(document.documentElement.style.getPropertyValue("--color-background")).toBe("#1a1a2e");
+    });
   });
 });
 ```
@@ -869,12 +872,56 @@ cd apps/web && git add src/app.tsx && git commit -m "feat: wrap app with ThemePr
 
 **Files:**
 - Modify: `apps/web/src/routes/index.tsx`
+- Test: `apps/web/src/__tests__/home-page.test.tsx`
 
-- [ ] **Step 1: Write a test to verify the route renders ArtClock**
+- [ ] **Step 1: Write failing test for HomePage route component**
 
-This is covered by the existing ArtClock tests and the visual E2E verification. The route file is a thin wrapper.
+Create `apps/web/src/__tests__/home-page.test.tsx`:
 
-- [ ] **Step 2: Replace index route content**
+```typescript
+import { render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+describe("HomePage", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 3, 11, 14, 23, 0));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("renders clock time from ArtClock", async () => {
+    // Dynamic import to get the HomePage component from the route module
+    const { Route } = await import("@/routes/index");
+    const HomePage = Route.options.component;
+    if (!HomePage) throw new Error("HomePage component not found on route");
+
+    render(<HomePage />);
+
+    expect(screen.getByText("14")).toBeInTheDocument();
+    expect(screen.getByText("23")).toBeInTheDocument();
+  });
+
+  it("renders formatted date from ArtClock", async () => {
+    const { Route } = await import("@/routes/index");
+    const HomePage = Route.options.component;
+    if (!HomePage) throw new Error("HomePage component not found on route");
+
+    render(<HomePage />);
+
+    expect(screen.getByText("SATURDAY 11 APR")).toBeInTheDocument();
+  });
+});
+```
+
+- [ ] **Step 2: Run test to verify it FAILS**
+
+Run: `cd apps/web && bun run test`
+Expected: FAIL (index route does not render ArtClock content, renders hello-world instead)
+
+- [ ] **Step 3: Replace index route content**
 
 Modify `apps/web/src/routes/index.tsx`:
 
@@ -891,24 +938,24 @@ function HomePage() {
 }
 ```
 
-- [ ] **Step 3: Run tests**
+- [ ] **Step 4: Run tests**
 
 Run: `cd apps/web && bun run test`
-Expected: PASS
+Expected: PASS (home-page tests and all others green)
 
-- [ ] **Step 4: Run type check**
+- [ ] **Step 5: Run type check**
 
 Run: `cd apps/web && bunx tsc --noEmit`
 Expected: exit 0
 
-- [ ] **Step 5: Lint**
+- [ ] **Step 6: Lint**
 
 Run: `cd apps/web && bun run lint:fix`
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-cd apps/web && git add src/routes/index.tsx && git commit -m "feat: replace hello-world index route with ArtClock" && git push
+cd apps/web && git add src/routes/index.tsx src/__tests__/home-page.test.tsx && git commit -m "feat: replace hello-world index route with ArtClock" && git push
 ```
 
 ---
