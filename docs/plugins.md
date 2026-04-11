@@ -1,10 +1,12 @@
 # Writing an Integration Plugin
 
-Integration plugins connect external services (Home Assistant, weather APIs, music services) to the Workflow Engine.
+## Overview
 
-## Plugin Interface
+Integration plugins connect external services (APIs, databases, message brokers, etc.) to the workflow engine. Each plugin implements the `Integration` interface and is isolated from other API layers.
 
-Every plugin implements the `Integration` interface from `apps/api/src/integrations/types.ts`:
+## Interface
+
+Defined in `apps/api/src/integrations/types.ts`:
 
 ```ts
 export interface Integration {
@@ -17,140 +19,95 @@ export interface Integration {
 }
 ```
 
-## Steps
+## Methods
 
-### 1. Create the integration folder
+### `init()`
 
-```
-apps/api/src/integrations/<name>/
-  index.ts    # Integration implementation
-```
+Called once when the plugin is loaded. Use this for authentication, connection setup, or loading configuration.
+
+### `getState()`
+
+Returns a snapshot of the plugin's current state. Used by the engine to inspect integration status and by the UI to display state.
+
+### `execute(command, params)`
+
+Runs a named command with the given parameters. This is the primary action interface. Commands are plugin-specific (e.g., `send-message`, `create-ticket`, `query-data`).
+
+### `subscribe(callback)` (optional)
+
+Registers a callback for real-time events from the integration. Returns an unsubscribe function. Useful for webhooks, websocket streams, or polling-based event sources.
+
+## Example Plugin
 
 ```ts
-// apps/api/src/integrations/weather/index.ts
+// apps/api/src/integrations/example/index.ts
+
 import type { Integration } from "../types";
 
-export class WeatherIntegration implements Integration {
-  id = "weather";
-  name = "Weather";
+export class ExampleIntegration implements Integration {
+  id = "example";
+  name = "Example Service";
+
+  private apiKey: string | null = null;
 
   async init() {
-    // Set up API client, validate credentials
+    // Load credentials, establish connections
+    this.apiKey = process.env.EXAMPLE_API_KEY ?? null;
   }
 
   async getState() {
-    // Return current weather data
-    return { temp: 22, condition: "clear" };
+    return {
+      connected: this.apiKey !== null,
+    };
   }
 
   async execute(command: string, params: Record<string, unknown>) {
-    // Handle commands (e.g., "refresh")
     switch (command) {
-      case "refresh":
-        return this.getState();
+      case "ping":
+        return { pong: true };
       default:
         throw new Error(`Unknown command: ${command}`);
     }
   }
 
   subscribe(callback: (event: unknown) => void) {
-    // Optional: push real-time updates
-    const interval = setInterval(async () => {
-      callback(await this.getState());
-    }, 60_000);
+    const interval = setInterval(() => {
+      callback({ type: "heartbeat", timestamp: Date.now() });
+    }, 30_000);
+
     return () => clearInterval(interval);
   }
 }
 ```
 
-### 2. Create Inngest functions for async work
-
-```ts
-// apps/api/src/inngest/functions/poll-weather.ts
-import { inngest } from "../client";
-import { WeatherService } from "../../services/weather";
-
-export const pollWeather = inngest.createFunction(
-  { id: "poll-weather" },
-  { cron: "*/15 * * * *" },  // Every 15 minutes
-  async ({ step }) => {
-    await step.run("fetch-weather", async () => {
-      return WeatherService.fetchAndStore();
-    });
-  },
-);
-```
-
-Register in `src/server.ts`:
-
-```ts
-import { pollWeather } from "./inngest/functions/poll-weather";
-
-const inngestHandler = serve({
-  client: inngest,
-  functions: [pollWeather],
-});
-```
-
-### 3. Create a service for business logic
-
-```ts
-// apps/api/src/services/weather.ts
-import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
-import type * as schema from "../db/schema";
-
-export const WeatherService = {
-  async fetchAndStore() {
-    // Fetch from external API, store in DB
-  },
-  async getCurrent(db: BunSQLiteDatabase<typeof schema>) {
-    // Read current weather from DB
-  },
-};
-```
-
-### 4. Create a tRPC router for API endpoints
-
-```ts
-// apps/api/src/trpc/routers/weather.ts
-import { publicProcedure, router } from "../init";
-import { WeatherService } from "../../services/weather";
-
-export const weatherRouter = router({
-  current: publicProcedure.query(async ({ ctx }) => {
-    return WeatherService.getCurrent(ctx.db);
-  }),
-});
-```
-
-Register in `src/trpc/routers/index.ts`:
-
-```ts
-import { weatherRouter } from "./weather";
-
-export const appRouter = router({
-  health: healthRouter,
-  weather: weatherRouter,
-});
-```
-
-### 5. Register with the Integration Hub
-
-Once the Integration Hub core system is built, register the plugin:
-
-```ts
-import { WeatherIntegration } from "../integrations/weather";
-
-hub.register(new WeatherIntegration());
-```
-
 ## Import Rules
 
-Plugins must respect the import boundary rules:
+Plugins are isolated. A plugin file may only import:
 
-- `integrations/<name>/` can only import from shared types (`integrations/types.ts`)
-- `services/` can import from `db/` and `integrations/types`
-- `trpc/routers/` can only import from `services/`
-- `inngest/functions/` can only import from `services/` and `inngest/client`
+- `@repo/shared` (shared types and schemas)
+- Other files within the same integration directory
+- Third-party packages specific to the integration
 
-Never import tRPC, Inngest, or HTTP concerns into the integration implementation itself.
+Plugins must **not** import from `db/`, `services/`, `trpc/`, or `inngest/`. The services layer calls into plugins, not the other way around.
+
+## Registration
+
+Plugins are registered and initialized by the services layer. The service layer is responsible for lifecycle management (init, teardown) and exposing plugin capabilities to tRPC routers and Inngest functions.
+
+## Testing
+
+Test plugins in isolation. Mock external APIs and verify that `execute()` returns expected results for each command.
+
+```ts
+import { describe, expect, it } from "vitest";
+import { ExampleIntegration } from "../integrations/example";
+
+describe("ExampleIntegration", () => {
+  it("responds to ping", async () => {
+    const plugin = new ExampleIntegration();
+    await plugin.init();
+    const result = await plugin.execute("ping", {});
+    expect(result).toEqual({ pong: true });
+  });
+});
+```
