@@ -9,17 +9,18 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const view = useNavigationStore((s) => s.view);
+  const animated = useNavigationStore((s) => s.animated);
   const setView = useNavigationStore((s) => s.setView);
   const isHub = view === "hub";
+  const transitionClass = animated ? "transition-transform duration-300 ease-out" : "";
 
   return (
     <div className="relative h-full overflow-hidden">
       {/* biome-ignore lint/a11y/useKeyWithClickEvents: tap-to-open hub from clock */}
       <div
         data-testid="clock-layer"
-        className="absolute inset-0 transition-transform duration-300 ease-out"
+        className="absolute inset-0"
         style={{
-          transform: isHub ? "translateX(-30%)" : "translateX(0)",
           pointerEvents: isHub ? "none" : "auto",
         }}
         onClick={() => setView("hub")}
@@ -29,7 +30,7 @@ function HomePage() {
 
       <div
         data-testid="hub-layer"
-        className="absolute inset-0 transition-transform duration-300 ease-out"
+        className={`absolute inset-0 ${transitionClass}`}
         style={{
           transform: isHub ? "translateX(0)" : "translateX(100%)",
           pointerEvents: isHub ? "auto" : "none",
