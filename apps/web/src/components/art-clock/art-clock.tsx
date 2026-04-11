@@ -8,13 +8,14 @@ export function formatTime(date: Date): { hours: string; minutes: string } {
   return { hours, minutes };
 }
 
+const dateFormatter = new Intl.DateTimeFormat("en-GB", {
+  weekday: "long",
+  day: "numeric",
+  month: "short",
+});
+
 export function formatDate(date: Date): string {
-  const formatted = new Intl.DateTimeFormat("en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "short",
-  }).format(date);
-  return formatted.toUpperCase();
+  return dateFormatter.format(date).toUpperCase();
 }
 
 export function ArtClock() {

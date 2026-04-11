@@ -11,9 +11,9 @@ function camelToKebab(str: string): string {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const activePaletteId = useThemeStore((state) => state.activePaletteId);
-  const palettes = useThemeStore((state) => state.palettes);
-  const palette = palettes[activePaletteId] ?? MIDNIGHT_PALETTE;
+  const palette = useThemeStore(
+    (state) => state.palettes[state.activePaletteId] ?? MIDNIGHT_PALETTE,
+  );
 
   useEffect(() => {
     const root = document.documentElement;
