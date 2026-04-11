@@ -6,13 +6,13 @@ describe("HomePage hub integration", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 3, 11, 14, 23, 0));
-    useNavigationStore.setState({ view: "clock", animated: false });
+    useNavigationStore.setState({ view: "clock" });
   });
 
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
-    useNavigationStore.setState({ view: "clock", animated: false });
+    useNavigationStore.setState({ view: "clock" });
   });
 
   async function renderHomePage() {

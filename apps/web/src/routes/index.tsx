@@ -1,7 +1,9 @@
 import { ArtClock } from "@/components/art-clock/art-clock";
 import { WidgetGrid } from "@/components/hub/widget-grid";
+import { useDragToDismiss } from "@/hooks/use-drag-to-dismiss";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { createFileRoute } from "@tanstack/react-router";
+import { useRef } from "react";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -9,10 +11,14 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const view = useNavigationStore((s) => s.view);
-  const animated = useNavigationStore((s) => s.animated);
   const setView = useNavigationStore((s) => s.setView);
   const isHub = view === "hub";
-  const transitionClass = animated ? "transition-transform duration-300 ease-out" : "";
+  const hubRef = useRef<HTMLDivElement>(null);
+
+  useDragToDismiss(hubRef, {
+    enabled: isHub,
+    onDismiss: () => setView("clock"),
+  });
 
   return (
     <div className="relative h-full overflow-hidden">
@@ -29,8 +35,9 @@ function HomePage() {
       </div>
 
       <div
+        ref={hubRef}
         data-testid="hub-layer"
-        className={`absolute inset-0 bg-background ${transitionClass}`}
+        className="absolute inset-0 bg-background transition-transform duration-300 ease-out"
         style={{
           transform: isHub ? "translateX(0)" : "translateX(100%)",
           pointerEvents: isHub ? "auto" : "none",
