@@ -22,14 +22,22 @@ export function ArtClock() {
   const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
   const { hours, minutes } = formatTime(now);
   const dateStr = formatDate(now);
+  const progress = now.getSeconds() / 60;
 
   return (
     <div className="flex h-full flex-col items-center justify-center">
       <div className="flex items-baseline text-[12rem] font-[100] leading-none tracking-tight text-foreground">
         <span>{hours}</span>
-        <span className="animate-[pulse-colon_2s_ease-in-out_infinite]">:</span>
+        <span>:</span>
         <span>{minutes}</span>
       </div>
+      <div
+        className="mt-2 h-[1px] w-[12rem] origin-left bg-foreground"
+        style={{
+          transform: `scaleX(${progress})`,
+          transition: progress === 0 ? "none" : "transform 1s linear",
+        }}
+      />
       <div className="mt-4 text-lg font-[300] tracking-[0.25em] text-muted-foreground">
         {dateStr}
       </div>
