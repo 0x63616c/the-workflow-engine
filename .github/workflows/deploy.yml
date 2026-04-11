@@ -54,6 +54,9 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Resolve homelab via Tailscale IP
+        run: echo "100.78.116.17 homelab" | sudo tee -a /etc/hosts
+
       - name: Add homelab to known_hosts
         run: |
           mkdir -p ~/.ssh
