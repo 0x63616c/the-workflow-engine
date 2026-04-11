@@ -32,11 +32,9 @@ export function ArtClock() {
         <span>{hours}</span>
         <span>:</span>
         <span>{minutes}</span>
-        <span className="ml-2 text-[6rem] font-[200] text-muted-foreground">{period}</span>
+        <span className="ml-2 text-[6rem] font-[200] text-foreground">{period}</span>
       </div>
-      <div className="mt-4 text-lg font-[300] tracking-[0.25em] text-muted-foreground">
-        {dateStr}
-      </div>
+      <div className="mt-4 text-lg font-[300] tracking-[0.25em] text-foreground">{dateStr}</div>
     </div>
   );
 }
