@@ -24,6 +24,8 @@ registry:
 builder:
   remote: homelab
   arch: arm64
+  args:
+    BUILD_HASH: <%= `git rev-parse --short HEAD`.strip %>
 
 env:
   clear:

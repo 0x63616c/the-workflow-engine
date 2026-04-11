@@ -21,6 +21,9 @@ RUN cd apps/web && bun run build
 FROM oven/bun:1-slim AS production
 WORKDIR /app
 
+ARG BUILD_HASH=dev
+ENV BUILD_HASH=${BUILD_HASH}
+
 COPY --from=deps /app/node_modules node_modules
 COPY libs/shared libs/shared
 COPY apps/api apps/api
