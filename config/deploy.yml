@@ -9,8 +9,6 @@ servers:
   web:
     hosts:
       - homelab
-    options:
-      network: kamal
 
 proxy:
   host: workflow-engine.local
