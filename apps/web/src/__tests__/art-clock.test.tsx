@@ -69,10 +69,18 @@ describe("ArtClock", () => {
     expect(colon).toBeInTheDocument();
   });
 
-  it("colon has pulse animation class", () => {
+  it("renders minute progress bar", () => {
     render(<ArtClock />);
-    const colon = screen.getByText(":");
-    expect(colon.className).toContain("animate-[pulse-colon_2s_ease-in-out_infinite]");
+    const bar = document.querySelector(".origin-left.bg-foreground");
+    expect(bar).toBeInTheDocument();
+    expect((bar as HTMLElement).style.transform).toBe("scaleX(0)");
+  });
+
+  it("progress bar advances with seconds", () => {
+    vi.setSystemTime(new Date(2026, 3, 11, 14, 23, 30));
+    render(<ArtClock />);
+    const bar = document.querySelector(".origin-left.bg-foreground");
+    expect((bar as HTMLElement).style.transform).toBe("scaleX(0.5)");
   });
 
   it("renders formatted date", () => {
