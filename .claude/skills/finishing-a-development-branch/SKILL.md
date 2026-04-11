@@ -7,11 +7,9 @@ description: Use when implementation is complete, all tests pass, and you need t
 
 ## Overview
 
-Guide completion of development work by presenting clear options and handling chosen workflow.
+Guide completion of dev work by presenting clear options and handling chosen workflow.
 
-**Core principle:** Verify tests → Present options → Execute choice → Clean up.
-
-**Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
+**Core principle:** Verify tests -> Present options -> Execute choice -> Clean up.
 
 ## The Process
 
@@ -44,7 +42,7 @@ Stop. Don't proceed to Step 2.
 git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null
 ```
 
-Or ask: "This branch split from main - is that correct?"
+Or ask: "This branch split from main - correct?"
 
 ### Step 3: Present Options
 
@@ -68,19 +66,10 @@ Which option?
 #### Option 1: Merge Locally
 
 ```bash
-# Switch to base branch
 git checkout <base-branch>
-
-# Pull latest
 git pull
-
-# Merge feature branch
 git merge <feature-branch>
-
-# Verify tests on merged result
 <test command>
-
-# If tests pass
 git branch -d <feature-branch>
 ```
 
@@ -89,10 +78,8 @@ Then: Cleanup worktree (Step 5)
 #### Option 2: Push and Create PR
 
 ```bash
-# Push branch
 git push -u origin <feature-branch>
 
-# Create PR
 gh pr create --title "<title>" --body "$(cat <<'EOF'
 ## Summary
 <2-3 bullets of what changed>
@@ -137,13 +124,9 @@ Then: Cleanup worktree (Step 5)
 
 **For Options 1, 2, 4:**
 
-Check if in worktree:
 ```bash
 git worktree list | grep $(git branch --show-current)
-```
-
-If yes:
-```bash
+# If in worktree:
 git worktree remove <worktree-path>
 ```
 
@@ -153,28 +136,19 @@ git worktree remove <worktree-path>
 
 | Option | Merge | Push | Keep Worktree | Cleanup Branch |
 |--------|-------|------|---------------|----------------|
-| 1. Merge locally | ✓ | - | - | ✓ |
-| 2. Create PR | - | ✓ | ✓ | - |
-| 3. Keep as-is | - | - | ✓ | - |
-| 4. Discard | - | - | - | ✓ (force) |
+| 1. Merge locally | Y | - | - | Y |
+| 2. Create PR | - | Y | Y | - |
+| 3. Keep as-is | - | - | Y | - |
+| 4. Discard | - | - | - | Y (force) |
 
 ## Common Mistakes
 
-**Skipping test verification**
-- **Problem:** Merge broken code, create failing PR
-- **Fix:** Always verify tests before offering options
-
-**Open-ended questions**
-- **Problem:** "What should I do next?" → ambiguous
-- **Fix:** Present exactly 4 structured options
-
-**Automatic worktree cleanup**
-- **Problem:** Remove worktree when might need it (Option 2, 3)
-- **Fix:** Only cleanup for Options 1 and 4
-
-**No confirmation for discard**
-- **Problem:** Accidentally delete work
-- **Fix:** Require typed "discard" confirmation
+| Mistake | Fix |
+|---------|-----|
+| Skip test verification | Always verify tests before offering options |
+| Open-ended questions | Present exactly 4 structured options |
+| Auto worktree cleanup | Only cleanup for Options 1 and 4 |
+| No discard confirmation | Require typed "discard" confirmation |
 
 ## Red Flags
 

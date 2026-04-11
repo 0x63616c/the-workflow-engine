@@ -9,13 +9,13 @@ description: "ONLY invoke when user explicitly types /auto-pilot. Never auto-tri
 This skill ONLY activates when the user explicitly types `/auto-pilot`. Do NOT auto-trigger on phrases like "build me", "just do it", "e2e", or similar. The user must explicitly invoke `/auto-pilot`.
 </TRIGGER-RULE>
 
-Fully autonomous end-to-end build pipeline. Takes a single prompt and delivers a finished, verified implementation with spec, plan, code, tests, E2E proof, and a PR. Zero human-in-the-loop.
+Fully autonomous build pipeline. Single prompt -> finished implementation with spec, plan, code, tests, E2E proof, PR. Zero human-in-the-loop.
 
-**You are the orchestrator.** Your job is to stay lean, dispatch agents for every phase, and keep the main context clean. You do NOT do the work yourself. You coordinate.
+**You are orchestrator.** Stay lean, dispatch agents per phase, keep main context clean. You do NOT do work yourself. You coordinate.
 
 ## Subagent Skill Injection
 
-Every subagent you dispatch MUST have `/caveman:caveman` and `/auto-pilot` prepended to its prompt. Caveman mode cuts token waste across all agents. Example:
+Every subagent MUST have `/caveman:caveman` and `/auto-pilot` prepended to prompt. Cuts token waste across all agents. Example:
 
 ```
 Agent({
@@ -35,12 +35,12 @@ Each phase is a separate agent. Artifacts flow between phases via committed file
 
 ## Orchestrator State Machine
 
-You MUST use TaskCreate at startup to create the fixed task list below. As you execute each phase:
-1. Mark the task `in_progress` with TaskUpdate before dispatching the agent
-2. Mark it `completed` after the agent reports back successfully
-3. If a phase fails, keep the task `in_progress` and report to the user
+MUST use TaskCreate at startup for fixed task list below. Per phase:
+1. Mark `in_progress` with TaskUpdate before dispatching agent
+2. Mark `completed` after agent reports success
+3. Phase fails: keep `in_progress`, report to user
 
-This is your progress tracker. Never skip updating it.
+Progress tracker. Never skip updating.
 
 ### Fixed Task List
 
@@ -80,7 +80,7 @@ Create these tasks at startup with TaskCreate, then set up blockedBy dependencie
 
 Mark task 2 `in_progress`. Spawn the **architect** agent.
 
-This agent replaces the interactive brainstorming process. Instead of asking the user questions, it makes autonomous decisions based on the codebase context.
+Replaces interactive brainstorming. Makes autonomous decisions based on codebase context.
 
 ```
 Agent({
@@ -93,9 +93,9 @@ Agent({
 })
 ```
 
-**The architect must NOT ask questions.** It explores, decides, and documents. If something is ambiguous, it picks the simpler option and documents the assumption in the spec.
+**Architect must NOT ask questions.** Explores, decides, documents. Ambiguous? Pick simpler option, document assumption.
 
-**The spec MUST include an E2E Verification Plan section.** The architect decides at design time how this feature should be verified beyond unit tests (what to start, what to hit, what to check).
+**Spec MUST include E2E Verification Plan.** Architect decides at design time how feature gets verified beyond unit tests.
 
 On success: mark task 2 `completed`.
 
@@ -114,9 +114,9 @@ Agent({
 })
 ```
 
-**If issues found:** Send issues back to architect via SendMessage. Architect fixes, re-commits. Re-dispatch spec reviewer. Max 2 review cycles, then proceed.
+**Issues found:** Send back to architect via SendMessage. Architect fixes, re-commits. Re-dispatch reviewer. Max 2 cycles, then proceed.
 
-**If approved:** Mark task 3 `completed`.
+**Approved:** Mark task 3 `completed`.
 
 ### Phase 3: Planner
 
@@ -158,7 +158,7 @@ Agent({
 
 Mark task 6 `in_progress`. Spawn the **implementer-lead** agent.
 
-This agent is the controller from subagent-driven-development. It reads the plan, extracts tasks, and for each task dispatches: implementer subagent -> spec reviewer subagent -> code quality reviewer subagent.
+Controller from subagent-driven-development. Reads plan, extracts tasks. Per task dispatches: implementer -> spec reviewer -> code quality reviewer.
 
 ```
 Agent({
@@ -171,9 +171,9 @@ Agent({
 })
 ```
 
-**The implementer-lead dispatches its own sub-agents** using the Agent tool. These are one-shot subagents, not team members.
+**Implementer-lead dispatches own sub-agents** via Agent tool. One-shot subagents, not team members.
 
-**TDD is mandatory for every implementer subagent.** The implementer-lead prompt includes the TDD Iron Law which gets passed to each implementer.
+**TDD mandatory for every implementer subagent.** Implementer-lead prompt includes TDD Iron Law passed to each implementer.
 
 On success: mark task 6 `completed`.
 
@@ -192,9 +192,9 @@ Agent({
 })
 ```
 
-**If critical issues found:** Send back to implementer-lead to fix. Max 1 fix cycle.
+**Critical issues:** Send back to implementer-lead. Max 1 fix cycle.
 
-**If approved or only minor issues:** Mark task 7 `completed`.
+**Approved or minor only:** Mark task 7 `completed`.
 
 ### Phase 7: E2E Verification
 
@@ -215,9 +215,9 @@ Agent({
 })
 ```
 
-**If FAIL:** Send failure details back to implementer-lead to fix. Re-run E2E verification. Max 2 cycles. If still failing after 2 cycles, report to user with what's broken and leave the worktree intact.
+**FAIL:** Send details back to implementer-lead. Re-run E2E. Max 2 cycles. Still failing? Report to user, leave worktree intact.
 
-**If PASS:** Mark task 8 `completed`.
+**PASS:** Mark task 8 `completed`.
 
 ### Phase 8: Create PR
 
@@ -876,30 +876,26 @@ EOF
 
 ## Error Recovery
 
-If any phase fails completely (agent can't complete its work):
+If phase fails completely:
 
 1. Log what happened
-2. Report to the user with: which phase failed, why, what was completed so far (reference the task list)
-3. Leave the worktree intact so the user can pick up manually
+2. Report to user: which phase, why, what completed (reference task list)
+3. Leave worktree intact for manual pickup
 4. Do NOT silently retry indefinitely
 
 ## Red Flags
 
 **Never:**
-- Do the work yourself (you are the orchestrator, always)
-- Skip any phase
-- Skip reviews
-- Skip E2E verification
-- Create a PR with failing tests or failed E2E
-- Proceed if tests are failing
-- Force-push or delete work without user confirmation
-- Let the main context get polluted with implementation details
-- Forget to update tasks with TaskUpdate
+- Do work yourself (orchestrator only)
+- Skip any phase, reviews, or E2E verification
+- Create PR with failing tests or failed E2E
+- Force-push or delete without user confirmation
+- Pollute main context with impl details
+- Forget TaskUpdate
 
 **Always:**
-- Use TaskCreate/TaskUpdate to track every phase
-- Keep main context clean (just coordination)
+- TaskCreate/TaskUpdate per phase
+- Main context clean (coordination only)
 - Pass artifacts via file paths
 - Commit and push after each phase
-- Report progress between phases (task status updates do this automatically)
-- Verify everything is green before PR
+- Verify green before PR
