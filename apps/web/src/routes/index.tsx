@@ -16,7 +16,7 @@ function HomePage() {
       {/* biome-ignore lint/a11y/useKeyWithClickEvents: tap-to-open hub from clock */}
       <div
         data-testid="clock-layer"
-        className="absolute inset-0 transition-opacity duration-500"
+        className="absolute inset-0 transition-opacity duration-150"
         style={{
           opacity: view === "clock" ? 1 : 0,
           pointerEvents: view === "clock" ? "auto" : "none",
@@ -28,7 +28,7 @@ function HomePage() {
 
       <div
         data-testid="hub-layer"
-        className="absolute inset-0 transition-opacity duration-500"
+        className="absolute inset-0 transition-opacity duration-150"
         style={{
           opacity: view === "hub" ? 1 : 0,
           pointerEvents: view === "hub" ? "auto" : "none",
