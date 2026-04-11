@@ -35,12 +35,13 @@ export function WidgetGrid() {
   const { hours, minutes, period } = formatTime(now);
   const clockValue = `${hours}:${minutes} ${period}`;
 
-  const swipeHandlers = useMemo(() => ({ onSwipeRight: () => setView("clock") }), [setView]);
+  const swipeHandlers = useMemo(() => ({ onSwipeRight: () => setView("clock", true) }), [setView]);
   useSwipe(swipeRef, swipeHandlers, { enabled: view === "hub" });
   useIdleTimeout(() => setView("clock"), IDLE_TIMEOUT_MS, { enabled: view === "hub" });
 
   return (
-    <div data-testid="hub-container" className="h-full">
+    // biome-ignore lint/a11y/useKeyWithClickEvents: tap-to-dismiss hub on iPad touch panel
+    <div data-testid="hub-container" className="h-full" onClick={() => setView("clock")}>
       <div ref={swipeRef} className="h-full">
         <div data-testid="widget-grid" className="grid grid-cols-2 gap-4 p-6">
           {PLACEHOLDER_WIDGETS.map((widget) => (
