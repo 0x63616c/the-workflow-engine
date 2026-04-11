@@ -12,14 +12,15 @@ Decisions made autonomously (not specified in alignment doc):
 - **Accent foreground**: `#1a1a1a` (near-black for text on accent backgrounds).
 - **Clock font weight**: Geist Variable at weight 100 (ultralight). Maximum elegance, thinnest available.
 - **Time format**: 24-hour (`HH:MM`) with no leading zero on hours. Colon pulses (opacity animation, 2s cycle). No seconds displayed.
-- **Date format**: Weekday full name, day number, month abbreviated, e.g. "Friday 11 Apr". Lowercase, letter-spaced.
+- **Date format**: Weekday full name, day number, month abbreviated, e.g. "FRIDAY 11 APR". Uppercase, letter-spaced.
 - **Clock update interval**: 1000ms (1 second) to keep colon pulse smooth.
 - **Theme initialization**: Runs once at app startup via a `<ThemeProvider>` component that reads the Zustand store and applies CSS variables to `document.documentElement`. Subscribes to store changes for future dynamic switching.
 - **CSS variable naming**: Reuses existing `--color-*` convention from `globals.css` `@theme` block. Theme engine overrides these at runtime via `style` attribute on `<html>`.
-- **No transition animations on theme switch yet**: Single palette means no visible transitions. The store supports a `transitionDuration_MS` field for future use.
-- **Build hash display removed**: The current index route shows a build hash. This is removed from the clock view. The build hash query remains in `ConnectionStatus` component.
+- **No transition animations on theme switch yet**: Single palette means no visible transitions. The store holds a `transitionDuration_MS` field as data for future use, but ThemeProvider does NOT apply any transition CSS. Transition styling is future work for time-of-day switching.
+- **Build hash display removed**: The current index route shows a build hash. This is removed from the clock view. The build hash query remains in `ConnectionStatus` component. Note: `ConnectionStatus` is mounted in `__root.tsx` (not the index route) and is unaffected by these changes.
 - **Clock container**: Full viewport, centered, no scroll. Flexbox column layout.
-- **`theme.ts` replaced**: The existing `src/styles/theme.ts` static color export is replaced by the Zustand store. Any code importing from it will import from the new store instead.
+- **`theme.ts` replaced**: The existing `src/styles/theme.ts` static color export is replaced by the Zustand store. Any code importing from it will import from the new store instead. The `radii` export from `theme.ts` is intentionally dropped. Radii values remain defined in the CSS `@theme` block in `globals.css`. Nothing imports radii programmatically.
+- **Midnight `0:00` display**: Showing `0:00` at midnight (not `12:00` or `00:00`) is a conscious design choice, consistent with the no-leading-zero rule for 24-hour format.
 
 ## Architecture
 
@@ -72,6 +73,9 @@ interface ThemePalette {
     popoverForeground: string;
   };
 }
+// Note: ThemePalette intentionally covers only colors. Radii are CSS-only
+// via the @theme block in globals.css. Future palettes that need different
+// radii would extend this interface later.
 
 interface ThemeState {
   palettes: Record<string, ThemePalette>;
@@ -136,8 +140,9 @@ Thin component that:
 1. Reads `activePaletteId` and `palettes` from store
 2. Derives the active palette's colors
 3. Applies each color as `--color-{name}` on `document.documentElement.style`
-4. Sets `transition` on `document.documentElement.style` using `transitionDuration_MS` for future smooth palette switches
-5. Returns `children` (no wrapper div)
+4. Returns `children` (no wrapper div)
+
+**Implementation note**: ThemeProvider sets CSS variables via inline styles on `document.documentElement.style`. This overrides `@theme` defaults via CSS specificity. Implementer should NOT try CSS custom property redeclaration or class swapping.
 
 Uses `useEffect` to sync CSS vars when palette changes. Converts camelCase color keys to kebab-case for CSS variable names (e.g., `mutedForeground` -> `muted-foreground`).
 
@@ -196,13 +201,13 @@ function formatDate(date: Date): string
 
 `formatTime` returns separate hours/minutes strings so the colon can be a separate animated element.
 
-`formatDate` uses `Intl.DateTimeFormat` with `{ weekday: "long", day: "numeric", month: "short" }` and transforms to uppercase.
+`formatDate` uses `Intl.DateTimeFormat` with locale `"en-GB"` and options `{ weekday: "long", day: "numeric", month: "short" }`, then transforms to uppercase. The `"en-GB"` locale ensures day-month order.
 
 **Colon animation**: Defined as a CSS keyframe in `globals.css`:
 ```css
 @keyframes pulse-colon {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  50% { opacity: 0.2; }
 }
 ```
 Applied via Tailwind arbitrary class: `animate-[pulse-colon_2s_ease-in-out_infinite]`
