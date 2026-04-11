@@ -1,0 +1,23 @@
+pre-commit:
+  parallel: true
+  commands:
+    biome:
+      glob: "*.{ts,tsx,js,jsx,json,css}"
+      run: bunx biome check --write {staged_files}
+      stage_fixed: true
+    typecheck:
+      run: bun run typecheck
+    test:
+      run: bunx vitest run --changed
+    boundaries:
+      run: bun run check:boundaries
+    no-env:
+      glob: ".env*"
+      exclude_tags:
+        - example
+      run: |
+        for f in {staged_files}; do
+          if [ "$f" != ".env.example" ] && [ "$(basename "$f")" != ".env.example" ]; then
+            echo "ERROR: $f must not be committed" && exit 1
+          fi
+        done

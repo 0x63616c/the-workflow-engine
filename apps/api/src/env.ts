@@ -1,0 +1,14 @@
+import { z } from "zod";
+
+const envSchema = z.object({
+  PORT: z.coerce.number().int().default(4201),
+  PORT_OFFSET: z.coerce.number().int().min(0).max(99).default(0),
+  DATABASE_URL: z.string().default("./data.db"),
+  INNGEST_EVENT_KEY: z.string().default("local-dev-event-key-00000000"),
+  INNGEST_SIGNING_KEY: z.string().default("signing-key-0000000000000000"),
+  INNGEST_DEV: z.coerce.number().int().default(1),
+});
+
+export const env = envSchema.parse(process.env);
+export const EFFECTIVE_PORT = env.PORT + env.PORT_OFFSET;
+export const WS_PORT = EFFECTIVE_PORT + 1;

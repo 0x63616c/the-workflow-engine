@@ -1,0 +1,10 @@
+services:
+  inngest:
+    image: inngest/inngest
+    ports:
+      - "${INNGEST_PORT:-8288}:8288"
+    environment:
+      - INNGEST_EVENT_KEY=${INNGEST_EVENT_KEY:-local-dev-event-key-00000000}
+      - INNGEST_SIGNING_KEY=${INNGEST_SIGNING_KEY:-signing-key-0000000000000000}
+    volumes:
+      - ./.inngest:/data
