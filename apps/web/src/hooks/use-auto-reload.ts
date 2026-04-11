@@ -1,14 +1,9 @@
-import { trpc } from "@/lib/trpc";
+import { useBuildHash } from "@/hooks/use-build-hash";
 import { useEffect, useRef } from "react";
-
-const POLL_INTERVAL_MS = 10_000;
 
 export function useAutoReload() {
   const knownHash = useRef<string | null>(null);
-
-  const { data } = trpc.health.buildHash.useQuery(undefined, {
-    refetchInterval: POLL_INTERVAL_MS,
-  });
+  const { data } = useBuildHash();
 
   useEffect(() => {
     if (!data?.hash) return;
