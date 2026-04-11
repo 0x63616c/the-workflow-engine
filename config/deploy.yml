@@ -22,7 +22,7 @@ registry:
     - KAMAL_REGISTRY_PASSWORD
 
 builder:
-  remote: homelab
+  remote: ssh://calum@homelab
   arch: arm64
   args:
     BUILD_HASH: <%= `git rev-parse --short HEAD`.strip %>
