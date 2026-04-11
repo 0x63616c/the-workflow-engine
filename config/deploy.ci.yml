@@ -1,3 +1,4 @@
-# CI destination: inherits everything from deploy.yml
-# Exists so Kamal reads .kamal/secrets.ci (env vars) instead of .kamal/secrets (1Password)
-{}
+# CI destination: inherits from deploy.yml
+# Only exists so Kamal reads .kamal/secrets.ci instead of .kamal/secrets
+servers:
+  - homelab
