@@ -11,7 +11,7 @@ servers:
       - homelab
 
 proxy:
-  host: workflow-engine.local
+  host: homelab
   ssl: false
   app_port: 4301
 
