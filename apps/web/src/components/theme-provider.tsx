@@ -19,10 +19,19 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     const root = document.documentElement;
     if (!root) return;
 
+    const keys: string[] = [];
+
     for (const [key, value] of Object.entries(palette.colors)) {
       const cssVarName = `--color-${camelToKebab(key)}`;
       root.style.setProperty(cssVarName, value);
+      keys.push(cssVarName);
     }
+
+    return () => {
+      for (const key of keys) {
+        root.style.removeProperty(key);
+      }
+    };
   }, [palette]);
 
   return <>{children}</>;
