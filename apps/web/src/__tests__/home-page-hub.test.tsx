@@ -22,13 +22,13 @@ describe("HomePage hub integration", () => {
     return render(<HomePage />);
   }
 
-  it("initially shows clock layer with opacity 1", async () => {
+  it("initially shows clock layer centered and hub off-screen right", async () => {
     await renderHomePage();
 
     const clockLayer = screen.getByTestId("clock-layer");
     const hubLayer = screen.getByTestId("hub-layer");
-    expect(clockLayer.style.opacity).toBe("1");
-    expect(hubLayer.style.opacity).toBe("0");
+    expect(clockLayer.style.transform).toBe("translateX(0)");
+    expect(hubLayer.style.transform).toBe("translateX(100%)");
   });
 
   it("initially has pointer-events auto on clock, none on hub", async () => {
@@ -46,21 +46,11 @@ describe("HomePage hub integration", () => {
     fireEvent.click(screen.getByTestId("clock-layer"));
 
     const hubLayer = screen.getByTestId("hub-layer");
-    expect(hubLayer.style.opacity).toBe("1");
+    expect(hubLayer.style.transform).toBe("translateX(0)");
     expect(hubLayer.style.pointerEvents).toBe("auto");
   });
 
-  it("tap hub-container returns to clock", async () => {
-    useNavigationStore.setState({ view: "hub" });
-    await renderHomePage();
-
-    fireEvent.click(screen.getByTestId("hub-container"));
-
-    const clockLayer = screen.getByTestId("clock-layer");
-    expect(clockLayer.style.opacity).toBe("1");
-  });
-
-  it("tap widget card does NOT return to clock", async () => {
+  it("widget card tap does NOT return to clock", async () => {
     useNavigationStore.setState({ view: "hub" });
     await renderHomePage();
 

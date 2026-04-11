@@ -10,16 +10,17 @@ export const Route = createFileRoute("/")({
 function HomePage() {
   const view = useNavigationStore((s) => s.view);
   const setView = useNavigationStore((s) => s.setView);
+  const isHub = view === "hub";
 
   return (
-    <div className="relative h-full">
+    <div className="relative h-full overflow-hidden">
       {/* biome-ignore lint/a11y/useKeyWithClickEvents: tap-to-open hub from clock */}
       <div
         data-testid="clock-layer"
-        className="absolute inset-0 transition-opacity duration-150"
+        className="absolute inset-0 transition-transform duration-300 ease-out"
         style={{
-          opacity: view === "clock" ? 1 : 0,
-          pointerEvents: view === "clock" ? "auto" : "none",
+          transform: isHub ? "translateX(-30%)" : "translateX(0)",
+          pointerEvents: isHub ? "none" : "auto",
         }}
         onClick={() => setView("hub")}
       >
@@ -28,10 +29,10 @@ function HomePage() {
 
       <div
         data-testid="hub-layer"
-        className="absolute inset-0 transition-opacity duration-150"
+        className="absolute inset-0 transition-transform duration-300 ease-out"
         style={{
-          opacity: view === "hub" ? 1 : 0,
-          pointerEvents: view === "hub" ? "auto" : "none",
+          transform: isHub ? "translateX(0)" : "translateX(100%)",
+          pointerEvents: isHub ? "auto" : "none",
         }}
       >
         <WidgetGrid />

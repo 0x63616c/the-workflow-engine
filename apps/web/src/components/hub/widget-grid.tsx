@@ -40,8 +40,7 @@ export function WidgetGrid() {
   useIdleTimeout(() => setView("clock"), IDLE_TIMEOUT_MS, { enabled: view === "hub" });
 
   return (
-    // biome-ignore lint/a11y/useKeyWithClickEvents: tap-to-dismiss hub container
-    <div data-testid="hub-container" className="h-full" onClick={() => setView("clock")}>
+    <div data-testid="hub-container" className="h-full">
       <div ref={swipeRef} className="h-full">
         <div data-testid="widget-grid" className="grid grid-cols-2 gap-4 p-6">
           {PLACEHOLDER_WIDGETS.map((widget) => (
