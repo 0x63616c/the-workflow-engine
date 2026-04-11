@@ -1,0 +1,50 @@
+service: workflow-engine
+
+image: ghcr.io/0x63616c/the-workflow-engine
+
+servers:
+  web:
+    hosts:
+      - 127.0.0.1
+    options:
+      network: workflow-engine
+
+proxy:
+  host: workflow-engine.local
+  ssl: false
+  app_port: 4301
+
+registry:
+  server: ghcr.io
+  username: 0x63616c
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: arm64
+
+env:
+  clear:
+    NODE_ENV: production
+    PORT: "4301"
+    PORT_OFFSET: "0"
+    INNGEST_DEV: "0"
+  secret:
+    - INNGEST_EVENT_KEY
+    - INNGEST_SIGNING_KEY
+
+accessories:
+  inngest:
+    image: inngest/inngest
+    cmd: inngest start
+    host: 127.0.0.1
+    port: "8388:8288"
+    options:
+      network: workflow-engine
+    env:
+      secret:
+        - INNGEST_EVENT_KEY
+        - INNGEST_SIGNING_KEY
+
+volumes:
+  - data:/app/data
