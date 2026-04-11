@@ -18,7 +18,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-GB", {
 });
 
 export function formatDate(date: Date): string {
-  return dateFormatter.format(date).toUpperCase();
+  return dateFormatter.format(date).replace(",", "").toUpperCase();
 }
 
 export function ArtClock() {
