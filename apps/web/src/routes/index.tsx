@@ -30,7 +30,7 @@ function HomePage() {
 
       <div
         data-testid="hub-layer"
-        className={`absolute inset-0 ${transitionClass}`}
+        className={`absolute inset-0 bg-background ${transitionClass}`}
         style={{
           transform: isHub ? "translateX(0)" : "translateX(100%)",
           pointerEvents: isHub ? "auto" : "none",
