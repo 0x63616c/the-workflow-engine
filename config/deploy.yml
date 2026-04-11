@@ -1,6 +1,6 @@
 service: workflow-engine
 
-image: ghcr.io/0x63616c/the-workflow-engine
+image: 0x63616c/the-workflow-engine
 
 ssh:
   user: calum
@@ -24,6 +24,7 @@ registry:
     - KAMAL_REGISTRY_PASSWORD
 
 builder:
+  remote: homelab
   arch: arm64
 
 env:
