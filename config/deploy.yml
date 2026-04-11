@@ -2,6 +2,9 @@ service: workflow-engine
 
 image: ghcr.io/0x63616c/the-workflow-engine
 
+ssh:
+  user: calum
+
 servers:
   web:
     hosts:
