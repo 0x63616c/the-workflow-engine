@@ -19,8 +19,9 @@ describe("HomePage", () => {
 
     render(<HomePage />);
 
-    expect(screen.getByText("14")).toBeInTheDocument();
+    expect(screen.getByText("2")).toBeInTheDocument();
     expect(screen.getByText("23")).toBeInTheDocument();
+    expect(screen.getByText("PM")).toBeInTheDocument();
   });
 
   it("renders formatted date from ArtClock", async () => {

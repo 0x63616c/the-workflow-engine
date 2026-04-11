@@ -2,10 +2,12 @@ import { useCurrentTime } from "@/hooks/use-current-time";
 
 const CLOCK_UPDATE_INTERVAL_MS = 1000;
 
-export function formatTime(date: Date): { hours: string; minutes: string } {
-  const hours = String(date.getHours());
+export function formatTime(date: Date): { hours: string; minutes: string; period: string } {
+  const h = date.getHours();
+  const hours = String(h === 0 ? 12 : h > 12 ? h - 12 : h);
   const minutes = String(date.getMinutes()).padStart(2, "0");
-  return { hours, minutes };
+  const period = h < 12 ? "AM" : "PM";
+  return { hours, minutes, period };
 }
 
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -21,7 +23,7 @@ export function formatDate(date: Date): string {
 
 export function ArtClock() {
   const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
-  const { hours, minutes } = formatTime(now);
+  const { hours, minutes, period } = formatTime(now);
   const dateStr = formatDate(now);
   const progress = now.getSeconds() / 60;
 
@@ -31,6 +33,7 @@ export function ArtClock() {
         <span>{hours}</span>
         <span>:</span>
         <span>{minutes}</span>
+        <span className="ml-2 text-[6rem] font-[200] text-muted-foreground">{period}</span>
       </div>
       <div
         className="mt-2 h-[1px] w-[12rem] origin-left bg-foreground"
