@@ -5,7 +5,7 @@ image: ghcr.io/0x63616c/the-workflow-engine
 servers:
   web:
     hosts:
-      - calums-mac-mini
+      - homelab
     options:
       network: workflow-engine
 
@@ -37,7 +37,7 @@ accessories:
   inngest:
     image: inngest/inngest
     cmd: inngest start
-    host: calums-mac-mini
+    host: homelab
     port: "8388:8288"
     options:
       network: workflow-engine
