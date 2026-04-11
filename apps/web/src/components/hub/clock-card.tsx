@@ -1,0 +1,39 @@
+import { formatTime } from "@/components/art-clock/art-clock";
+import { BentoCard } from "@/components/hub/bento-card";
+import { useCurrentTime } from "@/hooks/use-current-time";
+import { useNavigationStore } from "@/stores/navigation-store";
+
+const CLOCK_UPDATE_INTERVAL_MS = 1000;
+
+export function ClockCard() {
+  const setView = useNavigationStore((s) => s.setView);
+  const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
+  const { hours, minutes, period } = formatTime(now);
+
+  const date = now.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+
+  return (
+    <BentoCard
+      testId="widget-card-clock"
+      gridArea="clock"
+      onClick={() => setView("clock")}
+      className="flex flex-col items-center justify-center"
+    >
+      <div className="text-center">
+        <div className="text-4xl font-light tracking-tight text-foreground font-mono">
+          <span>{hours}</span>
+          <span className="animate-[pulse-colon_2s_ease-in-out_infinite]">:</span>
+          <span>{minutes}</span>
+        </div>
+        <div className="text-xs text-muted-foreground mt-0.5 uppercase tracking-wider">
+          {period}
+        </div>
+      </div>
+      <div className="text-xs text-muted-foreground/60 mt-3">{date}</div>
+    </BentoCard>
+  );
+}

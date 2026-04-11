@@ -1,6 +1,12 @@
 import { useNavigationStore } from "@/stores/navigation-store";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("qrcode", () => ({
+  default: {
+    toString: vi.fn().mockResolvedValue("<svg>mock-qr</svg>"),
+  },
+}));
 
 describe("HomePage", () => {
   beforeEach(() => {
@@ -22,9 +28,10 @@ describe("HomePage", () => {
 
     render(<HomePage />);
 
-    expect(screen.getByText("2")).toBeInTheDocument();
-    expect(screen.getByText("23")).toBeInTheDocument();
-    expect(screen.getByText("PM")).toBeInTheDocument();
+    const clockLayer = screen.getByTestId("clock-layer");
+    expect(within(clockLayer).getByText("2")).toBeInTheDocument();
+    expect(within(clockLayer).getByText("23")).toBeInTheDocument();
+    expect(within(clockLayer).getByText("PM")).toBeInTheDocument();
   });
 
   it("renders formatted date from ArtClock", async () => {

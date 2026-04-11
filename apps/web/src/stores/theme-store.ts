@@ -64,9 +64,43 @@ export const MIDNIGHT_PALETTE: ThemePalette = {
   },
 };
 
+export const DAYLIGHT_PALETTE: ThemePalette = {
+  id: "daylight",
+  name: "Daylight",
+  colors: {
+    background: "#f5f2ee",
+    foreground: "#1a1a1a",
+    muted: "#e8e5e0",
+    mutedForeground: "#737068",
+    border: "#e0dcd6",
+    input: "#e0dcd6",
+    ring: "#8a8580",
+    primary: "#1a1a1a",
+    primaryForeground: "#f5f2ee",
+    secondary: "#e8e5e0",
+    secondaryForeground: "#1a1a1a",
+    accent: "#d4a574",
+    accentForeground: "#1a1a1a",
+    destructive: "#ef4444",
+    destructiveForeground: "#fafafa",
+    card: "#ffffff",
+    cardForeground: "#1a1a1a",
+    popover: "#ffffff",
+    popoverForeground: "#1a1a1a",
+  },
+};
+
+function getInitialPaletteId(): string {
+  try {
+    return globalThis.localStorage?.getItem("theme-mode") ?? "midnight";
+  } catch {
+    return "midnight";
+  }
+}
+
 export const useThemeStore = create<ThemeState & ThemeActions>((set, get) => ({
-  palettes: { midnight: MIDNIGHT_PALETTE },
-  activePaletteId: "midnight",
+  palettes: { midnight: MIDNIGHT_PALETTE, daylight: DAYLIGHT_PALETTE },
+  activePaletteId: getInitialPaletteId(),
   transitionDuration_MS: 0,
 
   setActivePalette: (id: string) => {
