@@ -10,7 +10,7 @@ servers:
     hosts:
       - homelab
     options:
-      network: workflow-engine
+      network: kamal
 
 proxy:
   host: workflow-engine.local
@@ -44,7 +44,7 @@ accessories:
     host: homelab
     port: "8388:8288"
     options:
-      network: workflow-engine
+      network: kamal
     env:
       secret:
         - INNGEST_EVENT_KEY
