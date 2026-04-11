@@ -5,7 +5,7 @@ image: ghcr.io/0x63616c/the-workflow-engine
 servers:
   web:
     hosts:
-      - 127.0.0.1
+      - calums-mac-mini
     options:
       network: workflow-engine
 
@@ -37,7 +37,7 @@ accessories:
   inngest:
     image: inngest/inngest
     cmd: inngest start
-    host: 127.0.0.1
+    host: calums-mac-mini
     port: "8388:8288"
     options:
       network: workflow-engine
