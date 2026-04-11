@@ -29,16 +29,16 @@ describe("formatTime", () => {
 });
 
 describe("formatDate", () => {
-  it("formats date as uppercase WEEKDAY, DD MON YY", () => {
+  it("formats date as uppercase WEEKDAY DD MON YY without comma", () => {
     const date = new Date(2026, 3, 11); // Saturday April 11, 2026
     const result = formatDate(date);
-    expect(result).toBe("SATURDAY, 11 APR 26");
+    expect(result).toBe("SATURDAY 11 APR 26");
   });
 
   it("formats another date correctly", () => {
     const date = new Date(2026, 0, 1); // Thursday January 1, 2026
     const result = formatDate(date);
-    expect(result).toBe("THURSDAY, 1 JAN 26");
+    expect(result).toBe("THURSDAY 1 JAN 26");
   });
 });
 
@@ -76,6 +76,6 @@ describe("ArtClock", () => {
 
   it("renders formatted date", () => {
     render(<ArtClock />);
-    expect(screen.getByText("SATURDAY, 11 APR 26")).toBeInTheDocument();
+    expect(screen.getByText("SATURDAY 11 APR 26")).toBeInTheDocument();
   });
 });

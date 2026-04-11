@@ -31,6 +31,6 @@ describe("HomePage", () => {
 
     render(<HomePage />);
 
-    expect(screen.getByText("SATURDAY, 11 APR 26")).toBeInTheDocument();
+    expect(screen.getByText("SATURDAY 11 APR 26")).toBeInTheDocument();
   });
 });
