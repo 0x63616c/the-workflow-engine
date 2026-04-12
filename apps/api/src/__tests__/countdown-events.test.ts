@@ -1,8 +1,14 @@
-import BetterSqlite3 from "better-sqlite3";
-import { sql } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { Pool } from "pg";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const MIGRATIONS_DIR = resolve(__dirname, "../db/migrations");
+
+import { runMigrations } from "../db/migrate";
 import * as schema from "../db/schema";
 import {
   createCountdownEvent,
@@ -12,69 +18,79 @@ import {
   removeCountdownEvent,
   updateCountdownEvent,
 } from "../services/countdown-events";
+import { appRouter } from "../trpc/routers";
 
-const CREATE_TABLE_SQL = `CREATE TABLE countdown_events (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  title TEXT NOT NULL,
-  date TEXT NOT NULL,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-)`;
+type TestDB = ReturnType<typeof drizzle<typeof schema>>;
 
-function createTestDb() {
-  const sqlite = new BetterSqlite3(":memory:");
-  const db = drizzle({ client: sqlite, schema });
-  db.run(sql.raw(CREATE_TABLE_SQL));
-  return { db, sqlite };
+function createTestPool() {
+  return new Pool({
+    connectionString:
+      process.env.DATABASE_URL ??
+      "postgresql://workflow:workflow@localhost:5432/workflow_engine_test",
+  });
 }
 
-type TestDB = ReturnType<typeof createTestDb>["db"];
+// --- Schema tests ---
 
 describe("countdown_events schema", () => {
+  let pool: Pool;
   let db: TestDB;
-  let sqlite: InstanceType<typeof BetterSqlite3>;
 
-  beforeEach(() => {
-    const testDb = createTestDb();
-    db = testDb.db;
-    sqlite = testDb.sqlite;
+  beforeAll(async () => {
+    pool = createTestPool();
+    db = drizzle(pool, { schema });
+    await migrate(db, {
+      migrationsFolder: MIGRATIONS_DIR,
+    });
   });
 
-  afterEach(() => {
-    sqlite.close();
+  beforeEach(async () => {
+    await pool.query("TRUNCATE countdown_events, system_info RESTART IDENTITY CASCADE");
   });
 
-  it("inserts and retrieves a countdown event", () => {
-    const result = db
+  afterAll(async () => {
+    await pool.end();
+  });
+
+  it("inserts and retrieves a countdown event", async () => {
+    const rows = await db
       .insert(schema.countdownEvents)
       .values({ title: "Test Event", date: "2026-12-25" })
-      .returning()
-      .get();
+      .returning();
 
+    const result = rows[0];
     expect(result.id).toBe(1);
     expect(result.title).toBe("Test Event");
     expect(result.date).toBe("2026-12-25");
-    expect(result.createdAt).toBeDefined();
-    expect(result.updatedAt).toBeDefined();
+    expect(result.createdAt).toBeInstanceOf(Date);
+    expect(result.updatedAt).toBeInstanceOf(Date);
   });
 });
 
+// --- Service tests ---
+
 describe("countdown events service", () => {
+  let pool: Pool;
   let db: TestDB;
-  let sqlite: InstanceType<typeof BetterSqlite3>;
 
-  beforeEach(() => {
-    const testDb = createTestDb();
-    db = testDb.db;
-    sqlite = testDb.sqlite;
+  beforeAll(async () => {
+    pool = createTestPool();
+    db = drizzle(pool, { schema });
+    await migrate(db, {
+      migrationsFolder: MIGRATIONS_DIR,
+    });
   });
 
-  afterEach(() => {
-    sqlite.close();
+  beforeEach(async () => {
+    await pool.query("TRUNCATE countdown_events, system_info RESTART IDENTITY CASCADE");
   });
 
-  it("create inserts and returns event with id", () => {
-    const event = createCountdownEvent(db, {
+  afterAll(async () => {
+    await pool.end();
+  });
+
+  it("create inserts and returns event with id", async () => {
+    const event = await createCountdownEvent(db, {
       title: "Test Event",
       date: "2026-12-25",
     });
@@ -84,52 +100,54 @@ describe("countdown events service", () => {
     expect(event.date).toBe("2026-12-25");
   });
 
-  it("listUpcoming returns only future events ordered by date ASC", () => {
-    createCountdownEvent(db, { title: "Past", date: "2020-01-01" });
-    createCountdownEvent(db, { title: "Far future", date: "2030-06-15" });
-    createCountdownEvent(db, { title: "Near future", date: "2027-01-01" });
+  it("listUpcoming returns only future events ordered by date ASC", async () => {
+    await createCountdownEvent(db, { title: "Past", date: "2020-01-01" });
+    await createCountdownEvent(db, { title: "Far future", date: "2030-06-15" });
+    await createCountdownEvent(db, { title: "Near future", date: "2027-01-01" });
 
-    const upcoming = listUpcomingCountdownEvents(db);
+    const upcoming = await listUpcomingCountdownEvents(db);
 
     expect(upcoming).toHaveLength(2);
     expect(upcoming[0].title).toBe("Near future");
     expect(upcoming[1].title).toBe("Far future");
   });
 
-  it("listPast returns only past events ordered by date DESC", () => {
-    createCountdownEvent(db, { title: "Past old", date: "2019-01-01" });
-    createCountdownEvent(db, { title: "Past recent", date: "2024-06-15" });
-    createCountdownEvent(db, { title: "Future", date: "2030-01-01" });
+  it("listPast returns only past events ordered by date DESC", async () => {
+    await createCountdownEvent(db, { title: "Past old", date: "2019-01-01" });
+    await createCountdownEvent(db, { title: "Past recent", date: "2024-06-15" });
+    await createCountdownEvent(db, { title: "Future", date: "2030-01-01" });
 
-    const past = listPastCountdownEvents(db);
+    const past = await listPastCountdownEvents(db);
 
     expect(past).toHaveLength(2);
     expect(past[0].title).toBe("Past recent");
     expect(past[1].title).toBe("Past old");
   });
 
-  it("getById returns a single event", () => {
-    const created = createCountdownEvent(db, {
+  it("getById returns a single event", async () => {
+    const created = await createCountdownEvent(db, {
       title: "Find me",
       date: "2026-06-01",
     });
 
-    const found = getCountdownEventById(db, created.id);
+    const found = await getCountdownEventById(db, created.id);
 
     expect(found.title).toBe("Find me");
   });
 
-  it("getById throws for non-existent id", () => {
-    expect(() => getCountdownEventById(db, 999)).toThrow();
+  it("getById throws for non-existent id", async () => {
+    await expect(getCountdownEventById(db, 999)).rejects.toThrow(
+      "Countdown event with id 999 not found",
+    );
   });
 
-  it("update modifies title and date", () => {
-    const created = createCountdownEvent(db, {
+  it("update modifies title and date", async () => {
+    const created = await createCountdownEvent(db, {
       title: "Original",
       date: "2026-06-01",
     });
 
-    const updated = updateCountdownEvent(db, created.id, {
+    const updated = await updateCountdownEvent(db, created.id, {
       title: "Updated",
       date: "2026-07-01",
     });
@@ -138,45 +156,51 @@ describe("countdown events service", () => {
     expect(updated.date).toBe("2026-07-01");
   });
 
-  it("update throws for non-existent id", () => {
-    expect(() => updateCountdownEvent(db, 999, { title: "Nope", date: "2026-01-01" })).toThrow();
+  it("update throws for non-existent id", async () => {
+    await expect(
+      updateCountdownEvent(db, 999, { title: "Nope", date: "2026-01-01" }),
+    ).rejects.toThrow();
   });
 
-  it("remove deletes event", () => {
-    const created = createCountdownEvent(db, {
+  it("remove deletes event", async () => {
+    const created = await createCountdownEvent(db, {
       title: "Delete me",
       date: "2026-06-01",
     });
 
-    removeCountdownEvent(db, created.id);
+    await removeCountdownEvent(db, created.id);
 
-    expect(() => getCountdownEventById(db, created.id)).toThrow();
+    await expect(getCountdownEventById(db, created.id)).rejects.toThrow();
   });
 
-  it("remove throws for non-existent id", () => {
-    expect(() => removeCountdownEvent(db, 999)).toThrow();
+  it("remove throws for non-existent id", async () => {
+    await expect(removeCountdownEvent(db, 999)).rejects.toThrow();
   });
 });
 
-// --- Task 3: Router tests ---
-
-import { appRouter } from "../trpc/routers";
+// --- Router tests ---
 
 describe("countdown events router", () => {
+  let pool: Pool;
   let db: TestDB;
-  let sqlite: InstanceType<typeof BetterSqlite3>;
   let caller: ReturnType<typeof appRouter.createCaller>;
 
-  beforeEach(() => {
-    const testDb = createTestDb();
-    db = testDb.db;
-    sqlite = testDb.sqlite;
-    // biome-ignore lint/suspicious/noExplicitAny: test context with better-sqlite3 db
+  beforeAll(async () => {
+    pool = createTestPool();
+    db = drizzle(pool, { schema });
+    await migrate(db, {
+      migrationsFolder: MIGRATIONS_DIR,
+    });
+  });
+
+  beforeEach(async () => {
+    await pool.query("TRUNCATE countdown_events, system_info RESTART IDENTITY CASCADE");
+    // biome-ignore lint/suspicious/noExplicitAny: test context with pg db
     caller = appRouter.createCaller({ db } as any);
   });
 
-  afterEach(() => {
-    sqlite.close();
+  afterAll(async () => {
+    await pool.end();
   });
 
   it("create returns event with id", async () => {
@@ -271,5 +295,10 @@ describe("countdown events router", () => {
     await caller.countdownEvents.remove({ id: created.id });
 
     await expect(caller.countdownEvents.getById({ id: created.id })).rejects.toThrow();
+  });
+
+  it("runMigrations is idempotent", async () => {
+    await expect(runMigrations()).resolves.not.toThrow();
+    await expect(runMigrations()).resolves.not.toThrow();
   });
 });
