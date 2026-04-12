@@ -10,8 +10,19 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="flex h-full flex-col bg-background">
       <main className="flex-1 overflow-y-auto">{children}</main>
+      <Logo />
       <DeployLabel />
     </div>
+  );
+}
+
+function Logo() {
+  return (
+    <img
+      src="/logo.png"
+      alt="The Workflow Engine"
+      className="fixed bottom-2 left-3 size-6 rounded-lg opacity-30"
+    />
   );
 }
 
