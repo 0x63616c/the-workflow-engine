@@ -1,19 +1,23 @@
 import "@/components/hub/register-cards";
 import { getRegisteredCards } from "@/components/hub/card-registry";
 import { CountdownCardMini } from "@/components/hub/countdown-card";
+import { useAppConfig } from "@/hooks/use-app-config";
 import { useIdleTimeout } from "@/hooks/use-idle-timeout";
 import { trpc } from "@/lib/trpc";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
 
-const IDLE_TIMEOUT_MS = 45_000;
+const DEFAULT_IDLE_TIMEOUT_MS = 45_000;
 
 export function WidgetGrid() {
   const expandCard = useCardExpansionStore((s) => s.expandCard);
   const expandedCardId = useCardExpansionStore((s) => s.expandedCardId);
   const upcoming = trpc.countdownEvents.listUpcoming.useQuery();
   const nextEvent = upcoming.data?.[0] ?? null;
+  const { get: getConfig } = useAppConfig();
+  const idleTimeout_MS =
+    (getConfig("display.idleTimeout_MS") as number | null) ?? DEFAULT_IDLE_TIMEOUT_MS;
 
-  const { remainingSeconds } = useIdleTimeout(() => expandCard("clock"), IDLE_TIMEOUT_MS, {
+  const { remainingSeconds } = useIdleTimeout(() => expandCard("clock"), idleTimeout_MS, {
     enabled: expandedCardId === null,
   });
 

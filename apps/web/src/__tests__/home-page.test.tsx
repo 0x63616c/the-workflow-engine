@@ -58,6 +58,14 @@ vi.mock("@/hooks/use-climate", () => ({
   }),
 }));
 
+vi.mock("@/hooks/use-app-config", () => ({
+  useAppConfig: () => ({
+    get: () => null,
+    set: vi.fn(),
+    isLoading: false,
+  }),
+}));
+
 describe("HomePage", () => {
   beforeEach(() => {
     vi.useFakeTimers();
