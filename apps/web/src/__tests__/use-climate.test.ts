@@ -5,6 +5,11 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
+    useUtils: vi.fn(() => ({
+      devices: {
+        climate: { invalidate: vi.fn() },
+      },
+    })),
     devices: {
       climate: {
         useQuery: vi.fn(),

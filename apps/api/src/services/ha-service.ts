@@ -64,7 +64,7 @@ export async function getClimateState(): Promise<ClimateState | null> {
     hvacAction,
     fanOn,
     fanEntityId: matchingFan?.entity_id ?? null,
-    targetTemp: (attrs.temperature as number) ?? null,
+    targetTemp: typeof attrs.temperature === "number" ? attrs.temperature : null,
   };
 }
 

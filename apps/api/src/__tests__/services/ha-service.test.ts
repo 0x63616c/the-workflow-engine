@@ -4,6 +4,7 @@ import {
   getLightsState,
   getMediaPlayers,
   mediaPlayerCommand,
+  setTemperature,
   setVolume,
   turnAllLightsOff,
   turnAllLightsOn,
@@ -73,6 +74,17 @@ describe("turnAllLightsOff()", () => {
     mockCallService.mockResolvedValueOnce(undefined);
     await turnAllLightsOff();
     expect(mockCallService).toHaveBeenCalledWith("light", "turn_off", { entity_id: "all" });
+  });
+});
+
+describe("setTemperature()", () => {
+  it("calls climate.set_temperature with entity and temperature", async () => {
+    mockCallService.mockResolvedValueOnce(undefined);
+    await setTemperature("climate.living_room", 74);
+    expect(mockCallService).toHaveBeenCalledWith("climate", "set_temperature", {
+      entity_id: "climate.living_room",
+      temperature: 74,
+    });
   });
 });
 

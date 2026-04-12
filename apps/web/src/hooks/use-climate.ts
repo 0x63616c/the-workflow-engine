@@ -7,9 +7,12 @@ export function useClimate() {
     refetchInterval: POLL_INTERVAL_MS,
     retry: false,
   });
+  const utils = trpc.useUtils();
   const fanOnMutation = trpc.devices.fanOn.useMutation();
   const fanOffMutation = trpc.devices.fanOff.useMutation();
-  const setTempMutation = trpc.devices.setTemperature.useMutation();
+  const setTempMutation = trpc.devices.setTemperature.useMutation({
+    onSuccess: () => utils.devices.climate.invalidate(),
+  });
 
   const data = climate.data;
   const hasError = "error" in (data ?? {});

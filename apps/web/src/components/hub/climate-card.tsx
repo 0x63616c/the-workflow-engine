@@ -3,7 +3,7 @@ import { getCardConfig } from "@/components/hub/card-registry";
 import { useClimate } from "@/hooks/use-climate";
 import { ChevronDown, ChevronUp, Thermometer } from "lucide-react";
 
-const TEMP_STEP = 1;
+const TEMP_STEP_DEGREES = 1;
 
 export function ClimateCard() {
   const config = getCardConfig("climate");
@@ -20,13 +20,13 @@ export function ClimateCard() {
   const handleTempUp = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!entityId || targetTemp == null) return;
-    setTemperature(entityId, targetTemp + TEMP_STEP);
+    setTemperature(entityId, targetTemp + TEMP_STEP_DEGREES);
   };
 
   const handleTempDown = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!entityId || targetTemp == null) return;
-    setTemperature(entityId, targetTemp - TEMP_STEP);
+    setTemperature(entityId, targetTemp - TEMP_STEP_DEGREES);
   };
 
   return (

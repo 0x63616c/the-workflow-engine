@@ -115,7 +115,7 @@ export const devicesRouter = router({
     }),
 
   setTemperature: publicProcedure
-    .input(z.object({ entityId: z.string(), temperature: z.number().min(50).max(90) }))
+    .input(z.object({ entityId: z.string(), temperature: z.number().min(65).max(80) }))
     .mutation(async ({ input }) => {
       try {
         await setTemperature(input.entityId, input.temperature);
