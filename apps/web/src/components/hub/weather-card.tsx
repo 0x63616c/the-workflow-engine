@@ -1,4 +1,6 @@
 import { BentoCard } from "@/components/hub/bento-card";
+import { getCardConfig } from "@/components/hub/card-registry";
+import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { CloudSun } from "lucide-react";
 
 interface WeatherCardProps {
@@ -24,12 +26,20 @@ function getGradient(condition: string): string {
 }
 
 export function WeatherCard({ temp, condition, high, low }: WeatherCardProps) {
+  const expandCard = useCardExpansionStore((s) => s.expandCard);
+  const config = getCardConfig("weather");
   const gradient = getGradient(condition);
 
   return (
     <BentoCard
       testId="widget-card-weather"
-      gridArea="weather"
+      gridColumn={config?.gridColumn}
+      gridRow={config?.gridRow}
+      colorScheme={{
+        bg: config?.colorScheme.bg,
+        border: config?.colorScheme.border,
+      }}
+      onClick={() => expandCard("weather")}
       className={`bg-gradient-to-br ${gradient} relative overflow-hidden`}
     >
       <div className="flex items-start justify-between">

@@ -1,7 +1,11 @@
 import { BentoCard } from "@/components/hub/bento-card";
+import { getCardConfig } from "@/components/hub/card-registry";
 import { useLights } from "@/hooks/use-lights";
+import { useCardExpansionStore } from "@/stores/card-expansion-store";
 
 export function LightsCard() {
+  const expandCard = useCardExpansionStore((s) => s.expandCard);
+  const config = getCardConfig("lights");
   const { onCount, totalCount, isLoading, isError, turnOn, turnOff } = useLights();
 
   const countLabel = isLoading
@@ -12,7 +16,16 @@ export function LightsCard() {
   const disabled = isLoading || isError;
 
   return (
-    <BentoCard testId="widget-card-lights" gridArea="lights">
+    <BentoCard
+      testId="widget-card-lights"
+      gridColumn={config?.gridColumn}
+      gridRow={config?.gridRow}
+      colorScheme={{
+        bg: config?.colorScheme.bg,
+        border: config?.colorScheme.border,
+      }}
+      onClick={() => expandCard("lights")}
+    >
       <div className="flex items-center justify-between h-full">
         <div>
           <div className="text-sm text-muted-foreground mb-3">Lights</div>

@@ -1,4 +1,5 @@
 import { BentoCard } from "@/components/hub/bento-card";
+import { getCardConfig } from "@/components/hub/card-registry";
 import { Check, Copy, Eye, EyeOff, Wifi } from "lucide-react";
 import QRCode from "qrcode";
 import { useCallback, useEffect, useState } from "react";
@@ -13,6 +14,7 @@ function generateWifiUri(ssid: string, password: string, encryption: string): st
 }
 
 export function WifiCard() {
+  const config = getCardConfig("wifi");
   const [flipped, setFlipped] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -63,7 +65,10 @@ export function WifiCard() {
     <div
       data-testid="widget-card-wifi"
       className="[perspective:600px]"
-      style={{ gridArea: "wifi" }}
+      style={{
+        ...(config?.gridColumn ? { gridColumn: config.gridColumn } : {}),
+        ...(config?.gridRow ? { gridRow: config.gridRow } : {}),
+      }}
     >
       <div
         className="relative w-full h-full transition-transform duration-500 [transform-style:preserve-3d]"
