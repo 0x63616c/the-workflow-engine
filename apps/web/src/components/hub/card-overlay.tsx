@@ -6,7 +6,7 @@ import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-const CONTROLS_VISIBLE_DURATION_MS = 1000;
+const CONTROLS_VISIBLE_DURATION_MS = 3000;
 const CONTROLS_FADE_DURATION_MS = 300;
 
 function ClockOverlay() {
@@ -47,7 +47,7 @@ function ClockOverlay() {
           type="button"
           data-testid="clock-dismiss"
           onClick={contractCard}
-          className="absolute top-4 right-4 z-20 p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+          className="absolute top-0 right-0 z-20 p-6 rounded-full hover:bg-white/5 active:bg-white/10 transition-colors"
           style={{
             opacity: controlsVisible ? 1 : 0,
             transition: `opacity ${CONTROLS_FADE_DURATION_MS}ms ease`,

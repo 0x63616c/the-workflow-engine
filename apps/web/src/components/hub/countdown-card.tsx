@@ -126,7 +126,7 @@ export function CountdownCardExpanded() {
         <button
           type="button"
           onClick={() => setShowForm(true)}
-          className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+          className="p-3 rounded-lg hover:bg-muted transition-colors"
         >
           <Plus size={18} className="text-muted-foreground" />
         </button>
@@ -214,7 +214,7 @@ export function CountdownCardExpanded() {
                 <button
                   type="button"
                   onClick={() => removeMutation.mutate({ id: event.id })}
-                  className="p-1 rounded hover:bg-destructive/10 transition-colors"
+                  className="p-2.5 rounded hover:bg-destructive/10 transition-colors"
                 >
                   <Trash2 size={14} className="text-muted-foreground/50" />
                 </button>

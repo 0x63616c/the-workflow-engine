@@ -70,6 +70,7 @@ export function MusicCard() {
             <button
               type="button"
               aria-label={isPlaying ? "Pause" : "Play"}
+              className="p-2 rounded-full hover:bg-white/5 active:bg-white/10 transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
                 sendCommand(activeSpeaker.entityId, isPlaying ? "pause" : "play");

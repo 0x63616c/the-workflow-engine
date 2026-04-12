@@ -108,20 +108,20 @@ export function ClockStateCarousel({ controlsVisible = true }: ClockStateCarouse
         type="button"
         data-testid="clock-prev"
         onClick={goPrev}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+        className="absolute left-0 top-0 bottom-0 w-20 z-10 flex items-center justify-center hover:bg-white/5 active:bg-white/10 transition-colors"
         style={controlStyle}
       >
-        <ChevronLeft className="w-6 h-6 text-white/60" />
+        <ChevronLeft className="w-8 h-8 text-white/60" />
       </button>
 
       <button
         type="button"
         data-testid="clock-next"
         onClick={goNext}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+        className="absolute right-0 top-0 bottom-0 w-20 z-10 flex items-center justify-center hover:bg-white/5 active:bg-white/10 transition-colors"
         style={controlStyle}
       >
-        <ChevronRight className="w-6 h-6 text-white/60" />
+        <ChevronRight className="w-8 h-8 text-white/60" />
       </button>
 
       <StateIndicatorDots
