@@ -9,8 +9,10 @@ Required secrets for CI/CD workflows. Configure in repo Settings > Secrets and v
 | `TS_OAUTH_CLIENT_ID` | Tailscale admin console | Settings > OAuth clients > Create, scope to `tag:ci` |
 | `TS_OAUTH_SECRET` | Tailscale admin console | Generated with the OAuth client above |
 | `SSH_PRIVATE_KEY` | Generate locally | See SSH Key Setup below |
+| `GHRC_TOKEN` | GitHub Personal Access Token | Create at github.com/settings/tokens, scope `read:packages write:packages` |
 | `INNGEST_EVENT_KEY` | 1Password | `op read "op://Homelab/Workflow Engine Inngest/event-key"` |
 | `INNGEST_SIGNING_KEY` | 1Password | `op read "op://Homelab/Workflow Engine Inngest/signing-key"` |
+| `HA_TOKEN` | 1Password | `op read "op://Homelab/Home Assistant/token"` |
 
 `GITHUB_TOKEN` is automatic, no setup needed.
 
