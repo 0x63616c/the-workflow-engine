@@ -36,6 +36,7 @@ env:
   secret:
     - INNGEST_EVENT_KEY
     - INNGEST_SIGNING_KEY
+    - HA_TOKEN
 
 accessories:
   inngest:
