@@ -8,7 +8,7 @@ import { useLights } from "@/hooks/use-lights";
 import { useSonos } from "@/hooks/use-sonos";
 import { useSwipe } from "@/hooks/use-swipe";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 
 function ExpandedWeather() {
   return (
@@ -127,7 +127,8 @@ export function CardOverlay() {
   const contractCard = useCardExpansionStore((s) => s.contractCard);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  useSwipe(contentRef, { onSwipeDown: contractCard }, { enabled: expandedCardId !== null });
+  const swipeHandlers = useMemo(() => ({ onSwipeDown: contractCard }), [contractCard]);
+  useSwipe(contentRef, swipeHandlers, { enabled: expandedCardId !== null });
 
   if (!expandedCardId) return null;
 
