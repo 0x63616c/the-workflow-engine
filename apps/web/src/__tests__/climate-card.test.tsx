@@ -12,8 +12,7 @@ vi.mock("@/stores/theme-store", () => ({
 
 const mockUseClimate = vi.mocked(useClimateModule.useClimate);
 
-const turnFanOnFn = vi.fn();
-const turnFanOffFn = vi.fn();
+const setTemperatureFn = vi.fn();
 
 function setupHook(overrides = {}) {
   mockUseClimate.mockReturnValue({
@@ -21,13 +20,15 @@ function setupHook(overrides = {}) {
     fanEntityId: null,
     friendlyName: "Living Room AC",
     currentTemp: 72,
+    targetTemp: 72,
     tempUnit: "F" as const,
     hvacMode: "cool",
     fanOn: false,
     isLoading: false,
     isError: false,
-    turnFanOn: turnFanOnFn,
-    turnFanOff: turnFanOffFn,
+    turnFanOn: vi.fn(),
+    turnFanOff: vi.fn(),
+    setTemperature: setTemperatureFn,
     ...overrides,
   });
 }
@@ -44,59 +45,48 @@ beforeEach(() => {
 describe("ClimateCard", () => {
   it("shows current temperature", () => {
     render(<ClimateCard />);
-    expect(screen.getByText("72\u00b0F")).toBeInTheDocument();
+    expect(screen.getByText("72")).toBeInTheDocument();
   });
 
-  it("shows hvac mode", () => {
+  it("shows temp label", () => {
     render(<ClimateCard />);
-    expect(screen.getByText("cool")).toBeInTheDocument();
+    expect(screen.getByText("Temp")).toBeInTheDocument();
   });
 
-  it("renders Fan On and Fan Off buttons", () => {
+  it("calls setTemperature with +1 when up button clicked", () => {
     render(<ClimateCard />);
-    expect(screen.getByRole("button", { name: /fan on/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /fan off/i })).toBeInTheDocument();
+    const buttons = screen.getAllByRole("button");
+    // First button is up (ChevronUp)
+    fireEvent.click(buttons[0]);
+    expect(setTemperatureFn).toHaveBeenCalledWith("climate.living_room", 73);
   });
 
-  it("calls turnFanOn when Fan On clicked", () => {
+  it("calls setTemperature with -1 when down button clicked", () => {
     render(<ClimateCard />);
-    fireEvent.click(screen.getByRole("button", { name: /fan on/i }));
-    expect(turnFanOnFn).toHaveBeenCalledWith("climate.living_room", null);
+    const buttons = screen.getAllByRole("button");
+    // Second button is down (ChevronDown)
+    fireEvent.click(buttons[1]);
+    expect(setTemperatureFn).toHaveBeenCalledWith("climate.living_room", 71);
   });
 
-  it("calls turnFanOff when Fan Off clicked", () => {
-    render(<ClimateCard />);
-    fireEvent.click(screen.getByRole("button", { name: /fan off/i }));
-    expect(turnFanOffFn).toHaveBeenCalledWith("climate.living_room", null);
-  });
-
-  it("highlights Fan On button when fan is on", () => {
-    setupHook({ fanOn: true });
-    render(<ClimateCard />);
-    const fanOnBtn = screen.getByRole("button", { name: /fan on/i });
-    expect(fanOnBtn.className).toContain("bg-white/10");
-  });
-
-  it("highlights Fan Off button when fan is off", () => {
-    setupHook({ fanOn: false });
-    render(<ClimateCard />);
-    const fanOffBtn = screen.getByRole("button", { name: /fan off/i });
-    expect(fanOffBtn.className).toContain("bg-white/10");
-  });
-
-  it("shows Unavailable and disables buttons on error", () => {
+  it("shows N/A on error", () => {
     setupHook({ isError: true });
     render(<ClimateCard />);
-    expect(screen.getByText(/unavailable/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /fan on/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /fan off/i })).toBeDisabled();
+    expect(screen.getByText("N/A")).toBeInTheDocument();
   });
 
-  it("shows loading state and disables buttons", () => {
+  it("shows -- when loading", () => {
     setupHook({ isLoading: true });
     render(<ClimateCard />);
-    expect(screen.getByText("--\u00b0F")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /fan on/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /fan off/i })).toBeDisabled();
+    expect(screen.getByText("--")).toBeInTheDocument();
+  });
+
+  it("disables buttons when loading", () => {
+    setupHook({ isLoading: true });
+    render(<ClimateCard />);
+    const buttons = screen.getAllByRole("button");
+    for (const btn of buttons) {
+      expect(btn).toBeDisabled();
+    }
   });
 });

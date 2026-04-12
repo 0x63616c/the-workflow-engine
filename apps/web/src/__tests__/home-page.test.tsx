@@ -51,8 +51,10 @@ vi.mock("@/hooks/use-climate", () => ({
     fanOn: false,
     isLoading: false,
     isError: false,
+    targetTemp: 72,
     turnFanOn: vi.fn(),
     turnFanOff: vi.fn(),
+    setTemperature: vi.fn(),
   }),
 }));
 
@@ -86,8 +88,8 @@ describe("HomePage", () => {
 
     render(<HomePage />);
 
-    expect(screen.getByText("2")).toBeInTheDocument();
-    expect(screen.getByText("23")).toBeInTheDocument();
-    expect(screen.getByText("PM")).toBeInTheDocument();
+    const clock = screen.getByTestId("widget-card-clock");
+    expect(clock).toBeInTheDocument();
+    expect(clock.textContent).toContain("PM");
   });
 });

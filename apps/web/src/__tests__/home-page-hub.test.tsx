@@ -51,8 +51,10 @@ vi.mock("@/hooks/use-climate", () => ({
     fanOn: false,
     isLoading: false,
     isError: false,
+    targetTemp: 72,
     turnFanOn: vi.fn(),
     turnFanOff: vi.fn(),
+    setTemperature: vi.fn(),
   }),
 }));
 
@@ -86,12 +88,12 @@ describe("HomePage hub integration", () => {
     expect(screen.queryByTestId("card-overlay")).not.toBeInTheDocument();
   });
 
-  it("tapping weather card opens overlay", async () => {
+  it("tapping clock card opens overlay", async () => {
     await renderHomePage();
 
-    fireEvent.click(screen.getByTestId("widget-card-weather"));
+    fireEvent.click(screen.getByTestId("widget-card-clock"));
 
-    expect(useCardExpansionStore.getState().expandedCardId).toBe("weather");
+    expect(useCardExpansionStore.getState().expandedCardId).toBe("clock");
   });
 
   it("auto-expands clock after idle timeout", async () => {
@@ -105,13 +107,13 @@ describe("HomePage hub integration", () => {
   });
 
   it("idle timer only active when no card is expanded", async () => {
-    useCardExpansionStore.setState({ expandedCardId: "weather" });
+    useCardExpansionStore.setState({ expandedCardId: "lights" });
     await renderHomePage();
 
     act(() => {
       vi.advanceTimersByTime(45_000);
     });
 
-    expect(useCardExpansionStore.getState().expandedCardId).toBe("weather");
+    expect(useCardExpansionStore.getState().expandedCardId).toBe("lights");
   });
 });

@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { CARD_CONFIGS, getCardConfig } from "@/components/hub/card-registry";
 
 describe("card-registry", () => {
-  it("has 12 card configs", () => {
-    expect(CARD_CONFIGS).toHaveLength(12);
+  it("has 7 card configs", () => {
+    expect(CARD_CONFIGS).toHaveLength(7);
   });
 
   it("each card has required fields", () => {
@@ -18,10 +18,10 @@ describe("card-registry", () => {
   });
 
   it("getCardConfig returns config by id", () => {
-    const weather = getCardConfig("weather");
-    expect(weather).toBeDefined();
-    expect(weather?.gridColumn).toBe("1 / 3");
-    expect(weather?.gridRow).toBe("1 / 3");
+    const clock = getCardConfig("clock");
+    expect(clock).toBeDefined();
+    expect(clock?.gridColumn).toBe("1 / 4");
+    expect(clock?.gridRow).toBe("1 / 3");
   });
 
   it("getCardConfig returns undefined for unknown id", () => {
@@ -33,13 +33,13 @@ describe("card-registry", () => {
     expect(wifi?.hasExpandedView).toBe(false);
   });
 
-  it("theme card has no expanded view", () => {
-    const theme = getCardConfig("theme");
-    expect(theme?.hasExpandedView).toBe(false);
+  it("fan card has no expanded view", () => {
+    const fan = getCardConfig("fan");
+    expect(fan?.hasExpandedView).toBe(false);
   });
 
-  it("weather card has expanded view", () => {
-    const weather = getCardConfig("weather");
-    expect(weather?.hasExpandedView).toBe(true);
+  it("music card has expanded view", () => {
+    const music = getCardConfig("music");
+    expect(music?.hasExpandedView).toBe(true);
   });
 });
