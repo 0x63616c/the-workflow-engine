@@ -1,4 +1,4 @@
-import { ArtClock } from "@/components/art-clock/art-clock";
+import { ClockStateCarousel } from "@/components/art-clock/clock-state-carousel";
 import { CountdownCardExpanded } from "@/components/hub/countdown-card";
 import { SonosAlbumArt } from "@/components/sonos/sonos-album-art";
 import { SonosControls } from "@/components/sonos/sonos-controls";
@@ -8,7 +8,8 @@ import { useLights } from "@/hooks/use-lights";
 import { useSonos } from "@/hooks/use-sonos";
 import { useSwipe } from "@/hooks/use-swipe";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
-import { useMemo, useRef } from "react";
+import { X } from "lucide-react";
+import { useCallback, useMemo, useRef } from "react";
 
 function ExpandedWeather() {
   return (
@@ -130,6 +131,15 @@ export function CardOverlay() {
   const swipeHandlers = useMemo(() => ({ onSwipeDown: contractCard }), [contractCard]);
   useSwipe(contentRef, swipeHandlers, { enabled: expandedCardId !== null });
 
+  const handleClockTap = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.target === e.currentTarget) {
+        contractCard();
+      }
+    },
+    [contractCard],
+  );
+
   if (!expandedCardId) return null;
 
   const isClock = expandedCardId === "clock";
@@ -137,14 +147,16 @@ export function CardOverlay() {
   if (isClock) {
     return (
       <div data-testid="card-overlay" className="fixed inset-0 z-50 bg-background">
-        {/* biome-ignore lint/a11y/useKeyWithClickEvents: tap to dismiss clock overlay */}
-        <div
-          ref={contentRef}
-          data-testid="card-overlay-content"
-          className="h-full w-full"
-          onClick={contractCard}
-        >
-          <ArtClock />
+        <div ref={contentRef} data-testid="card-overlay-content" className="h-full w-full relative">
+          <ClockStateCarousel />
+          <button
+            type="button"
+            data-testid="clock-dismiss"
+            onClick={contractCard}
+            className="absolute top-4 right-4 z-20 p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+          >
+            <X className="w-5 h-5 text-white/60" />
+          </button>
         </div>
       </div>
     );
