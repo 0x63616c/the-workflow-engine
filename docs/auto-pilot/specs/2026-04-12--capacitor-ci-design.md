@@ -114,7 +114,7 @@ jobs:
 #### `apps/web/ios/fastlane/Appfile`
 
 ```ruby
-app_identifier("com.theworkflowengine.app")
+app_identifier("co.worldwidewebb.theworkflowengine")
 ```
 
 No `apple_id` or `team_id` here. API key auth doesn't need them in the Appfile.
@@ -125,7 +125,7 @@ No `apple_id` or `team_id` here. API key auth doesn't need them in the Appfile.
 git_url("https://github.com/0x63616c/certificates.git")
 storage_mode("git")
 type("appstore")
-app_identifier(["com.theworkflowengine.app"])
+app_identifier(["co.worldwidewebb.theworkflowengine"])
 ```
 
 #### `apps/web/ios/fastlane/Fastfile`
