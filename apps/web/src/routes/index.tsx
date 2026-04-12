@@ -1,5 +1,6 @@
 import { ArtClock } from "@/components/art-clock/art-clock";
 import { WidgetGrid } from "@/components/hub/widget-grid";
+import { SonosPanel } from "@/components/sonos/sonos-panel";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -11,6 +12,7 @@ function HomePage() {
   const view = useNavigationStore((s) => s.view);
   const setView = useNavigationStore((s) => s.setView);
   const isHub = view === "hub";
+  const isSonos = view === "sonos";
 
   return (
     <div className="relative h-full">
@@ -19,8 +21,8 @@ function HomePage() {
         data-testid="clock-layer"
         className="absolute inset-0 transition-opacity duration-100 ease-out"
         style={{
-          opacity: isHub ? 0 : 1,
-          pointerEvents: isHub ? "none" : "auto",
+          opacity: isHub || isSonos ? 0 : 1,
+          pointerEvents: isHub || isSonos ? "none" : "auto",
         }}
         onClick={() => setView("hub")}
       >
@@ -36,6 +38,17 @@ function HomePage() {
         }}
       >
         <WidgetGrid />
+      </div>
+
+      <div
+        data-testid="sonos-layer"
+        className="absolute inset-0 transition-opacity duration-100 ease-out"
+        style={{
+          opacity: isSonos ? 1 : 0,
+          pointerEvents: isSonos ? "auto" : "none",
+        }}
+      >
+        <SonosPanel />
       </div>
     </div>
   );
