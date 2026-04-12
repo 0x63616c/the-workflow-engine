@@ -14,26 +14,6 @@ vi.mock("@/hooks/use-build-hash", () => ({
   useBuildHash: () => ({ data: { hash: "abc1234", deployedAt: null } }),
 }));
 
-function makeMotionElement(tag: string) {
-  return function MotionEl({
-    children,
-    ...props
-  }: { children?: React.ReactNode; [key: string]: unknown }) {
-    const { initial: _i, animate: _a, exit: _e, transition: _t, ...rest } = props;
-    return React.createElement(tag, rest as Record<string, unknown>, children);
-  };
-}
-
-vi.mock("framer-motion", () => ({
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  motion: new Proxy(
-    {},
-    {
-      get: (_target, tag: string) => makeMotionElement(tag),
-    },
-  ),
-}));
-
 describe("CardOverlay", () => {
   beforeEach(() => {
     vi.useFakeTimers();

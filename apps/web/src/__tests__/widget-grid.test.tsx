@@ -59,6 +59,14 @@ vi.mock("@/hooks/use-climate", () => ({
   }),
 }));
 
+vi.mock("@/hooks/use-app-config", () => ({
+  useAppConfig: () => ({
+    get: () => null,
+    set: vi.fn(),
+    isLoading: false,
+  }),
+}));
+
 describe("WidgetGrid", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -82,6 +90,7 @@ describe("WidgetGrid", () => {
     expect(screen.getByTestId("widget-card-fan")).toBeInTheDocument();
     expect(screen.getByTestId("widget-card-climate")).toBeInTheDocument();
     expect(screen.getByTestId("widget-card-wifi")).toBeInTheDocument();
+    expect(screen.getByTestId("widget-card-settings")).toBeInTheDocument();
   });
 
   it("uses 6-column grid layout", () => {
