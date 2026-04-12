@@ -1,4 +1,5 @@
 import { ArtClock } from "@/components/art-clock/art-clock";
+import { CountdownCardExpanded } from "@/components/hub/countdown-card";
 import { useSwipe } from "@/hooks/use-swipe";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { useRef } from "react";
@@ -41,6 +42,7 @@ function ExpandedCalendar() {
 
 const EXPANDED_VIEWS: Record<string, () => React.JSX.Element> = {
   weather: ExpandedWeather,
+  countdown: CountdownCardExpanded,
   lights: ExpandedLights,
   music: ExpandedMusic,
   calendar: ExpandedCalendar,
