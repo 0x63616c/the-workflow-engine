@@ -11,6 +11,7 @@ concurrency:
 permissions:
   contents: read
   packages: write
+  statuses: write
 
 env:
   SLACK_CHANNEL: C0ASR5837ED
@@ -363,6 +364,27 @@ jobs:
           else
             echo "text=${SECONDS}s" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Set commit status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ needs.deploy.result }}" = "success" ]; then
+            STATE="success"
+            DESC="Deploy pipeline succeeded"
+          elif [ "${{ needs.deploy.result }}" = "failure" ]; then
+            STATE="failure"
+            DESC="Deploy pipeline failed"
+          else
+            STATE="failure"
+            DESC="Deploy skipped — checks failed"
+          fi
+          gh api repos/${{ github.repository }}/statuses/${{ github.sha }} \
+            -f state="$STATE" \
+            -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            -f description="$DESC" \
+            -f context="deploy/pipeline"
 
       - name: Deploy succeeded
         if: needs.deploy.result == 'success'
