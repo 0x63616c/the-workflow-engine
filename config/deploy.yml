@@ -44,8 +44,23 @@ env:
     - INNGEST_EVENT_KEY
     - INNGEST_SIGNING_KEY
     - HA_TOKEN
+    - DATABASE_URL
+    - POSTGRES_PASSWORD
 
 accessories:
+  postgres:
+    image: postgres:16-alpine
+    host: homelab
+    port: "5432:5432"
+    env:
+      secret:
+        - POSTGRES_PASSWORD
+      clear:
+        POSTGRES_USER: workflow
+        POSTGRES_DB: workflow_engine
+    directories:
+      - postgres-data:/var/lib/postgresql/data
+
   inngest:
     image: inngest/inngest
     cmd: inngest start
@@ -84,5 +99,3 @@ accessories:
         GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
         GF_SERVER_ROOT_URL: "http://homelab:3000"
 
-volumes:
-  - data:/app/data
