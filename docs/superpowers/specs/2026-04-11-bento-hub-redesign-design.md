@@ -84,7 +84,7 @@ Keep current colors. Minor tweaks:
 - Card bg: `rgba(255,255,255,0.05)` instead of `#0a0a0a`
 
 ### Light palette (new "daylight")
-- background: `#f5f2ee` (warm off-white)
+- background: `#ffffff` (pure white)
 - foreground: `#1a1a1a`
 - card: `#ffffff`
 - border: `#e0dcd6`
