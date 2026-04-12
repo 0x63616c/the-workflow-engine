@@ -1,15 +1,32 @@
-import { MIDNIGHT_PALETTE, useThemeStore } from "@/stores/theme-store";
+import { DAYLIGHT_PALETTE, MIDNIGHT_PALETTE, useThemeStore } from "@/stores/theme-store";
 import type { ThemePalette } from "@/stores/theme-store";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+  };
+})();
 
 describe("theme-store", () => {
   afterEach(() => {
     // Reset store to initial state between tests
     useThemeStore.setState({
-      palettes: { midnight: MIDNIGHT_PALETTE },
+      palettes: { midnight: MIDNIGHT_PALETTE, daylight: DAYLIGHT_PALETTE },
       activePaletteId: "midnight",
       transitionDuration_MS: 0,
     });
+    localStorageMock.clear();
   });
 
   it("initializes with midnight palette as active", () => {
@@ -30,10 +47,18 @@ describe("theme-store", () => {
     expect(palette.colors.accentForeground).toBe("#1a1a1a");
   });
 
-  it("midnight palette has correct background and foreground", () => {
+  it("midnight palette has pure black background and pure white foreground", () => {
     const palette = useThemeStore.getState().getActivePalette();
     expect(palette.colors.background).toBe("#000000");
-    expect(palette.colors.foreground).toBe("#fafafa");
+    expect(palette.colors.foreground).toBe("#ffffff");
+  });
+
+  it("midnight palette has pure black card and popover surfaces", () => {
+    const palette = useThemeStore.getState().getActivePalette();
+    expect(palette.colors.card).toBe("#000000");
+    expect(palette.colors.popover).toBe("#000000");
+    expect(palette.colors.cardForeground).toBe("#ffffff");
+    expect(palette.colors.popoverForeground).toBe("#ffffff");
   });
 
   it("registerPalette adds a new palette", () => {
@@ -98,5 +123,57 @@ describe("theme-store", () => {
 
   it("has correct transitionDuration_MS default", () => {
     expect(useThemeStore.getState().transitionDuration_MS).toBe(0);
+  });
+
+  describe("daylight palette", () => {
+    it("has pure white background and pure black foreground", () => {
+      expect(DAYLIGHT_PALETTE.colors.background).toBe("#ffffff");
+      expect(DAYLIGHT_PALETTE.colors.foreground).toBe("#000000");
+    });
+
+    it("has pure white card and popover surfaces", () => {
+      expect(DAYLIGHT_PALETTE.colors.card).toBe("#ffffff");
+      expect(DAYLIGHT_PALETTE.colors.popover).toBe("#ffffff");
+      expect(DAYLIGHT_PALETTE.colors.cardForeground).toBe("#000000");
+      expect(DAYLIGHT_PALETTE.colors.popoverForeground).toBe("#000000");
+    });
+
+    it("has pure black primary color", () => {
+      expect(DAYLIGHT_PALETTE.colors.primary).toBe("#000000");
+      expect(DAYLIGHT_PALETTE.colors.primaryForeground).toBe("#ffffff");
+    });
+
+    it("is registered in the store by default", () => {
+      expect(useThemeStore.getState().palettes.daylight).toBeDefined();
+      expect(useThemeStore.getState().palettes.daylight.id).toBe("daylight");
+    });
+  });
+
+  describe("localStorage persistence", () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+      localStorageMock.clear();
+    });
+
+    it("setActivePalette persists the palette ID to localStorage", () => {
+      vi.stubGlobal("localStorage", localStorageMock);
+      useThemeStore.getState().setActivePalette("daylight");
+      expect(localStorageMock.getItem("theme-mode")).toBe("daylight");
+    });
+
+    it("setActivePalette persists when switching back to midnight", () => {
+      vi.stubGlobal("localStorage", localStorageMock);
+      useThemeStore.getState().setActivePalette("daylight");
+      useThemeStore.getState().setActivePalette("midnight");
+      expect(localStorageMock.getItem("theme-mode")).toBe("midnight");
+    });
+
+    it("setActivePalette does not persist when palette ID is invalid", () => {
+      vi.stubGlobal("localStorage", localStorageMock);
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      useThemeStore.getState().setActivePalette("nonexistent");
+      expect(localStorageMock.getItem("theme-mode")).toBeNull();
+      warnSpy.mockRestore();
+    });
   });
 });

@@ -43,4 +43,18 @@ describe("card-registry", () => {
     const music = getCardConfig("music");
     expect(music?.expandedView).toBeDefined();
   });
+
+  it("no card uses gradient backgrounds", () => {
+    for (const config of getRegisteredCards()) {
+      expect(config.colorScheme.bg).not.toContain("gradient");
+    }
+  });
+
+  it("no card uses low-opacity faint borders", () => {
+    for (const config of getRegisteredCards()) {
+      if (config.colorScheme.border) {
+        expect(config.colorScheme.border).not.toMatch(/\/\d+/);
+      }
+    }
+  });
 });

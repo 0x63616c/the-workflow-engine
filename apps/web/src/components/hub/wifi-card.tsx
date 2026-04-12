@@ -1,5 +1,6 @@
 import { BentoCard } from "@/components/hub/bento-card";
 import { getCardConfig } from "@/components/hub/card-registry";
+import { useThemeStore } from "@/stores/theme-store";
 import { Check, Copy, Eye, EyeOff, Wifi } from "lucide-react";
 import QRCode from "qrcode";
 import { useCallback, useEffect, useState } from "react";
@@ -20,6 +21,7 @@ export function WifiCard() {
   const [copied, setCopied] = useState(false);
   const [qrSvg, setQrSvg] = useState<string>("");
   const [countdown, setCountdown] = useState(0);
+  const isDark = useThemeStore((s) => s.activePaletteId === "midnight");
 
   useEffect(() => {
     const uri = generateWifiUri(WIFI_SSID, WIFI_PASSWORD, WIFI_ENCRYPTION);
@@ -27,9 +29,9 @@ export function WifiCard() {
       type: "svg",
       width: 80,
       margin: 1,
-      color: { dark: "#000000", light: "#ffffff" },
+      color: isDark ? { dark: "#ffffff", light: "#000000" } : { dark: "#000000", light: "#ffffff" },
     }).then(setQrSvg);
-  }, []);
+  }, [isDark]);
 
   const handleCopy = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -155,7 +157,8 @@ export function WifiCard() {
 
               <div className="flex justify-center">
                 <div
-                  className="rounded-md overflow-hidden bg-white p-1"
+                  data-testid="qr-container"
+                  className={`rounded-md overflow-hidden p-1 ${isDark ? "bg-black" : "bg-white"}`}
                   // biome-ignore lint/security/noDangerouslySetInnerHtml: QR SVG from trusted qrcode library
                   dangerouslySetInnerHTML={{ __html: qrSvg }}
                 />

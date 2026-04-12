@@ -43,24 +43,24 @@ export const MIDNIGHT_PALETTE: ThemePalette = {
   name: "Midnight",
   colors: {
     background: "#000000",
-    foreground: "#fafafa",
+    foreground: "#ffffff",
     muted: "#262626",
     mutedForeground: "#a3a3a3",
     border: "#262626",
     input: "#262626",
     ring: "#d4d4d4",
-    primary: "#fafafa",
-    primaryForeground: "#0a0a0a",
+    primary: "#ffffff",
+    primaryForeground: "#000000",
     secondary: "#262626",
-    secondaryForeground: "#fafafa",
+    secondaryForeground: "#ffffff",
     accent: "#d4a574",
     accentForeground: "#1a1a1a",
     destructive: "#ef4444",
-    destructiveForeground: "#fafafa",
-    card: "#0a0a0a",
-    cardForeground: "#fafafa",
-    popover: "#0a0a0a",
-    popoverForeground: "#fafafa",
+    destructiveForeground: "#ffffff",
+    card: "#000000",
+    cardForeground: "#ffffff",
+    popover: "#000000",
+    popoverForeground: "#ffffff",
   },
 };
 
@@ -69,24 +69,24 @@ export const DAYLIGHT_PALETTE: ThemePalette = {
   name: "Daylight",
   colors: {
     background: "#ffffff",
-    foreground: "#1a1a1a",
+    foreground: "#000000",
     muted: "#f0f0f0",
     mutedForeground: "#6b6b6b",
     border: "#e5e5e5",
     input: "#e5e5e5",
     ring: "#8a8a8a",
-    primary: "#1a1a1a",
+    primary: "#000000",
     primaryForeground: "#ffffff",
     secondary: "#f0f0f0",
-    secondaryForeground: "#1a1a1a",
+    secondaryForeground: "#000000",
     accent: "#d4a574",
     accentForeground: "#1a1a1a",
     destructive: "#ef4444",
-    destructiveForeground: "#fafafa",
-    card: "#f7f7f7",
-    cardForeground: "#1a1a1a",
-    popover: "#f7f7f7",
-    popoverForeground: "#1a1a1a",
+    destructiveForeground: "#ffffff",
+    card: "#ffffff",
+    cardForeground: "#000000",
+    popover: "#ffffff",
+    popoverForeground: "#000000",
   },
 };
 
@@ -108,6 +108,11 @@ export const useThemeStore = create<ThemeState & ThemeActions>((set, get) => ({
     if (!palettes[id]) {
       console.warn(`Theme palette "${id}" not found, keeping current palette`);
       return;
+    }
+    try {
+      globalThis.localStorage?.setItem("theme-mode", id);
+    } catch {
+      // ignore storage errors
     }
     set({ activePaletteId: id });
   },
