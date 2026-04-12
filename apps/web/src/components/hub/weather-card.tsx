@@ -50,7 +50,7 @@ export function WeatherCard({ temp, condition, high, low }: WeatherCardProps) {
             <span className="text-base text-muted-foreground">{condition}</span>
           </div>
         </div>
-        <div className="text-right text-sm text-muted-foreground mt-2">
+        <div className="text-right text-base text-muted-foreground mt-2">
           <div>H: {high}°</div>
           <div>L: {low}°</div>
         </div>

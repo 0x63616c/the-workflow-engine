@@ -38,8 +38,8 @@ export function ClockCard() {
         </div>
       </div>
       <div className="mt-4 text-center">
-        <div className="text-base font-light text-foreground/40">{dayName}</div>
-        <div className="text-sm text-muted-foreground/30 mt-0.5">{monthDay}</div>
+        <div className="text-3xl font-light text-foreground/70">{dayName}</div>
+        <div className="text-2xl text-muted-foreground/50 mt-0.5">{monthDay}</div>
       </div>
     </BentoCard>
   );

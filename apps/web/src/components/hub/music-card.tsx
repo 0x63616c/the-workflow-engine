@@ -53,14 +53,14 @@ export function MusicCard() {
             <EqualizerBars active={isPlaying} />
           </div>
           {isError ? (
-            <div className="text-base text-muted-foreground/50">Unavailable</div>
+            <div className="text-xl text-muted-foreground/50">Unavailable</div>
           ) : players.length === 0 ? (
-            <div className="text-base text-muted-foreground/50">No speakers</div>
+            <div className="text-xl text-muted-foreground/50">No speakers</div>
           ) : (
             <>
-              <div className="text-base text-foreground truncate">{track ?? "Not playing"}</div>
+              <div className="text-xl text-foreground truncate">{track ?? "Not playing"}</div>
               {artist && (
-                <div className="text-sm text-muted-foreground/70 mt-0.5 truncate">{artist}</div>
+                <div className="text-lg text-muted-foreground/70 mt-0.5 truncate">{artist}</div>
               )}
             </>
           )}
