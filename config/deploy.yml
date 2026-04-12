@@ -9,6 +9,8 @@ servers:
   web:
     hosts:
       - homelab
+    options:
+      add-host: host.docker.internal:host-gateway
 
 proxy:
   host: homelab
@@ -33,6 +35,7 @@ env:
     PORT: "4301"
     PORT_OFFSET: "0"
     INNGEST_DEV: "0"
+    HA_URL: "http://host.docker.internal:8123"
   secret:
     - INNGEST_EVENT_KEY
     - INNGEST_SIGNING_KEY
