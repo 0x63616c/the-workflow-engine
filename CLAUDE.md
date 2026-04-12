@@ -15,6 +15,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Use `using-git-worktrees` skill or `EnterWorktree` tool.
 - If already in a worktree, skip. Otherwise, create one before any edits.
 
+### Worktree Naming Convention
+
+**Format:** `{type}/{description}` for both directory and branch name.
+
+```
+Directory: .claude/worktrees/{type}/{description}
+Branch:    {type}/{description}
+```
+
+**Valid types** (conventional commit prefixes): `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `ci`, `perf`
+
+**Description**: kebab-case, concise.
+
+**Examples:**
+```bash
+git worktree add .claude/worktrees/feat/slack-notifications -b feat/slack-notifications
+git worktree add .claude/worktrees/fix/auth-token-expiry -b fix/auth-token-expiry
+git worktree add .claude/worktrees/chore/update-dependencies -b chore/update-dependencies
+```
+
+**Rules:**
+- Always use `.claude/worktrees/` — never `.worktrees/` or `worktrees/`
+- Branch name = folder path (e.g. `feat/slack-notifications`, NOT `worktree-feat+slack-notifications`)
+- No `worktree-` prefix. No `+` separator.
+
 ---
 
 # The Workflow Engine
