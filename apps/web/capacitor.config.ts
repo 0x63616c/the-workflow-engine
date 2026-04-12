@@ -10,6 +10,7 @@ const config: CapacitorConfig = {
   server: {
     url: serverUrl,
     cleartext: true,
+    allowNavigation: ["homelab", "localhost"],
   },
 };
 
