@@ -12,7 +12,7 @@ pre-commit:
   commands:
     biome:
       glob: "*.{ts,tsx,js,jsx,json,css}"
-      exclude: ".claude/skills/**"
+      exclude: "{.claude/skills/**,.claude/settings.json,.claude/settings.local.json}"
       run: bunx biome check --write {staged_files}
       stage_fixed: true
     typecheck:
