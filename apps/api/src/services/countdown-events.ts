@@ -1,10 +1,10 @@
-import { asc, desc, gte, lt, sql } from "drizzle-orm";
-import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
+import { asc, desc, eq, gte, lt, sql } from "drizzle-orm";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 
 import { countdownEvents } from "../db/schema";
+import type * as schema from "../db/schema";
 
-// biome-ignore lint/suspicious/noExplicitAny: accepts any drizzle sqlite db (bun-sqlite or better-sqlite3)
-type DB = BaseSQLiteDatabase<any, any, any>;
+type DB = NodePgDatabase<typeof schema>;
 
 interface CountdownEventInput {
   title: string;
@@ -15,59 +15,54 @@ function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-export function createCountdownEvent(db: DB, input: CountdownEventInput) {
-  return db
+export async function createCountdownEvent(db: DB, input: CountdownEventInput) {
+  const rows = await db
     .insert(countdownEvents)
     .values({ title: input.title, date: input.date })
-    .returning()
-    .get();
+    .returning();
+  return rows[0];
 }
 
-export function listUpcomingCountdownEvents(db: DB) {
+export async function listUpcomingCountdownEvents(db: DB) {
   return db
     .select()
     .from(countdownEvents)
     .where(gte(countdownEvents.date, todayISO()))
-    .orderBy(asc(countdownEvents.date))
-    .all();
+    .orderBy(asc(countdownEvents.date));
 }
 
-export function listPastCountdownEvents(db: DB) {
+export async function listPastCountdownEvents(db: DB) {
   return db
     .select()
     .from(countdownEvents)
     .where(lt(countdownEvents.date, todayISO()))
-    .orderBy(desc(countdownEvents.date))
-    .all();
+    .orderBy(desc(countdownEvents.date));
 }
 
-export function getCountdownEventById(db: DB, id: number) {
-  const event = db.select().from(countdownEvents).where(sql`${countdownEvents.id} = ${id}`).get();
-
-  if (!event) {
+export async function getCountdownEventById(db: DB, id: number) {
+  const rows = await db.select().from(countdownEvents).where(eq(countdownEvents.id, id));
+  if (rows.length === 0) {
     throw new Error(`Countdown event with id ${id} not found`);
   }
-
-  return event;
+  return rows[0];
 }
 
-export function updateCountdownEvent(db: DB, id: number, input: CountdownEventInput) {
-  getCountdownEventById(db, id);
+export async function updateCountdownEvent(db: DB, id: number, input: CountdownEventInput) {
+  await getCountdownEventById(db, id);
 
-  return db
+  const rows = await db
     .update(countdownEvents)
     .set({
       title: input.title,
       date: input.date,
-      updatedAt: sql`(datetime('now'))`,
+      updatedAt: sql`now()`,
     })
-    .where(sql`${countdownEvents.id} = ${id}`)
-    .returning()
-    .get();
+    .where(eq(countdownEvents.id, id))
+    .returning();
+  return rows[0];
 }
 
-export function removeCountdownEvent(db: DB, id: number) {
-  getCountdownEventById(db, id);
-
-  db.delete(countdownEvents).where(sql`${countdownEvents.id} = ${id}`).run();
+export async function removeCountdownEvent(db: DB, id: number) {
+  await getCountdownEventById(db, id);
+  await db.delete(countdownEvents).where(eq(countdownEvents.id, id));
 }
