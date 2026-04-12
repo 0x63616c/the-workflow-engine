@@ -15,5 +15,5 @@
     "lefthook": "^1.11.0",
     "typescript": "^5.8.0"
   },
-  "trustedDependencies": ["@biomejs/biome", "better-sqlite3", "esbuild", "lefthook", "protobufjs"]
+  "trustedDependencies": ["@biomejs/biome", "esbuild", "lefthook", "protobufjs"]
 }
