@@ -14,7 +14,7 @@ registerCard({
   id: "clock",
   gridColumn: "1 / 4",
   gridRow: "1 / 3",
-  colorScheme: { bg: "", accent: "#fafafa", border: "border-white/25" },
+  colorScheme: { bg: "", accent: "#fafafa", border: "" },
   component: ClockCard,
   expandedView: ClockStateCarousel,
 });

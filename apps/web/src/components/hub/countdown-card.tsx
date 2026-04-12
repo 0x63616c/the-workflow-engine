@@ -70,13 +70,15 @@ export function CountdownCardMini({ nextEvent }: CountdownCardMiniProps) {
           </div>
           {nextEvent ? (
             <>
-              <div className="text-xl font-medium text-foreground truncate">{nextEvent.title}</div>
+              <div className="text-base font-medium text-foreground truncate">
+                {nextEvent.title}
+              </div>
               <div className="text-3xl font-light text-foreground mt-1">
                 {formatDaysRemaining(daysUntil(nextEvent.date))}
               </div>
             </>
           ) : (
-            <div className="text-xl text-muted-foreground/50">No events</div>
+            <div className="text-base text-muted-foreground/50">No events</div>
           )}
         </div>
       </div>

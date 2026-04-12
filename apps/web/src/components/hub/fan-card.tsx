@@ -21,17 +21,15 @@ export function FanCard() {
       }}
       onClick={disabled ? undefined : toggle}
     >
-      <div
-        className={`flex flex-col justify-between h-full transition-opacity duration-300 ${!fanOn && !isLoading && !isError ? "opacity-40" : "opacity-100"}`}
-      >
+      <div className="flex flex-col justify-between h-full">
         <div className="flex items-center justify-between">
-          <span className="text-base text-muted-foreground">Fan</span>
+          <span className="text-sm text-muted-foreground">Fan</span>
           <Fan
-            size={32}
+            size={16}
             className={`transition-colors ${fanOn ? "text-cyan-400" : "text-muted-foreground/40"}`}
           />
         </div>
-        <div className="text-2xl font-light text-foreground">
+        <div className="text-lg font-light text-foreground">
           {displayValue({ isLoading, isError, value: fanOn ? "On" : "Off" })}
         </div>
       </div>

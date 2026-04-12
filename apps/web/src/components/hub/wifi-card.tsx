@@ -86,9 +86,9 @@ export function WifiCard() {
                   </div>
                   <span className="text-base text-muted-foreground">WiFi</span>
                 </div>
-                <div className="text-xl font-medium text-foreground">{WIFI_SSID}</div>
+                <div className="text-base font-medium text-foreground">{WIFI_SSID}</div>
               </div>
-              <div className="text-sm text-muted-foreground/40 mt-2">tap to share</div>
+              <div className="text-xs text-muted-foreground/40 mt-2">tap to share</div>
             </div>
           </BentoCard>
         </div>

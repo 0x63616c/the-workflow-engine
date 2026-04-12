@@ -25,11 +25,6 @@ describe("card-registry", () => {
     expect(clock?.gridRow).toBe("1 / 3");
   });
 
-  it("clock card has a prominent border (not empty string)", () => {
-    const clock = getCardConfig("clock");
-    expect(clock?.colorScheme.border).toBeTruthy();
-  });
-
   it("getCardConfig returns undefined for unknown id", () => {
     expect(getCardConfig("nonexistent")).toBeUndefined();
   });
