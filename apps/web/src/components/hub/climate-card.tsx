@@ -25,7 +25,7 @@ export function ClimateCard() {
   const disabled = isLoading || isError || entityId == null;
 
   return (
-    <BentoCard testId="widget-card-climate" gridArea="climate">
+    <BentoCard testId="widget-card-climate">
       <div className="flex items-center justify-between h-full">
         <div>
           <div className="text-sm text-muted-foreground mb-3">Climate</div>
