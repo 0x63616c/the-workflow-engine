@@ -1,5 +1,7 @@
 import { EventEmitter } from "node:events";
 
+import { log } from "../../lib/logger";
+
 export interface HaStateChangedEvent {
   entityId: string;
   domain: string;
@@ -78,6 +80,7 @@ export class HaWebSocketRelay extends EventEmitter {
     }
 
     if (type === "auth_ok") {
+      log.info("HA WebSocket relay connected");
       const id = this.msgId++;
       this.send({ type: "subscribe_events", id, event_type: "state_changed" });
       return;
@@ -117,13 +120,13 @@ export class HaWebSocketRelay extends EventEmitter {
 
   private readonly onError = (evt: Event): void => {
     const err = evt as ErrorEvent;
-    console.error(`[HaWebSocketRelay] WebSocket error: ${err.message ?? "unknown error"}`);
+    log.error({ error: err.message ?? "unknown error" }, "HA WebSocket relay error");
   };
 
   private readonly onClose = (): void => {
     if (this.destroyed) return;
 
-    console.warn(`[HaWebSocketRelay] Connection closed. Reconnecting in ${this.reconnectDelay}ms`);
+    log.warn({ delay_ms: this.reconnectDelay }, "HA WebSocket relay reconnecting");
 
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
