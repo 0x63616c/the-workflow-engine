@@ -32,6 +32,17 @@ describe("navigation-store", () => {
     useNavigationStore.getState().setView("hub");
     expect(useNavigationStore.getState().view).toBe("hub");
   });
+
+  it("setView changes view to timer", () => {
+    useNavigationStore.getState().setView("timer");
+    expect(useNavigationStore.getState().view).toBe("timer");
+  });
+
+  it("setView changes view from timer back to hub", () => {
+    useNavigationStore.getState().setView("timer");
+    useNavigationStore.getState().setView("hub");
+    expect(useNavigationStore.getState().view).toBe("hub");
+  });
 });
 
 describe("clockStateIndex", () => {
