@@ -21,4 +21,15 @@ describe("navigation-store", () => {
     useNavigationStore.getState().setView("clock");
     expect(useNavigationStore.getState().view).toBe("clock");
   });
+
+  it("setView changes view to sonos", () => {
+    useNavigationStore.getState().setView("sonos");
+    expect(useNavigationStore.getState().view).toBe("sonos");
+  });
+
+  it("setView changes view from sonos back to hub", () => {
+    useNavigationStore.getState().setView("sonos");
+    useNavigationStore.getState().setView("hub");
+    expect(useNavigationStore.getState().view).toBe("hub");
+  });
 });
