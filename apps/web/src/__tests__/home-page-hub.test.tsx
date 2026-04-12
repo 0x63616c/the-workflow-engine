@@ -8,6 +8,28 @@ vi.mock("qrcode", () => ({
   },
 }));
 
+vi.mock("@/hooks/use-lights", () => ({
+  useLights: () => ({
+    onCount: 0,
+    totalCount: 0,
+    isLoading: false,
+    isError: false,
+    turnOn: vi.fn(),
+    turnOff: vi.fn(),
+  }),
+}));
+
+vi.mock("@/hooks/use-sonos", () => ({
+  useSonos: () => ({
+    players: [],
+    activeSpeaker: null,
+    isLoading: false,
+    isError: false,
+    sendCommand: vi.fn(),
+    setVolume: vi.fn(),
+  }),
+}));
+
 describe("HomePage hub integration", () => {
   beforeEach(() => {
     vi.useFakeTimers();

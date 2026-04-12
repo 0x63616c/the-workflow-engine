@@ -44,19 +44,19 @@ describe("LightsCard", () => {
 
   it("renders All On and All Off buttons", () => {
     render(<LightsCard />);
-    expect(screen.getByRole("button", { name: /all on/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /all off/i })).toBeInTheDocument();
+    expect(screen.getByText(/all on/i, { selector: "button" })).toBeInTheDocument();
+    expect(screen.getByText(/all off/i, { selector: "button" })).toBeInTheDocument();
   });
 
   it("calls turnOn when All On clicked", () => {
     render(<LightsCard />);
-    fireEvent.click(screen.getByRole("button", { name: /all on/i }));
+    fireEvent.click(screen.getByText(/all on/i, { selector: "button" }));
     expect(turnOnFn).toHaveBeenCalledOnce();
   });
 
   it("calls turnOff when All Off clicked", () => {
     render(<LightsCard />);
-    fireEvent.click(screen.getByRole("button", { name: /all off/i }));
+    fireEvent.click(screen.getByText(/all off/i, { selector: "button" }));
     expect(turnOffFn).toHaveBeenCalledOnce();
   });
 
@@ -64,15 +64,15 @@ describe("LightsCard", () => {
     setupHook({ isError: true });
     render(<LightsCard />);
     expect(screen.getByText(/unavailable/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /all on/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /all off/i })).toBeDisabled();
+    expect(screen.getByText(/all on/i, { selector: "button" })).toBeDisabled();
+    expect(screen.getByText(/all off/i, { selector: "button" })).toBeDisabled();
   });
 
   it("shows loading state and disables buttons", () => {
     setupHook({ isLoading: true });
     render(<LightsCard />);
     expect(screen.getByText(/— of —/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /all on/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /all off/i })).toBeDisabled();
+    expect(screen.getByText(/all on/i, { selector: "button" })).toBeDisabled();
+    expect(screen.getByText(/all off/i, { selector: "button" })).toBeDisabled();
   });
 });

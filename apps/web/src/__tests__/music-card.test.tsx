@@ -1,5 +1,6 @@
 import { MusicCard } from "@/components/hub/music-card";
 import * as useSonosModule from "@/hooks/use-sonos";
+import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -7,14 +8,6 @@ vi.mock("@/hooks/use-sonos");
 vi.mock("@/stores/theme-store", () => ({
   useThemeStore: vi.fn((selector: (s: { activePaletteId: string }) => unknown) =>
     selector({ activePaletteId: "midnight" }),
-  ),
-}));
-
-const setViewFn = vi.fn();
-vi.mock("@/stores/navigation-store", () => ({
-  useNavigationStore: vi.fn(
-    (selector: (s: { view: string; setView: typeof setViewFn }) => unknown) =>
-      selector({ view: "hub", setView: setViewFn }),
   ),
 }));
 
@@ -53,6 +46,7 @@ function setupHook(overrides = {}) {
 beforeEach(() => {
   vi.clearAllMocks();
   setupHook();
+  useCardExpansionStore.setState({ expandedCardId: null });
 });
 
 afterEach(() => {
@@ -66,10 +60,10 @@ describe("MusicCard", () => {
     expect(screen.getByText("Test Artist")).toBeInTheDocument();
   });
 
-  it("tapping card navigates to sonos view", () => {
+  it("tapping card expands music card", () => {
     render(<MusicCard />);
     fireEvent.click(screen.getByTestId("widget-card-music"));
-    expect(setViewFn).toHaveBeenCalledWith("sonos");
+    expect(useCardExpansionStore.getState().expandedCardId).toBe("music");
   });
 
   it("play button calls sendCommand play when paused", () => {
