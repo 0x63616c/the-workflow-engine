@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { HaError } from "../../integrations/homeassistant/types";
+import { haRelay } from "../../integrations/homeassistant/ws-relay";
+import type { HaStateChangedEvent } from "../../integrations/homeassistant/ws-relay";
 import {
   getClimateState,
   getLightsState,
@@ -122,6 +124,40 @@ export const devicesRouter = router({
       } catch (err) {
         if (err instanceof HaError) return { error: "HA unavailable" };
         throw err;
+      }
+    }),
+
+  onStateChange: publicProcedure
+    .input(z.object({ domains: z.array(z.string()).optional() }).optional())
+    .subscription(async function* ({ input, signal }) {
+      const filterDomains = input?.domains;
+
+      const queue: HaStateChangedEvent[] = [];
+      let resolve: (() => void) | null = null;
+
+      const listener = (evt: HaStateChangedEvent) => {
+        if (filterDomains && !filterDomains.includes(evt.domain)) return;
+        queue.push(evt);
+        resolve?.();
+        resolve = null;
+      };
+
+      haRelay.on("stateChanged", listener);
+
+      try {
+        while (!signal?.aborted) {
+          if (queue.length > 0) {
+            const item = queue.shift();
+            if (item) yield item;
+          } else {
+            await new Promise<void>((res) => {
+              resolve = res;
+              signal?.addEventListener("abort", () => res(), { once: true });
+            });
+          }
+        }
+      } finally {
+        haRelay.off("stateChanged", listener);
       }
     }),
 });

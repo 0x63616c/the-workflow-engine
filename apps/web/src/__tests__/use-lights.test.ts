@@ -5,6 +5,11 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
+    useUtils: vi.fn(() => ({
+      devices: {
+        lights: { invalidate: vi.fn() },
+      },
+    })),
     devices: {
       lights: {
         useQuery: vi.fn(),
@@ -15,6 +20,9 @@ vi.mock("@/lib/trpc", () => ({
       lightsOff: {
         useMutation: vi.fn(),
       },
+      onStateChange: {
+        useSubscription: vi.fn(),
+      },
     },
   },
 }));
@@ -22,6 +30,7 @@ vi.mock("@/lib/trpc", () => ({
 const mockLightsQuery = vi.mocked(trpc.devices.lights.useQuery);
 const mockLightsOnMutation = vi.mocked(trpc.devices.lightsOn.useMutation);
 const mockLightsOffMutation = vi.mocked(trpc.devices.lightsOff.useMutation);
+const mockOnStateChange = vi.mocked(trpc.devices.onStateChange.useSubscription);
 
 function setupMocks({
   queryData = undefined as { onCount: number; totalCount: number } | { error: string } | undefined,
@@ -32,6 +41,7 @@ function setupMocks({
   mockLightsQuery.mockReturnValue({ data: queryData, isLoading, isError } as never);
   mockLightsOnMutation.mockReturnValue({ mutate: mutateFn } as never);
   mockLightsOffMutation.mockReturnValue({ mutate: mutateFn } as never);
+  mockOnStateChange.mockReturnValue(undefined as never);
   return mutateFn;
 }
 
@@ -76,5 +86,37 @@ describe("useLights", () => {
     const { result } = renderHook(() => useLights());
     result.current.turnOff();
     expect(mutateFn).toHaveBeenCalled();
+  });
+
+  it("subscribes to light domain state changes", () => {
+    setupMocks();
+    renderHook(() => useLights());
+    expect(mockOnStateChange).toHaveBeenCalledWith(
+      { domains: ["light"] },
+      expect.objectContaining({ onData: expect.any(Function), onError: expect.any(Function) }),
+    );
+  });
+
+  it("onData callback invalidates lights query cache", () => {
+    const invalidate = vi.fn();
+    vi.mocked(trpc.useUtils).mockReturnValue({
+      devices: { lights: { invalidate } },
+    } as never);
+
+    let capturedOnData: (() => void) | undefined;
+    mockOnStateChange.mockImplementation((_input, opts) => {
+      capturedOnData = (opts as { onData?: () => void }).onData;
+      return undefined as never;
+    });
+
+    // Set up remaining mocks without overriding useUtils
+    const mutateFn = vi.fn();
+    mockLightsQuery.mockReturnValue({ data: undefined, isLoading: false, isError: false } as never);
+    mockLightsOnMutation.mockReturnValue({ mutate: mutateFn } as never);
+    mockLightsOffMutation.mockReturnValue({ mutate: mutateFn } as never);
+
+    renderHook(() => useLights());
+    capturedOnData?.();
+    expect(invalidate).toHaveBeenCalled();
   });
 });
