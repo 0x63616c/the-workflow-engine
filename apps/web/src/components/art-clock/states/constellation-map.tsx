@@ -1,3 +1,268 @@
+import { formatDate, formatTime } from "@/components/art-clock/art-clock";
+import { useCurrentTime } from "@/hooks/use-current-time";
+import { useEffect, useRef } from "react";
+
+const CLOCK_UPDATE_INTERVAL_MS = 1000;
+const ROTATION_SPEED_RAD_PER_MS = 0.00003;
+
+interface Star {
+  x: number;
+  y: number;
+}
+
+interface Constellation {
+  name: string;
+  stars: Star[];
+  lines: [number, number][];
+}
+
+const CONSTELLATIONS: Constellation[] = [
+  {
+    name: "ORION",
+    stars: [
+      { x: 0.35, y: 0.3 },
+      { x: 0.38, y: 0.35 },
+      { x: 0.41, y: 0.4 },
+      { x: 0.32, y: 0.45 },
+      { x: 0.44, y: 0.45 },
+      { x: 0.36, y: 0.52 },
+      { x: 0.4, y: 0.52 },
+    ],
+    lines: [
+      [0, 1],
+      [1, 2],
+      [2, 3],
+      [2, 4],
+      [3, 5],
+      [4, 6],
+      [5, 6],
+    ],
+  },
+  {
+    name: "CASSIOPEIA",
+    stars: [
+      { x: 0.6, y: 0.12 },
+      { x: 0.65, y: 0.17 },
+      { x: 0.7, y: 0.13 },
+      { x: 0.75, y: 0.18 },
+      { x: 0.8, y: 0.13 },
+    ],
+    lines: [
+      [0, 1],
+      [1, 2],
+      [2, 3],
+      [3, 4],
+    ],
+  },
+  {
+    name: "URSA MAJOR",
+    stars: [
+      { x: 0.15, y: 0.22 },
+      { x: 0.19, y: 0.2 },
+      { x: 0.23, y: 0.19 },
+      { x: 0.27, y: 0.21 },
+      { x: 0.28, y: 0.25 },
+      { x: 0.24, y: 0.27 },
+      { x: 0.2, y: 0.28 },
+    ],
+    lines: [
+      [0, 1],
+      [1, 2],
+      [2, 3],
+      [3, 4],
+      [4, 5],
+      [5, 6],
+      [6, 0],
+    ],
+  },
+  {
+    name: "URSA MINOR",
+    stars: [
+      { x: 0.5, y: 0.05 },
+      { x: 0.52, y: 0.08 },
+      { x: 0.54, y: 0.12 },
+      { x: 0.53, y: 0.16 },
+      { x: 0.56, y: 0.18 },
+      { x: 0.59, y: 0.16 },
+      { x: 0.57, y: 0.12 },
+    ],
+    lines: [
+      [0, 1],
+      [1, 2],
+      [2, 3],
+      [3, 4],
+      [4, 5],
+      [5, 6],
+      [6, 2],
+    ],
+  },
+  {
+    name: "LYRA",
+    stars: [
+      { x: 0.72, y: 0.3 },
+      { x: 0.74, y: 0.35 },
+      { x: 0.76, y: 0.33 },
+      { x: 0.78, y: 0.35 },
+      { x: 0.76, y: 0.38 },
+    ],
+    lines: [
+      [0, 1],
+      [1, 2],
+      [2, 3],
+      [3, 4],
+      [4, 1],
+    ],
+  },
+  {
+    name: "CYGNUS",
+    stars: [
+      { x: 0.83, y: 0.25 },
+      { x: 0.88, y: 0.3 },
+      { x: 0.93, y: 0.35 },
+      { x: 0.86, y: 0.28 },
+      { x: 0.9, y: 0.28 },
+    ],
+    lines: [
+      [0, 1],
+      [1, 2],
+      [3, 4],
+    ],
+  },
+  {
+    name: "LEO",
+    stars: [
+      { x: 0.12, y: 0.55 },
+      { x: 0.16, y: 0.52 },
+      { x: 0.2, y: 0.5 },
+      { x: 0.24, y: 0.52 },
+      { x: 0.22, y: 0.58 },
+      { x: 0.16, y: 0.6 },
+    ],
+    lines: [
+      [0, 1],
+      [1, 2],
+      [2, 3],
+      [3, 4],
+      [4, 5],
+      [5, 0],
+    ],
+  },
+  {
+    name: "SCORPIUS",
+    stars: [
+      { x: 0.65, y: 0.62 },
+      { x: 0.68, y: 0.65 },
+      { x: 0.7, y: 0.7 },
+      { x: 0.67, y: 0.75 },
+      { x: 0.63, y: 0.78 },
+      { x: 0.6, y: 0.82 },
+    ],
+    lines: [
+      [0, 1],
+      [1, 2],
+      [2, 3],
+      [3, 4],
+      [4, 5],
+    ],
+  },
+];
+
 export function ConstellationMap() {
-  return <div className="absolute inset-0 bg-black" />;
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rafRef = useRef<number>(0);
+  const startTimeRef = useRef<number>(Date.now());
+  const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
+  const { hours, minutes, period } = formatTime(now);
+  const dateStr = formatDate(now);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const resize = () => {
+      canvas.width = window.innerWidth * window.devicePixelRatio;
+      canvas.height = window.innerHeight * window.devicePixelRatio;
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const draw = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const elapsed = Date.now() - startTimeRef.current;
+      const angle = elapsed * ROTATION_SPEED_RAD_PER_MS;
+
+      ctx.clearRect(0, 0, w, h);
+      ctx.save();
+      ctx.translate(w / 2, h / 2);
+      ctx.rotate(angle);
+      ctx.translate(-w / 2, -h / 2);
+
+      for (const c of CONSTELLATIONS) {
+        ctx.strokeStyle = "rgba(255,255,255,0.4)";
+        ctx.lineWidth = 0.5;
+        for (const [a, b] of c.lines) {
+          const sa = c.stars[a];
+          const sb = c.stars[b];
+          ctx.beginPath();
+          ctx.moveTo(sa.x * w, sa.y * h);
+          ctx.lineTo(sb.x * w, sb.y * h);
+          ctx.stroke();
+        }
+
+        for (const star of c.stars) {
+          ctx.beginPath();
+          ctx.arc(star.x * w, star.y * h, 1.5, 0, Math.PI * 2);
+          ctx.fillStyle = "white";
+          ctx.fill();
+        }
+
+        const cx = c.stars.reduce((s, st) => s + st.x, 0) / c.stars.length;
+        const cy = c.stars.reduce((s, st) => s + st.y, 0) / c.stars.length;
+        ctx.fillStyle = "rgba(255,255,255,0.35)";
+        ctx.font = "100 11px 'Geist', sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(c.name, cx * w, cy * h - 12);
+      }
+
+      ctx.restore();
+      rafRef.current = requestAnimationFrame(draw);
+    };
+
+    rafRef.current = requestAnimationFrame(draw);
+
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  return (
+    <div className="absolute inset-0 bg-black">
+      <canvas ref={canvasRef} data-testid="constellation-canvas" className="absolute inset-0" />
+      <div
+        data-testid="constellation-time-overlay"
+        className="absolute bottom-16 left-0 right-0 flex flex-col items-center text-white"
+        style={{ pointerEvents: "none" }}
+      >
+        <div className="flex items-baseline gap-1" style={{ fontWeight: 100 }}>
+          <span className="text-8xl">{hours}</span>
+          <span className="text-8xl">:</span>
+          <span className="text-8xl">{minutes}</span>
+          <span className="ml-2 text-4xl" style={{ fontWeight: 200 }}>
+            {period}
+          </span>
+        </div>
+        <div className="mt-2 text-sm tracking-widest" style={{ fontWeight: 300 }}>
+          {dateStr}
+        </div>
+      </div>
+    </div>
+  );
 }
