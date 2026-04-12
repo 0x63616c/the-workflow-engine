@@ -1,0 +1,60 @@
+#!/bin/bash
+# Ensure all Kamal accessories defined in config/deploy.yml are running.
+# Parses accessory names from the deploy config, checks each one,
+# and boots any that aren't running.
+#
+# Usage: bin/ensure-accessories
+#
+# Exit codes:
+#   0 — all accessories running (or successfully booted)
+#   1 — one or more accessories failed to boot
+
+set -euo pipefail
+
+DEPLOY_CONFIG="config/deploy.yml"
+
+if [ ! -f "$DEPLOY_CONFIG" ]; then
+  echo "Error: $DEPLOY_CONFIG not found"
+  exit 1
+fi
+
+# Parse accessory names from deploy.yml using Ruby (already available since Kamal requires it).
+# Handles ERB templating in the config file.
+ACCESSORIES=$(ruby -ryaml -rerb -e "
+  config = YAML.safe_load(ERB.new(File.read('$DEPLOY_CONFIG')).result)
+  (config['accessories'] || {}).keys.each { |name| puts name }
+")
+
+if [ -z "$ACCESSORIES" ]; then
+  echo "No accessories defined in $DEPLOY_CONFIG"
+  exit 0
+fi
+
+FAILED=0
+
+for NAME in $ACCESSORIES; do
+  echo "Checking accessory: $NAME"
+
+  # kamal accessory details exits 0 even when container doesn't exist,
+  # but outputs nothing. Check for actual container output.
+  OUTPUT=$(kamal accessory details "$NAME" 2>&1) || true
+
+  if echo "$OUTPUT" | grep -q "Up"; then
+    echo "  $NAME is running"
+  else
+    echo "  $NAME is not running, booting..."
+    if kamal accessory boot "$NAME"; then
+      echo "  $NAME booted successfully"
+    else
+      echo "  ERROR: failed to boot $NAME"
+      FAILED=1
+    fi
+  fi
+done
+
+if [ "$FAILED" -ne 0 ]; then
+  echo "One or more accessories failed to boot"
+  exit 1
+fi
+
+echo "All accessories running"
