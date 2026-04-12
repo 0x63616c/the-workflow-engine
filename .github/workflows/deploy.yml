@@ -53,7 +53,7 @@ jobs:
                   {
                     type: "context",
                     elements: [
-                      { type: "mrkdwn", text: ("`" + ($sha | .[:7]) + "`") },
+                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "`") },
                       { type: "plain_text", text: $commit }
                     ]
                   },
@@ -295,19 +295,19 @@ jobs:
                 blocks: [
                   {
                     type: "header",
-                    text: { type: "plain_text", text: (":rocket: Deploy Pipeline :white_check_mark:  " + $duration), emoji: true }
+                    text: { type: "plain_text", text: ":rocket: Deploy Pipeline :white_check_mark:", emoji: true }
                   },
                   {
                     type: "context",
                     elements: [
-                      { type: "mrkdwn", text: ("`" + ($sha | .[:7]) + "`") },
+                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "`") },
                       { type: "plain_text", text: $commit }
                     ]
                   },
                   {
                     type: "context",
                     elements: [
-                      { type: "mrkdwn", text: ("<" + $commit_url + "|Commit> | <" + $run_url + "|Pipeline>") }
+                      { type: "mrkdwn", text: ("<" + $commit_url + "|Commit> | <" + $run_url + "|Pipeline> | " + $duration) }
                     ]
                   }
                 ]
@@ -372,19 +372,19 @@ jobs:
                 blocks: [
                   {
                     type: "header",
-                    text: { type: "plain_text", text: (":rocket: Deploy Pipeline :x:  " + $duration), emoji: true }
+                    text: { type: "plain_text", text: ":rocket: Deploy Pipeline :x:", emoji: true }
                   },
                   {
                     type: "context",
                     elements: [
-                      { type: "mrkdwn", text: ("`" + ($sha | .[:7]) + "`") },
+                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "`") },
                       { type: "plain_text", text: $commit }
                     ]
                   },
                   {
                     type: "context",
                     elements: [
-                      { type: "mrkdwn", text: ("<" + $commit_url + "|Commit> | <" + $run_url + "|Pipeline>") }
+                      { type: "mrkdwn", text: ("<" + $commit_url + "|Commit> | <" + $run_url + "|Pipeline> | " + $duration) }
                     ]
                   }
                 ]
@@ -451,19 +451,19 @@ jobs:
                 blocks: [
                   {
                     type: "header",
-                    text: { type: "plain_text", text: (":rocket: Deploy Pipeline :no_entry_sign:  " + $duration), emoji: true }
+                    text: { type: "plain_text", text: ":rocket: Deploy Pipeline :no_entry_sign:", emoji: true }
                   },
                   {
                     type: "context",
                     elements: [
-                      { type: "mrkdwn", text: ("`" + ($sha | .[:7]) + "`") },
+                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "`") },
                       { type: "plain_text", text: $commit }
                     ]
                   },
                   {
                     type: "context",
                     elements: [
-                      { type: "mrkdwn", text: ("<" + $commit_url + "|Commit> | <" + $run_url + "|Pipeline>") }
+                      { type: "mrkdwn", text: ("<" + $commit_url + "|Commit> | <" + $run_url + "|Pipeline> | " + $duration) }
                     ]
                   }
                 ]
