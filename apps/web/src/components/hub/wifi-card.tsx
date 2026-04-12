@@ -4,8 +4,8 @@ import { Check, Copy, Eye, EyeOff, Wifi } from "lucide-react";
 import QRCode from "qrcode";
 import { useCallback, useEffect, useState } from "react";
 
-const WIFI_SSID = "HomeNet";
-const WIFI_PASSWORD = "welcome2024";
+const WIFI_SSID = import.meta.env.VITE_WIFI_SSID ?? "WiFi";
+const WIFI_PASSWORD = import.meta.env.VITE_WIFI_PASSWORD ?? "";
 const WIFI_ENCRYPTION = "WPA";
 const AUTO_FLIP_BACK_MS = 300_000;
 
