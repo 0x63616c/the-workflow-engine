@@ -1,6 +1,7 @@
 # Stage 1: Install dependencies
 FROM oven/bun:1 AS deps
 WORKDIR /app
+RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 COPY package.json bun.lock ./
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
