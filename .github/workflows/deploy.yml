@@ -31,8 +31,9 @@ jobs:
         id: slack
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | head -1)
+          COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | head -1)
           RESPONSE=$(curl -s -X POST "https://slack.com/api/chat.postMessage" \
             -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -H "Content-Type: application/json; charset=utf-8" \
@@ -75,6 +76,7 @@ jobs:
       - name: Post context to thread
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          COMMIT_AUTHOR: ${{ github.event.head_commit.author.name }}
         run: |
           curl -s -X POST "https://slack.com/api/chat.postMessage" \
             -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
@@ -82,7 +84,7 @@ jobs:
             -d "$(jq -n \
               --arg channel "$SLACK_CHANNEL" \
               --arg thread_ts "${{ steps.slack.outputs.ts }}" \
-              --arg author "${{ github.event.head_commit.author.name }}" \
+              --arg author "$COMMIT_AUTHOR" \
               --arg branch "${{ github.ref_name }}" \
               --arg sha "${{ github.sha }}" \
               '{
@@ -204,10 +206,53 @@ jobs:
                 ]
               }')"
 
+  build-logging-images:
+    name: Build Logging Images
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GHRC_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Loki
+        uses: docker/build-push-action@v6
+        with:
+          context: infra/logging/loki
+          platforms: linux/arm64
+          push: true
+          tags: ghcr.io/0x63616c/workflow-engine-loki:latest
+          cache-from: type=gha,scope=loki
+          cache-to: type=gha,mode=max,scope=loki
+
+      - name: Build and push Alloy
+        uses: docker/build-push-action@v6
+        with:
+          context: infra/logging/alloy
+          platforms: linux/arm64
+          push: true
+          tags: ghcr.io/0x63616c/workflow-engine-alloy:latest
+          cache-from: type=gha,scope=alloy
+          cache-to: type=gha,mode=max,scope=alloy
+
+      - name: Build and push Grafana
+        uses: docker/build-push-action@v6
+        with:
+          context: infra/logging/grafana
+          platforms: linux/arm64
+          push: true
+          tags: ghcr.io/0x63616c/workflow-engine-grafana:latest
+          cache-from: type=gha,scope=grafana
+          cache-to: type=gha,mode=max,scope=grafana
+
   deploy:
     name: Deploy to Homelab
     runs-on: ubuntu-latest
-    needs: [notify-start, check]
+    needs: [notify-start, check, build-logging-images]
     outputs:
       deploy_start_time: ${{ steps.deploy-timer.outputs.start_time }}
     steps:
@@ -316,8 +361,9 @@ jobs:
         if: needs.deploy.result == 'success'
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | head -1)
+          COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | head -1)
           DURATION="${{ steps.duration.outputs.text }}"
 
           curl -s -X POST "https://slack.com/api/chat.update" \
@@ -394,8 +440,9 @@ jobs:
         if: needs.deploy.result == 'failure'
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | head -1)
+          COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | head -1)
           DURATION="${{ steps.duration.outputs.text }}"
 
           curl -s -X POST "https://slack.com/api/chat.update" \
@@ -474,8 +521,9 @@ jobs:
         if: needs.deploy.result == 'skipped'
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | head -1)
+          COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | head -1)
           DURATION="${{ steps.duration.outputs.text }}"
 
           curl -s -X POST "https://slack.com/api/chat.update" \

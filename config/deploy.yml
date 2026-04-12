@@ -53,10 +53,48 @@ accessories:
     port: "8388:8288"
     options:
       network: kamal
+      restart: always
     env:
       secret:
         - INNGEST_EVENT_KEY
         - INNGEST_SIGNING_KEY
+
+  loki:
+    image: ghcr.io/0x63616c/workflow-engine-loki:latest
+    host: homelab
+    port: "3100:3100"
+    directories:
+      - loki-data:/loki
+    options:
+      network: kamal
+      restart: always
+
+  alloy:
+    image: ghcr.io/0x63616c/workflow-engine-alloy:latest
+    host: homelab
+    port: "12345:12345"
+    cmd: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+    options:
+      network: kamal
+      restart: always
+      volume:
+        - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  grafana:
+    image: ghcr.io/0x63616c/workflow-engine-grafana:latest
+    host: homelab
+    port: "3000:3000"
+    directories:
+      - grafana-data:/var/lib/grafana
+    env:
+      clear:
+        GF_AUTH_ANONYMOUS_ENABLED: "true"
+        GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+        GF_AUTH_DISABLE_LOGIN_FORM: "true"
+        GF_SERVER_ROOT_URL: "http://homelab:3000"
+    options:
+      network: kamal
+      restart: always
 
 volumes:
   - data:/app/data
