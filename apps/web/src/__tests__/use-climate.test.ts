@@ -23,6 +23,9 @@ vi.mock("@/lib/trpc", () => ({
       setTemperature: {
         useMutation: vi.fn(),
       },
+      onStateChange: {
+        useSubscription: vi.fn(),
+      },
     },
   },
 }));
@@ -31,6 +34,7 @@ const mockClimateQuery = vi.mocked(trpc.devices.climate.useQuery);
 const mockFanOnMutation = vi.mocked(trpc.devices.fanOn.useMutation);
 const mockFanOffMutation = vi.mocked(trpc.devices.fanOff.useMutation);
 const mockSetTempMutation = vi.mocked(trpc.devices.setTemperature.useMutation);
+const mockOnStateChange = vi.mocked(trpc.devices.onStateChange.useSubscription);
 
 function setupMocks({
   queryData = undefined as
@@ -57,6 +61,7 @@ function setupMocks({
   mockFanOnMutation.mockReturnValue({ mutate: fanOnMutate } as never);
   mockFanOffMutation.mockReturnValue({ mutate: fanOffMutate } as never);
   mockSetTempMutation.mockReturnValue({ mutate: setTempMutate } as never);
+  mockOnStateChange.mockReturnValue(undefined as never);
   return { fanOnMutate, fanOffMutate, setTempMutate };
 }
 
@@ -126,5 +131,42 @@ describe("useClimate", () => {
     const { result } = renderHook(() => useClimate());
     result.current.setTemperature("climate.lr", 74);
     expect(setTempMutate).toHaveBeenCalledWith({ entityId: "climate.lr", temperature: 74 });
+  });
+
+  it("subscribes to climate and fan domain state changes", () => {
+    setupMocks();
+    renderHook(() => useClimate());
+    expect(mockOnStateChange).toHaveBeenCalledWith(
+      { domains: ["climate", "fan"] },
+      expect.objectContaining({ onData: expect.any(Function), onError: expect.any(Function) }),
+    );
+  });
+
+  it("onData callback invalidates climate query cache", () => {
+    const invalidate = vi.fn();
+    vi.mocked(trpc.useUtils).mockReturnValue({
+      devices: { climate: { invalidate } },
+    } as never);
+
+    let capturedOnData: (() => void) | undefined;
+    mockOnStateChange.mockImplementation((_input, opts) => {
+      capturedOnData = (opts as { onData?: () => void }).onData;
+      return undefined as never;
+    });
+
+    // Set up remaining mocks without overriding useUtils
+    const mutateFn = vi.fn();
+    mockClimateQuery.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+    } as never);
+    mockFanOnMutation.mockReturnValue({ mutate: mutateFn } as never);
+    mockFanOffMutation.mockReturnValue({ mutate: mutateFn } as never);
+    mockSetTempMutation.mockReturnValue({ mutate: mutateFn } as never);
+
+    renderHook(() => useClimate());
+    capturedOnData?.();
+    expect(invalidate).toHaveBeenCalled();
   });
 });

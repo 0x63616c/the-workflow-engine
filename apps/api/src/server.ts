@@ -7,12 +7,14 @@ import { runMigrations } from "./db/migrate";
 import { EFFECTIVE_PORT, env } from "./env";
 import { inngest } from "./inngest/client";
 import { ha } from "./integrations/homeassistant";
+import { haRelay } from "./integrations/homeassistant/ws-relay";
 import { log } from "./lib/logger";
 import { createContext } from "./trpc/context";
 import { appRouter } from "./trpc/routers";
 
 await runMigrations();
 await ha.init();
+haRelay.connect();
 
 const inngestHandler = serve({
   client: inngest,
@@ -89,6 +91,7 @@ const server = Bun.serve({
 log.info({ port: server.port, env: env.NODE_ENV, build: env.BUILD_HASH }, "API started");
 
 const shutdown = async () => {
+  haRelay.destroy();
   await pool.end();
   process.exit(0);
 };

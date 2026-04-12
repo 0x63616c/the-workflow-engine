@@ -1,18 +1,34 @@
 import { trpc } from "@/lib/trpc";
+import { useState } from "react";
 
 const POLL_INTERVAL_MS = 5_000;
 
 export function useClimate() {
+  const [subscriptionError, setSubscriptionError] = useState(false);
+
+  const utils = trpc.useUtils();
+
   const climate = trpc.devices.climate.useQuery(undefined, {
-    refetchInterval: POLL_INTERVAL_MS,
+    refetchInterval: subscriptionError ? POLL_INTERVAL_MS : false,
     retry: false,
   });
-  const utils = trpc.useUtils();
-  const invalidateClimate = () => utils.devices.climate.invalidate();
-  const fanOnMutation = trpc.devices.fanOn.useMutation({ onSuccess: invalidateClimate });
-  const fanOffMutation = trpc.devices.fanOff.useMutation({ onSuccess: invalidateClimate });
+
+  trpc.devices.onStateChange.useSubscription(
+    { domains: ["climate", "fan"] },
+    {
+      onData: () => {
+        utils.devices.climate.invalidate();
+      },
+      onError: () => {
+        setSubscriptionError(true);
+      },
+    },
+  );
+
+  const fanOnMutation = trpc.devices.fanOn.useMutation();
+  const fanOffMutation = trpc.devices.fanOff.useMutation();
   const setTempMutation = trpc.devices.setTemperature.useMutation({
-    onSuccess: invalidateClimate,
+    onSuccess: () => utils.devices.climate.invalidate(),
   });
 
   const data = climate.data;

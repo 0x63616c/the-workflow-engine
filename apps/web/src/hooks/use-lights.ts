@@ -1,12 +1,30 @@
 import { trpc } from "@/lib/trpc";
+import { useState } from "react";
 
 const POLL_INTERVAL_MS = 5_000;
 
 export function useLights() {
+  const [subscriptionError, setSubscriptionError] = useState(false);
+
+  const utils = trpc.useUtils();
+
   const lights = trpc.devices.lights.useQuery(undefined, {
-    refetchInterval: POLL_INTERVAL_MS,
+    refetchInterval: subscriptionError ? POLL_INTERVAL_MS : false,
     retry: false,
   });
+
+  trpc.devices.onStateChange.useSubscription(
+    { domains: ["light"] },
+    {
+      onData: () => {
+        utils.devices.lights.invalidate();
+      },
+      onError: () => {
+        setSubscriptionError(true);
+      },
+    },
+  );
+
   const lightsOnMutation = trpc.devices.lightsOn.useMutation();
   const lightsOffMutation = trpc.devices.lightsOff.useMutation();
 

@@ -36,13 +36,13 @@ export function LightsCard() {
         <div className="flex items-center justify-between">
           <span className="text-base text-muted-foreground">Lights</span>
           <Lightbulb
-            size={18}
+            size={32}
             className={`transition-colors ${onCount === 0 ? "text-muted-foreground/40" : "text-amber-400"}`}
           />
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-xl font-light text-foreground">{countLabel}</span>
-          <span className="text-sm text-muted-foreground/50">{allOn ? "All Off" : "All On"}</span>
+          <span className="text-2xl font-light text-foreground">{countLabel}</span>
+          <span className="text-base text-muted-foreground/50">{allOn ? "All Off" : "All On"}</span>
         </div>
       </div>
     </BentoCard>
