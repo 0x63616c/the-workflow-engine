@@ -54,7 +54,7 @@ describe("WidgetGrid", () => {
     useCardExpansionStore.setState({ expandedCardId: null });
   });
 
-  it("renders all 12 widget cards", () => {
+  it("renders all widget cards including timer", () => {
     render(<WidgetGrid />);
 
     expect(screen.getByTestId("widget-card-weather")).toBeInTheDocument();
@@ -68,7 +68,7 @@ describe("WidgetGrid", () => {
     expect(screen.getByTestId("widget-card-email")).toBeInTheDocument();
     expect(screen.getByTestId("widget-card-system")).toBeInTheDocument();
     expect(screen.getByTestId("widget-card-quote")).toBeInTheDocument();
-    expect(screen.getByTestId("widget-card-theme")).toBeInTheDocument();
+    expect(screen.getByTestId("widget-card-timer")).toBeInTheDocument();
   });
 
   it("uses 6-column grid layout", () => {
