@@ -10,23 +10,22 @@ concurrency:
 
 jobs:
   check:
-    name: Lint, Typecheck, Test
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Lint
+            command: bunx biome ci .
+          - name: Typecheck
+            command: bun run typecheck
+          - name: Test
+            command: bun run test
+          - name: Boundaries
+            command: bun run check:boundaries
     steps:
       - uses: actions/checkout@v6
-
       - uses: oven-sh/setup-bun@v2
-
       - run: bun install --frozen-lockfile
-
-      - name: Biome CI
-        run: bunx biome ci .
-
-      - name: Typecheck
-        run: bun run typecheck
-
-      - name: Test
-        run: bun run test
-
-      - name: Check import boundaries
-        run: bun run check:boundaries
+      - run: ${{ matrix.command }}
