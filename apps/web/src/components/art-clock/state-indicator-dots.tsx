@@ -31,13 +31,17 @@ export function StateIndicatorDots({
           key={dotIndex}
           type="button"
           data-testid={`state-dot-${dotIndex}`}
-          className="h-px w-3 bg-white p-0 border-0 cursor-pointer"
-          style={{ opacity: dotIndex === activeIndex ? 1 : 0.2 }}
+          className="py-4 px-1.5 border-0 cursor-pointer flex items-center justify-center"
           onClick={(e) => {
             e.stopPropagation();
             onDotClick?.(dotIndex);
           }}
-        />
+        >
+          <span
+            className="block h-px w-3 bg-white"
+            style={{ opacity: dotIndex === activeIndex ? 1 : 0.2 }}
+          />
+        </button>
       ))}
     </div>
   );

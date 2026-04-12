@@ -120,12 +120,12 @@ export function WifiCard() {
                       e.stopPropagation();
                       setShowPassword(!showPassword);
                     }}
-                    className="p-0.5 rounded hover:bg-muted transition-colors"
+                    className="p-2 rounded hover:bg-muted transition-colors"
                   >
                     {showPassword ? (
-                      <EyeOff size={10} className="text-muted-foreground" />
+                      <EyeOff size={14} className="text-muted-foreground" />
                     ) : (
-                      <Eye size={10} className="text-muted-foreground" />
+                      <Eye size={14} className="text-muted-foreground" />
                     )}
                   </button>
                 </div>

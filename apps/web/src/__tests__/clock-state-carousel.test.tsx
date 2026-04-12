@@ -81,7 +81,8 @@ describe("ClockStateCarousel", () => {
     useNavigationStore.setState({ clockStateIndex: 5 });
     render(<ClockStateCarousel />);
     const activeDot = screen.getByTestId("state-dot-5");
-    expect(activeDot).toHaveStyle({ opacity: "1" });
+    const indicator = activeDot.querySelector("span");
+    expect(indicator).toHaveStyle({ opacity: "1" });
   });
 
   it("renders 9 indicator dots", () => {
