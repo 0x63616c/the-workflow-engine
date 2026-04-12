@@ -4,12 +4,11 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { runMigrations } from "../db/migrate";
+import * as schema from "../db/schema";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = resolve(__dirname, "../db/migrations");
-
-import { runMigrations } from "../db/migrate";
-import * as schema from "../db/schema";
 import {
   createCountdownEvent,
   getCountdownEventById,

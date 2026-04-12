@@ -45,7 +45,6 @@ env:
     - INNGEST_SIGNING_KEY
     - HA_TOKEN
     - DATABASE_URL
-    - POSTGRES_PASSWORD
 
 accessories:
   postgres:
