@@ -114,4 +114,36 @@ describe("WidgetGrid", () => {
     expect(screen.getByTestId("hub-container")).toBeInTheDocument();
     expect(screen.getByTestId("widget-grid")).toBeInTheDocument();
   });
+
+  it("renders 24 placeholder background cells", () => {
+    render(<WidgetGrid />);
+
+    const placeholders = screen.getAllByTestId(/^grid-placeholder-/);
+    expect(placeholders).toHaveLength(24);
+  });
+
+  it("placeholder cells are aria-hidden", () => {
+    render(<WidgetGrid />);
+
+    const placeholders = screen.getAllByTestId(/^grid-placeholder-/);
+    for (const cell of placeholders) {
+      expect(cell).toHaveAttribute("aria-hidden", "true");
+    }
+  });
+
+  it("grid container uses min-h-full not fixed h-full", () => {
+    render(<WidgetGrid />);
+
+    const grid = screen.getByTestId("widget-grid");
+    const classes = grid.className.split(" ");
+    expect(classes).toContain("min-h-full");
+    expect(classes).not.toContain("h-full");
+  });
+
+  it("does not use static gridTemplateRows", () => {
+    render(<WidgetGrid />);
+
+    const grid = screen.getByTestId("widget-grid");
+    expect(grid.style.gridTemplateRows).not.toBe("repeat(4, 1fr)");
+  });
 });
