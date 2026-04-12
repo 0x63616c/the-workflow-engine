@@ -5,6 +5,7 @@ import {
   getLightsState,
   getMediaPlayers,
   mediaPlayerCommand,
+  setTemperature,
   setVolume,
   turnAllLightsOff,
   turnAllLightsOn,
@@ -107,6 +108,17 @@ export const devicesRouter = router({
     .mutation(async ({ input }) => {
       try {
         await turnFanOff(input.entityId, input.fanEntityId);
+      } catch (err) {
+        if (err instanceof HaError) return { error: "HA unavailable" };
+        throw err;
+      }
+    }),
+
+  setTemperature: publicProcedure
+    .input(z.object({ entityId: z.string(), temperature: z.number().min(65).max(80) }))
+    .mutation(async ({ input }) => {
+      try {
+        await setTemperature(input.entityId, input.temperature);
       } catch (err) {
         if (err instanceof HaError) return { error: "HA unavailable" };
         throw err;

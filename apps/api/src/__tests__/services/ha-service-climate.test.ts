@@ -48,6 +48,7 @@ describe("getClimateState()", () => {
       hvacAction: "cooling",
       fanOn: false,
       fanEntityId: null,
+      targetTemp: null,
     });
   });
 

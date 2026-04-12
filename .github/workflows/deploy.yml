@@ -300,7 +300,7 @@ jobs:
           HA_TOKEN: ${{ secrets.HA_TOKEN }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-        run: bin/ensure-accessories
+        run: scripts/ensure-accessories
 
       - name: Record deploy start time
         id: deploy-timer

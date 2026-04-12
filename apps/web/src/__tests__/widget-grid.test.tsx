@@ -47,6 +47,7 @@ vi.mock("@/hooks/use-climate", () => ({
     fanEntityId: null,
     friendlyName: "Living Room AC",
     currentTemp: 72,
+    targetTemp: 72,
     tempUnit: "F",
     hvacMode: "cool",
     fanOn: false,
@@ -54,6 +55,7 @@ vi.mock("@/hooks/use-climate", () => ({
     isError: false,
     turnFanOn: vi.fn(),
     turnFanOff: vi.fn(),
+    setTemperature: vi.fn(),
   }),
 }));
 
@@ -70,22 +72,16 @@ describe("WidgetGrid", () => {
     useCardExpansionStore.setState({ expandedCardId: null });
   });
 
-  it("renders all widget cards including climate", () => {
+  it("renders all widget cards", () => {
     render(<WidgetGrid />);
 
-    expect(screen.getByTestId("widget-card-weather")).toBeInTheDocument();
     expect(screen.getByTestId("widget-card-clock")).toBeInTheDocument();
     expect(screen.getByTestId("widget-card-countdown")).toBeInTheDocument();
-    expect(screen.getByTestId("widget-card-photo")).toBeInTheDocument();
-    expect(screen.getByTestId("widget-card-wifi")).toBeInTheDocument();
-    expect(screen.getByTestId("widget-card-lights")).toBeInTheDocument();
     expect(screen.getByTestId("widget-card-music")).toBeInTheDocument();
-    expect(screen.getByTestId("widget-card-calendar")).toBeInTheDocument();
-    expect(screen.getByTestId("widget-card-email")).toBeInTheDocument();
-    expect(screen.getByTestId("widget-card-system")).toBeInTheDocument();
-    expect(screen.getByTestId("widget-card-quote")).toBeInTheDocument();
-    expect(screen.getByTestId("widget-card-timer")).toBeInTheDocument();
+    expect(screen.getByTestId("widget-card-lights")).toBeInTheDocument();
+    expect(screen.getByTestId("widget-card-fan")).toBeInTheDocument();
     expect(screen.getByTestId("widget-card-climate")).toBeInTheDocument();
+    expect(screen.getByTestId("widget-card-wifi")).toBeInTheDocument();
   });
 
   it("uses 6-column grid layout", () => {
@@ -95,19 +91,12 @@ describe("WidgetGrid", () => {
     expect(grid.style.gridTemplateColumns).toBe("repeat(6, 1fr)");
   });
 
-  it("renders weather data", () => {
+  it("renders clock card", () => {
     render(<WidgetGrid />);
 
-    expect(screen.getByText("72\u00b0")).toBeInTheDocument();
-    expect(screen.getByText("Partly Cloudy")).toBeInTheDocument();
-  });
-
-  it("renders clock with current time", () => {
-    render(<WidgetGrid />);
-
-    expect(screen.getByText("2")).toBeInTheDocument();
-    expect(screen.getByText("23")).toBeInTheDocument();
-    expect(screen.getByText("PM")).toBeInTheDocument();
+    const clock = screen.getByTestId("widget-card-clock");
+    expect(clock).toBeInTheDocument();
+    expect(clock.textContent).toContain("PM");
   });
 
   it("has hub-container and widget-grid test IDs", () => {

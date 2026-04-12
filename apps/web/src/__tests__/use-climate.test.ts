@@ -5,6 +5,11 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
+    useUtils: vi.fn(() => ({
+      devices: {
+        climate: { invalidate: vi.fn() },
+      },
+    })),
     devices: {
       climate: {
         useQuery: vi.fn(),
@@ -15,6 +20,9 @@ vi.mock("@/lib/trpc", () => ({
       fanOff: {
         useMutation: vi.fn(),
       },
+      setTemperature: {
+        useMutation: vi.fn(),
+      },
     },
   },
 }));
@@ -22,6 +30,7 @@ vi.mock("@/lib/trpc", () => ({
 const mockClimateQuery = vi.mocked(trpc.devices.climate.useQuery);
 const mockFanOnMutation = vi.mocked(trpc.devices.fanOn.useMutation);
 const mockFanOffMutation = vi.mocked(trpc.devices.fanOff.useMutation);
+const mockSetTempMutation = vi.mocked(trpc.devices.setTemperature.useMutation);
 
 function setupMocks({
   queryData = undefined as
@@ -34,6 +43,7 @@ function setupMocks({
         hvacAction: string | null;
         fanOn: boolean;
         fanEntityId: string | null;
+        targetTemp: number | null;
       }
     | { error: string }
     | undefined,
@@ -42,10 +52,12 @@ function setupMocks({
 } = {}) {
   const fanOnMutate = vi.fn();
   const fanOffMutate = vi.fn();
+  const setTempMutate = vi.fn();
   mockClimateQuery.mockReturnValue({ data: queryData, isLoading, isError } as never);
   mockFanOnMutation.mockReturnValue({ mutate: fanOnMutate } as never);
   mockFanOffMutation.mockReturnValue({ mutate: fanOffMutate } as never);
-  return { fanOnMutate, fanOffMutate };
+  mockSetTempMutation.mockReturnValue({ mutate: setTempMutate } as never);
+  return { fanOnMutate, fanOffMutate, setTempMutate };
 }
 
 describe("useClimate", () => {
@@ -54,6 +66,7 @@ describe("useClimate", () => {
     const { result } = renderHook(() => useClimate());
     expect(result.current.entityId).toBeNull();
     expect(result.current.currentTemp).toBeNull();
+    expect(result.current.targetTemp).toBeNull();
     expect(result.current.fanOn).toBe(false);
     expect(result.current.isLoading).toBe(true);
   });
@@ -69,11 +82,13 @@ describe("useClimate", () => {
         hvacAction: "cooling",
         fanOn: false,
         fanEntityId: null,
+        targetTemp: 72,
       },
     });
     const { result } = renderHook(() => useClimate());
     expect(result.current.entityId).toBe("climate.living_room");
     expect(result.current.currentTemp).toBe(72);
+    expect(result.current.targetTemp).toBe(72);
     expect(result.current.tempUnit).toBe("F");
     expect(result.current.hvacMode).toBe("cool");
     expect(result.current.fanOn).toBe(false);
@@ -104,5 +119,12 @@ describe("useClimate", () => {
     const { result } = renderHook(() => useClimate());
     result.current.turnFanOff("climate.lr", "fan.lr");
     expect(fanOffMutate).toHaveBeenCalledWith({ entityId: "climate.lr", fanEntityId: "fan.lr" });
+  });
+
+  it("setTemperature calls setTemperature mutation", () => {
+    const { setTempMutate } = setupMocks();
+    const { result } = renderHook(() => useClimate());
+    result.current.setTemperature("climate.lr", 74);
+    expect(setTempMutate).toHaveBeenCalledWith({ entityId: "climate.lr", temperature: 74 });
   });
 });

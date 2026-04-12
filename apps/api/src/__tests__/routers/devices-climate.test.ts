@@ -13,6 +13,7 @@ vi.mock("../../services/ha-service", () => ({
   getClimateState: vi.fn(),
   turnFanOn: vi.fn(),
   turnFanOff: vi.fn(),
+  setTemperature: vi.fn(),
 }));
 
 const caller = appRouter.createCaller({} as never);
@@ -32,6 +33,7 @@ describe("devices.climate", () => {
       hvacAction: "cooling",
       fanOn: false,
       fanEntityId: null,
+      targetTemp: 72,
     };
     vi.mocked(haService.getClimateState).mockResolvedValueOnce(mockState);
     const result = await caller.devices.climate();

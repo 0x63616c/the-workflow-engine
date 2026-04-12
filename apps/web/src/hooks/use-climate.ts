@@ -7,8 +7,12 @@ export function useClimate() {
     refetchInterval: POLL_INTERVAL_MS,
     retry: false,
   });
+  const utils = trpc.useUtils();
   const fanOnMutation = trpc.devices.fanOn.useMutation();
   const fanOffMutation = trpc.devices.fanOff.useMutation();
+  const setTempMutation = trpc.devices.setTemperature.useMutation({
+    onSuccess: () => utils.devices.climate.invalidate(),
+  });
 
   const data = climate.data;
   const hasError = "error" in (data ?? {});
@@ -22,6 +26,7 @@ export function useClimate() {
     hvacAction: string | null;
     fanOn: boolean;
     fanEntityId: string | null;
+    targetTemp: number | null;
   };
 
   const state = !hasError && data ? (data as ClimateData) : null;
@@ -36,9 +41,12 @@ export function useClimate() {
     fanOn: state?.fanOn ?? false,
     isLoading: climate.isLoading,
     isError: hasError || climate.isError,
+    targetTemp: state?.targetTemp ?? null,
     turnFanOn: (entityId: string, fanEntityId?: string | null) =>
       fanOnMutation.mutate({ entityId, fanEntityId }),
     turnFanOff: (entityId: string, fanEntityId?: string | null) =>
       fanOffMutation.mutate({ entityId, fanEntityId }),
+    setTemperature: (entityId: string, temperature: number) =>
+      setTempMutation.mutate({ entityId, temperature }),
   };
 }

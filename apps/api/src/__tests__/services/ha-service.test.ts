@@ -4,6 +4,7 @@ import {
   getLightsState,
   getMediaPlayers,
   mediaPlayerCommand,
+  setTemperature,
   setVolume,
   turnAllLightsOff,
   turnAllLightsOn,
@@ -45,6 +46,19 @@ describe("getLightsState()", () => {
     const result = await getLightsState();
     expect(result).toEqual({ onCount: 0, totalCount: 0 });
   });
+
+  it("excludes unavailable entities from both onCount and totalCount", async () => {
+    mockGetEntities.mockResolvedValueOnce([
+      { entity_id: "light.a", state: "on", attributes: {}, last_updated: "" },
+      { entity_id: "light.b", state: "on", attributes: {}, last_updated: "" },
+      { entity_id: "light.c", state: "off", attributes: {}, last_updated: "" },
+      { entity_id: "light.d", state: "unavailable", attributes: {}, last_updated: "" },
+      { entity_id: "light.e", state: "unavailable", attributes: {}, last_updated: "" },
+    ]);
+
+    const result = await getLightsState();
+    expect(result).toEqual({ onCount: 2, totalCount: 3 });
+  });
 });
 
 describe("turnAllLightsOn()", () => {
@@ -60,6 +74,17 @@ describe("turnAllLightsOff()", () => {
     mockCallService.mockResolvedValueOnce(undefined);
     await turnAllLightsOff();
     expect(mockCallService).toHaveBeenCalledWith("light", "turn_off", { entity_id: "all" });
+  });
+});
+
+describe("setTemperature()", () => {
+  it("calls climate.set_temperature with entity and temperature", async () => {
+    mockCallService.mockResolvedValueOnce(undefined);
+    await setTemperature("climate.living_room", 74);
+    expect(mockCallService).toHaveBeenCalledWith("climate", "set_temperature", {
+      entity_id: "climate.living_room",
+      temperature: 74,
+    });
   });
 });
 
