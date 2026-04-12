@@ -105,7 +105,13 @@ jobs:
     name: Lint, Typecheck, Test
     runs-on: ubuntu-latest
     needs: notify-start
+    outputs:
+      start_time: ${{ steps.timer.outputs.start_time }}
     steps:
+      - name: Record start time
+        id: timer
+        run: echo "start_time=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v4
 
       - uses: oven-sh/setup-bun@v2
@@ -130,6 +136,20 @@ jobs:
     needs: [notify-start, check]
     if: always()
     steps:
+      - name: Calculate checks duration
+        id: duration
+        run: |
+          START=${{ needs.check.outputs.start_time }}
+          NOW=$(date +%s)
+          ELAPSED=$((NOW - START))
+          MINUTES=$((ELAPSED / 60))
+          SECONDS=$((ELAPSED % 60))
+          if [ "$MINUTES" -gt 0 ]; then
+            echo "text=${MINUTES}m ${SECONDS}s" >> "$GITHUB_OUTPUT"
+          else
+            echo "text=${SECONDS}s" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checks passed
         if: needs.check.result == 'success'
         env:
@@ -141,6 +161,7 @@ jobs:
             -d "$(jq -n \
               --arg channel "$SLACK_CHANNEL" \
               --arg thread_ts "${{ needs.notify-start.outputs.thread_ts }}" \
+              --arg duration "${{ steps.duration.outputs.text }}" \
               '{
                 channel: $channel,
                 thread_ts: $thread_ts,
@@ -149,7 +170,7 @@ jobs:
                   {
                     type: "context",
                     elements: [
-                      { type: "mrkdwn", text: ":white_check_mark:  *Checks passed* — lint, typecheck, tests, boundaries" }
+                      { type: "mrkdwn", text: (":white_check_mark:  *Checks passed* — lint, typecheck, tests, boundaries (" + $duration + ")") }
                     ]
                   }
                 ]
@@ -167,6 +188,7 @@ jobs:
               --arg channel "$SLACK_CHANNEL" \
               --arg thread_ts "${{ needs.notify-start.outputs.thread_ts }}" \
               --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              --arg duration "${{ steps.duration.outputs.text }}" \
               '{
                 channel: $channel,
                 thread_ts: $thread_ts,
@@ -176,7 +198,7 @@ jobs:
                     type: "section",
                     text: {
                       type: "mrkdwn",
-                      text: (":x:  *Checks failed* — <" + $run_url + "|View Logs>")
+                      text: (":x:  *Checks failed* (" + $duration + ") — <" + $run_url + "|Logs>")
                     }
                   }
                 ]
@@ -186,6 +208,8 @@ jobs:
     name: Deploy to Homelab
     runs-on: ubuntu-latest
     needs: [notify-start, check]
+    outputs:
+      deploy_start_time: ${{ steps.deploy-timer.outputs.start_time }}
     steps:
       - uses: actions/checkout@v4
 
@@ -241,6 +265,10 @@ jobs:
       - name: Login to GHCR
         run: echo "${{ secrets.GHRC_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+      - name: Record deploy start time
+        id: deploy-timer
+        run: echo "start_time=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - name: Deploy with Kamal
         env:
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GHRC_TOKEN }}
@@ -255,10 +283,25 @@ jobs:
     needs: [notify-start, deploy]
     if: always()
     steps:
-      - name: Calculate duration
+      - name: Calculate pipeline duration
         id: duration
         run: |
           START=${{ needs.notify-start.outputs.start_time }}
+          NOW=$(date +%s)
+          ELAPSED=$((NOW - START))
+          MINUTES=$((ELAPSED / 60))
+          SECONDS=$((ELAPSED % 60))
+          if [ "$MINUTES" -gt 0 ]; then
+            echo "text=${MINUTES}m ${SECONDS}s" >> "$GITHUB_OUTPUT"
+          else
+            echo "text=${SECONDS}s" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Calculate deploy duration
+        id: deploy-duration
+        if: needs.deploy.outputs.deploy_start_time != ''
+        run: |
+          START=${{ needs.deploy.outputs.deploy_start_time }}
           NOW=$(date +%s)
           ELAPSED=$((NOW - START))
           MINUTES=$((ELAPSED / 60))
@@ -307,19 +350,20 @@ jobs:
                   {
                     type: "context",
                     elements: [
-                      { type: "mrkdwn", text: ("<" + $commit_url + "|Commit> | <" + $run_url + "|Pipeline> | " + $duration) }
+                      { type: "mrkdwn", text: ("<" + $commit_url + "|Commit> | <" + $run_url + "|Pipeline> | <http://homelab|App> | " + $duration) }
                     ]
                   }
                 ]
               }')"
 
+          DEPLOY_DURATION="${{ steps.deploy-duration.outputs.text }}"
           curl -s -X POST "https://slack.com/api/chat.postMessage" \
             -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -H "Content-Type: application/json; charset=utf-8" \
             -d "$(jq -n \
               --arg channel "$SLACK_CHANNEL" \
               --arg thread_ts "${{ needs.notify-start.outputs.thread_ts }}" \
-              --arg duration "$DURATION" \
+              --arg deploy_duration "$DEPLOY_DURATION" \
               '{
                 channel: $channel,
                 thread_ts: $thread_ts,
@@ -328,7 +372,7 @@ jobs:
                   {
                     type: "context",
                     elements: [
-                      { type: "mrkdwn", text: (":white_check_mark:  *Deployed — the app is now live* (" + $duration + ")") }
+                      { type: "mrkdwn", text: (":white_check_mark:  *Deployed — the app is now live* (" + $deploy_duration + ") — <http://homelab|Open App>") }
                     ]
                   }
                 ]
@@ -390,6 +434,7 @@ jobs:
                 ]
               }')"
 
+          DEPLOY_DURATION="${{ steps.deploy-duration.outputs.text }}"
           curl -s -X POST "https://slack.com/api/chat.postMessage" \
             -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -H "Content-Type: application/json; charset=utf-8" \
@@ -397,7 +442,7 @@ jobs:
               --arg channel "$SLACK_CHANNEL" \
               --arg thread_ts "${{ needs.notify-start.outputs.thread_ts }}" \
               --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-              --arg duration "$DURATION" \
+              --arg deploy_duration "$DEPLOY_DURATION" \
               '{
                 channel: $channel,
                 thread_ts: $thread_ts,
@@ -407,7 +452,7 @@ jobs:
                     type: "section",
                     text: {
                       type: "mrkdwn",
-                      text: (":x:  *Deploy failed* (" + $duration + ") — <" + $run_url + "|Logs>")
+                      text: (":x:  *Deploy failed* (" + $deploy_duration + ") — <" + $run_url + "|Logs>")
                     }
                   }
                 ]
@@ -476,7 +521,7 @@ jobs:
               --arg channel "$SLACK_CHANNEL" \
               --arg thread_ts "${{ needs.notify-start.outputs.thread_ts }}" \
               --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-              --arg duration "$DURATION" \
+              --arg pipeline_duration "$DURATION" \
               '{
                 channel: $channel,
                 thread_ts: $thread_ts,
@@ -486,7 +531,7 @@ jobs:
                     type: "section",
                     text: {
                       type: "mrkdwn",
-                      text: (":no_entry_sign:  *Deploy skipped* (" + $duration + ") — <" + $run_url + "|Logs>")
+                      text: (":no_entry_sign:  *Deploy skipped* (" + $pipeline_duration + ") — <" + $run_url + "|Logs>")
                     }
                   }
                 ]
