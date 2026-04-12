@@ -6,24 +6,47 @@ interface BentoCardProps {
   className?: string;
   onClick?: () => void;
   testId?: string;
-  gridArea?: string;
+  gridColumn?: string;
+  gridRow?: string;
+  colorScheme?: {
+    bg?: string;
+    border?: string;
+  };
+  borderRadius?: string;
 }
 
-export function BentoCard({ children, className = "", onClick, testId, gridArea }: BentoCardProps) {
+export function BentoCard({
+  children,
+  className = "",
+  onClick,
+  testId,
+  gridColumn,
+  gridRow,
+  colorScheme,
+  borderRadius,
+}: BentoCardProps) {
   const isDark = useThemeStore((s) => s.activePaletteId === "midnight");
+  const radiusClass = borderRadius ?? "rounded-2xl";
 
   return (
     <div
       data-testid={testId}
       className={`
-        rounded-2xl p-5 transition-all duration-150 ease-out
+        ${radiusClass} p-5 transition-all duration-150 ease-out
         border bg-card
         ${onClick ? "cursor-pointer active:scale-[0.97]" : ""}
+        ${colorScheme?.bg ?? ""}
+        ${colorScheme?.border ?? ""}
         ${className}
       `}
       style={{
-        ...(gridArea ? { gridArea } : {}),
-        borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+        ...(gridColumn ? { gridColumn } : {}),
+        ...(gridRow ? { gridRow } : {}),
+        borderColor: colorScheme?.border
+          ? undefined
+          : isDark
+            ? "rgba(255,255,255,0.08)"
+            : "rgba(0,0,0,0.06)",
         boxShadow: isDark ? "none" : "0 1px 3px rgba(0,0,0,0.08)",
       }}
       onClick={(e) => {

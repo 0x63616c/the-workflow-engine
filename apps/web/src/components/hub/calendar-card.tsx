@@ -1,4 +1,6 @@
 import { BentoCard } from "@/components/hub/bento-card";
+import { getCardConfig } from "@/components/hub/card-registry";
+import { useCardExpansionStore } from "@/stores/card-expansion-store";
 
 interface CalendarEvent {
   title: string;
@@ -13,12 +15,20 @@ const PLACEHOLDER_EVENT: CalendarEvent | null = {
 };
 
 export function CalendarCard() {
+  const expandCard = useCardExpansionStore((s) => s.expandCard);
+  const config = getCardConfig("calendar");
   const event = PLACEHOLDER_EVENT;
 
   return (
     <BentoCard
       testId="widget-card-calendar"
-      gridArea="calendar"
+      gridColumn={config?.gridColumn}
+      gridRow={config?.gridRow}
+      colorScheme={{
+        bg: config?.colorScheme.bg,
+        border: config?.colorScheme.border,
+      }}
+      onClick={() => expandCard("calendar")}
       className="relative overflow-hidden"
     >
       {event && (

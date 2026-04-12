@@ -1,3 +1,4 @@
+import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -111,12 +112,13 @@ describe("HomePage hub integration", () => {
     expect(useNavigationStore.getState().view).toBe("clock");
   });
 
-  it("clock widget tap returns to clock", async () => {
+  it("clock widget tap expands clock card", async () => {
     useNavigationStore.setState({ view: "hub", clockStateIndex: 0 });
+    useCardExpansionStore.setState({ expandedCardId: null });
     await renderHomePage();
 
     fireEvent.click(screen.getByTestId("widget-card-clock"));
 
-    expect(useNavigationStore.getState().view).toBe("clock");
+    expect(useCardExpansionStore.getState().expandedCardId).toBe("clock");
   });
 });

@@ -1,12 +1,14 @@
 import { formatTime } from "@/components/art-clock/art-clock";
 import { BentoCard } from "@/components/hub/bento-card";
+import { getCardConfig } from "@/components/hub/card-registry";
 import { useCurrentTime } from "@/hooks/use-current-time";
-import { useNavigationStore } from "@/stores/navigation-store";
+import { useCardExpansionStore } from "@/stores/card-expansion-store";
 
 const CLOCK_UPDATE_INTERVAL_MS = 1000;
 
 export function ClockCard() {
-  const setView = useNavigationStore((s) => s.setView);
+  const expandCard = useCardExpansionStore((s) => s.expandCard);
+  const config = getCardConfig("clock");
   const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
   const { hours, minutes, period } = formatTime(now);
 
@@ -19,8 +21,13 @@ export function ClockCard() {
   return (
     <BentoCard
       testId="widget-card-clock"
-      gridArea="clock"
-      onClick={() => setView("clock")}
+      gridColumn={config?.gridColumn}
+      gridRow={config?.gridRow}
+      colorScheme={{
+        bg: config?.colorScheme.bg,
+        border: config?.colorScheme.border,
+      }}
+      onClick={() => expandCard("clock")}
       className="flex flex-col items-center justify-center"
     >
       <div className="text-center">

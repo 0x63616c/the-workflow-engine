@@ -1,6 +1,7 @@
 import { BentoCard } from "@/components/hub/bento-card";
+import { getCardConfig } from "@/components/hub/card-registry";
 import { useSonos } from "@/hooks/use-sonos";
-import { useNavigationStore } from "@/stores/navigation-store";
+import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { Pause, Play } from "lucide-react";
 
 function EqualizerBars({ active }: { active: boolean }) {
@@ -26,15 +27,25 @@ function EqualizerBars({ active }: { active: boolean }) {
 }
 
 export function MusicCard() {
+  const expandCard = useCardExpansionStore((s) => s.expandCard);
+  const config = getCardConfig("music");
   const { activeSpeaker, players, isError, sendCommand } = useSonos();
-  const setView = useNavigationStore((s) => s.setView);
 
   const isPlaying = activeSpeaker?.state === "playing";
   const track = activeSpeaker?.attributes.mediaTitle;
   const artist = activeSpeaker?.attributes.mediaArtist;
 
   return (
-    <BentoCard testId="widget-card-music" gridArea="music" onClick={() => setView("sonos")}>
+    <BentoCard
+      testId="widget-card-music"
+      gridColumn={config?.gridColumn}
+      gridRow={config?.gridRow}
+      colorScheme={{
+        bg: config?.colorScheme.bg,
+        border: config?.colorScheme.border,
+      }}
+      onClick={() => expandCard("music")}
+    >
       <div className="flex flex-col justify-between h-full">
         <div>
           <div className="flex items-center justify-between mb-2">

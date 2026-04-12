@@ -1,8 +1,10 @@
 import { BentoCard } from "@/components/hub/bento-card";
+import { getCardConfig } from "@/components/hub/card-registry";
 import { useThemeStore } from "@/stores/theme-store";
 import { Moon, Sun } from "lucide-react";
 
 export function ThemeToggleCard() {
+  const config = getCardConfig("theme");
   const activePaletteId = useThemeStore((s) => s.activePaletteId);
   const setActivePalette = useThemeStore((s) => s.setActivePalette);
   const isDark = activePaletteId === "midnight";
@@ -16,7 +18,13 @@ export function ThemeToggleCard() {
   return (
     <BentoCard
       testId="widget-card-theme"
-      gridArea="theme"
+      gridColumn={config?.gridColumn}
+      gridRow={config?.gridRow}
+      colorScheme={{
+        bg: config?.colorScheme.bg,
+        border: config?.colorScheme.border,
+      }}
+      borderRadius={config?.borderRadius}
       onClick={toggle}
       className="flex flex-col items-center justify-center"
     >
