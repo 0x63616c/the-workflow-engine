@@ -16,6 +16,10 @@ proxy:
   host: homelab
   ssl: false
   app_port: 4301
+  healthcheck:
+    path: /up
+    interval: 3
+    timeout: 5
 
 registry:
   server: ghcr.io
