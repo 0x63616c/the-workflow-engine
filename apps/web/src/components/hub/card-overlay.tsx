@@ -1,10 +1,10 @@
 import { ClockStateCarousel } from "@/components/art-clock/clock-state-carousel";
 import { CountdownCardExpanded } from "@/components/hub/countdown-card";
 import { SonosAlbumArt } from "@/components/sonos/sonos-album-art";
-import { TimerPanel } from "@/components/timer/timer-panel";
 import { SonosControls } from "@/components/sonos/sonos-controls";
 import { SonosProgressBar } from "@/components/sonos/sonos-progress-bar";
 import { SonosSpeakerList } from "@/components/sonos/sonos-speaker-list";
+import { TimerPanel } from "@/components/timer/timer-panel";
 import { useLights } from "@/hooks/use-lights";
 import { useSonos } from "@/hooks/use-sonos";
 import { useSwipe } from "@/hooks/use-swipe";
