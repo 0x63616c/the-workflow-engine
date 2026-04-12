@@ -31,6 +31,13 @@ pre-commit:
         for f in {staged_files}; do
           plutil -lint "$f" || exit 1
         done
+    yaml-lint:
+      glob: "*.{yml,yaml}"
+      exclude: ".claude/**"
+      run: yamllint -d relaxed {staged_files}
+    actionlint:
+      glob: ".github/workflows/*.{yml,yaml}"
+      run: actionlint {staged_files}
     no-env:
       glob: ".env*"
       exclude_tags:
