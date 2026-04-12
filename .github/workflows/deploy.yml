@@ -12,32 +12,44 @@ permissions:
   contents: read
   packages: write
 
+env:
+  SLACK_CHANNEL: C0ASR5837ED
+
 jobs:
   notify-start:
     name: Notify Pipeline Start
     runs-on: ubuntu-latest
     outputs:
-      thread_ts: ${{ steps.slack.outputs.thread_ts }}
+      thread_ts: ${{ steps.slack.outputs.ts }}
     steps:
       - name: Post pipeline start to Slack
         id: slack
-        uses: slackapi/slack-github-action@v2.1.0
-        with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload: |
-            channel: C0ASR5837ED
-            text: "Pipeline started for `${{ github.repository }}`"
-            blocks:
-              - type: section
-                text:
-                  type: mrkdwn
-                  text: |
-                    *Pipeline started* :rocket:
-                    *Commit:* `${{ github.event.head_commit.message }}`
-                    *Author:* ${{ github.event.head_commit.author.name }}
-                    *Branch:* `${{ github.ref_name }}`
-                    <${{ github.event.head_commit.url }}|View commit> | <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View pipeline>
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        run: |
+          COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | head -1)
+          RESPONSE=$(curl -s -X POST "https://slack.com/api/chat.postMessage" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            -d "$(jq -n \
+              --arg channel "$SLACK_CHANNEL" \
+              --arg commit "$COMMIT_MSG" \
+              --arg author "${{ github.event.head_commit.author.name }}" \
+              --arg branch "${{ github.ref_name }}" \
+              --arg commit_url "${{ github.event.head_commit.url }}" \
+              --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              '{
+                channel: $channel,
+                text: ("Pipeline started: " + $commit),
+                blocks: [{
+                  type: "section",
+                  text: {
+                    type: "mrkdwn",
+                    text: ("*Pipeline started* :rocket:\n*Commit:* `" + $commit + "`\n*Author:* " + $author + "\n*Branch:* `" + $branch + "`\n<" + $commit_url + "|View commit> | <" + $run_url + "|View pipeline>")
+                  }
+                }]
+              }')")
+          echo "ts=$(echo "$RESPONSE" | jq -r '.ts')" >> "$GITHUB_OUTPUT"
 
   check:
     name: Lint, Typecheck, Test
@@ -70,35 +82,52 @@ jobs:
     steps:
       - name: Checks passed
         if: needs.check.result == 'success'
-        uses: slackapi/slack-github-action@v2.1.0
-        with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload: |
-            channel: C0ASR5837ED
-            thread_ts: "${{ needs.notify-start.outputs.thread_ts }}"
-            text: "Checks passed"
-            blocks:
-              - type: section
-                text:
-                  type: mrkdwn
-                  text: "*Checks passed* :white_check_mark: Lint, typecheck, tests, boundaries all green."
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        run: |
+          curl -s -X POST "https://slack.com/api/chat.postMessage" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            -d "$(jq -n \
+              --arg channel "$SLACK_CHANNEL" \
+              --arg thread_ts "${{ needs.notify-start.outputs.thread_ts }}" \
+              '{
+                channel: $channel,
+                thread_ts: $thread_ts,
+                text: "Checks passed",
+                blocks: [{
+                  type: "section",
+                  text: {
+                    type: "mrkdwn",
+                    text: "*Checks passed* :white_check_mark: Lint, typecheck, tests, boundaries all green."
+                  }
+                }]
+              }')"
 
       - name: Checks failed
         if: needs.check.result == 'failure'
-        uses: slackapi/slack-github-action@v2.1.0
-        with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload: |
-            channel: C0ASR5837ED
-            thread_ts: "${{ needs.notify-start.outputs.thread_ts }}"
-            text: "Checks failed"
-            blocks:
-              - type: section
-                text:
-                  type: mrkdwn
-                  text: "*Checks failed* :x: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        run: |
+          curl -s -X POST "https://slack.com/api/chat.postMessage" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            -d "$(jq -n \
+              --arg channel "$SLACK_CHANNEL" \
+              --arg thread_ts "${{ needs.notify-start.outputs.thread_ts }}" \
+              --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              '{
+                channel: $channel,
+                thread_ts: $thread_ts,
+                text: "Checks failed",
+                blocks: [{
+                  type: "section",
+                  text: {
+                    type: "mrkdwn",
+                    text: ("*Checks failed* :x: <" + $run_url + "|View logs>")
+                  }
+                }]
+              }')"
 
   deploy:
     name: Deploy to Homelab
@@ -108,19 +137,27 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Notify deploying
-        uses: slackapi/slack-github-action@v2.1.0
-        with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload: |
-            channel: C0ASR5837ED
-            thread_ts: "${{ needs.notify-start.outputs.thread_ts }}"
-            text: "Deploying to homelab..."
-            blocks:
-              - type: section
-                text:
-                  type: mrkdwn
-                  text: "*Deploying to homelab...* :hourglass_flowing_sand:"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        run: |
+          curl -s -X POST "https://slack.com/api/chat.postMessage" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            -d "$(jq -n \
+              --arg channel "$SLACK_CHANNEL" \
+              --arg thread_ts "${{ needs.notify-start.outputs.thread_ts }}" \
+              '{
+                channel: $channel,
+                thread_ts: $thread_ts,
+                text: "Deploying to homelab...",
+                blocks: [{
+                  type: "section",
+                  text: {
+                    type: "mrkdwn",
+                    text: "*Deploying to homelab...* :hourglass_flowing_sand:"
+                  }
+                }]
+              }')"
 
       - name: Connect to Tailscale
         uses: tailscale/github-action@v4
@@ -166,48 +203,73 @@ jobs:
     steps:
       - name: Deploy succeeded
         if: needs.deploy.result == 'success'
-        uses: slackapi/slack-github-action@v2.1.0
-        with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload: |
-            channel: C0ASR5837ED
-            thread_ts: "${{ needs.notify-start.outputs.thread_ts }}"
-            text: "Deployed successfully"
-            blocks:
-              - type: section
-                text:
-                  type: mrkdwn
-                  text: "*Deployed* :white_check_mark: The app is now live."
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        run: |
+          curl -s -X POST "https://slack.com/api/chat.postMessage" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            -d "$(jq -n \
+              --arg channel "$SLACK_CHANNEL" \
+              --arg thread_ts "${{ needs.notify-start.outputs.thread_ts }}" \
+              '{
+                channel: $channel,
+                thread_ts: $thread_ts,
+                text: "Deployed successfully",
+                blocks: [{
+                  type: "section",
+                  text: {
+                    type: "mrkdwn",
+                    text: "*Deployed* :white_check_mark: The app is now live."
+                  }
+                }]
+              }')"
 
       - name: Deploy failed
         if: needs.deploy.result == 'failure'
-        uses: slackapi/slack-github-action@v2.1.0
-        with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload: |
-            channel: C0ASR5837ED
-            thread_ts: "${{ needs.notify-start.outputs.thread_ts }}"
-            text: "Deploy failed"
-            blocks:
-              - type: section
-                text:
-                  type: mrkdwn
-                  text: "*Deploy failed* :x: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        run: |
+          curl -s -X POST "https://slack.com/api/chat.postMessage" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            -d "$(jq -n \
+              --arg channel "$SLACK_CHANNEL" \
+              --arg thread_ts "${{ needs.notify-start.outputs.thread_ts }}" \
+              --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              '{
+                channel: $channel,
+                thread_ts: $thread_ts,
+                text: "Deploy failed",
+                blocks: [{
+                  type: "section",
+                  text: {
+                    type: "mrkdwn",
+                    text: ("*Deploy failed* :x: <" + $run_url + "|View logs>")
+                  }
+                }]
+              }')"
 
       - name: Deploy skipped (checks failed)
         if: needs.deploy.result == 'skipped'
-        uses: slackapi/slack-github-action@v2.1.0
-        with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload: |
-            channel: C0ASR5837ED
-            thread_ts: "${{ needs.notify-start.outputs.thread_ts }}"
-            text: "Deploy skipped"
-            blocks:
-              - type: section
-                text:
-                  type: mrkdwn
-                  text: "*Deploy skipped* :no_entry_sign: Checks failed, deploy did not run."
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        run: |
+          curl -s -X POST "https://slack.com/api/chat.postMessage" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            -d "$(jq -n \
+              --arg channel "$SLACK_CHANNEL" \
+              --arg thread_ts "${{ needs.notify-start.outputs.thread_ts }}" \
+              '{
+                channel: $channel,
+                thread_ts: $thread_ts,
+                text: "Deploy skipped",
+                blocks: [{
+                  type: "section",
+                  text: {
+                    type: "mrkdwn",
+                    text: "*Deploy skipped* :no_entry_sign: Checks failed, deploy did not run."
+                  }
+                }]
+              }')"
