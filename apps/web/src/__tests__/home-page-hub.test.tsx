@@ -30,17 +30,21 @@ vi.mock("@/hooks/use-sonos", () => ({
   }),
 }));
 
+vi.mock("@/components/art-clock/clock-state-carousel", () => ({
+  ClockStateCarousel: () => <div data-testid="clock-state-carousel" />,
+}));
+
 describe("HomePage hub integration", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 3, 11, 14, 23, 0));
-    useNavigationStore.setState({ view: "clock" });
+    useNavigationStore.setState({ view: "clock", clockStateIndex: 0 });
   });
 
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
-    useNavigationStore.setState({ view: "clock" });
+    useNavigationStore.setState({ view: "clock", clockStateIndex: 0 });
   });
 
   async function renderHomePage() {
@@ -79,7 +83,7 @@ describe("HomePage hub integration", () => {
   });
 
   it("tap hub-container returns to clock", async () => {
-    useNavigationStore.setState({ view: "hub" });
+    useNavigationStore.setState({ view: "hub", clockStateIndex: 0 });
     await renderHomePage();
 
     fireEvent.click(screen.getByTestId("hub-container"));
@@ -88,7 +92,7 @@ describe("HomePage hub integration", () => {
   });
 
   it("widget card tap does NOT return to clock", async () => {
-    useNavigationStore.setState({ view: "hub" });
+    useNavigationStore.setState({ view: "hub", clockStateIndex: 0 });
     await renderHomePage();
 
     fireEvent.click(screen.getByTestId("widget-card-weather"));
@@ -97,7 +101,7 @@ describe("HomePage hub integration", () => {
   });
 
   it("auto-returns to clock after idle timeout", async () => {
-    useNavigationStore.setState({ view: "hub" });
+    useNavigationStore.setState({ view: "hub", clockStateIndex: 0 });
     await renderHomePage();
 
     act(() => {
@@ -108,7 +112,7 @@ describe("HomePage hub integration", () => {
   });
 
   it("clock widget tap returns to clock", async () => {
-    useNavigationStore.setState({ view: "hub" });
+    useNavigationStore.setState({ view: "hub", clockStateIndex: 0 });
     await renderHomePage();
 
     fireEvent.click(screen.getByTestId("widget-card-clock"));
