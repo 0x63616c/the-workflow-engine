@@ -1,4 +1,4 @@
-import { useNavigationStore } from "@/stores/navigation-store";
+import { CLOCK_STATE_COUNT, useNavigationStore } from "@/stores/navigation-store";
 import { afterEach, describe, expect, it } from "vitest";
 
 describe("navigation-store", () => {
@@ -31,5 +31,50 @@ describe("navigation-store", () => {
     useNavigationStore.getState().setView("sonos");
     useNavigationStore.getState().setView("hub");
     expect(useNavigationStore.getState().view).toBe("hub");
+  });
+});
+
+describe("clockStateIndex", () => {
+  afterEach(() => {
+    useNavigationStore.setState({ view: "clock" });
+  });
+
+  it("initializes clockStateIndex to 0", () => {
+    expect(useNavigationStore.getState().clockStateIndex).toBe(0);
+  });
+
+  it("setClockStateIndex sets index to 3", () => {
+    useNavigationStore.getState().setClockStateIndex(3);
+    expect(useNavigationStore.getState().clockStateIndex).toBe(3);
+  });
+
+  it("setClockStateIndex clamps below 0 to 0", () => {
+    useNavigationStore.getState().setClockStateIndex(-1);
+    expect(useNavigationStore.getState().clockStateIndex).toBe(0);
+  });
+
+  it("setClockStateIndex clamps above 8 to 8", () => {
+    useNavigationStore.getState().setClockStateIndex(9);
+    expect(useNavigationStore.getState().clockStateIndex).toBe(8);
+  });
+
+  it("setClockStateIndex clamps NaN to 0", () => {
+    useNavigationStore.getState().setClockStateIndex(Number.NaN);
+    expect(useNavigationStore.getState().clockStateIndex).toBe(0);
+  });
+
+  it("changing clockStateIndex does not affect view", () => {
+    useNavigationStore.getState().setClockStateIndex(5);
+    expect(useNavigationStore.getState().view).toBe("clock");
+  });
+
+  it("changing view does not affect clockStateIndex", () => {
+    useNavigationStore.getState().setClockStateIndex(3);
+    useNavigationStore.getState().setView("hub");
+    expect(useNavigationStore.getState().clockStateIndex).toBe(3);
+  });
+
+  it("CLOCK_STATE_COUNT is 9", () => {
+    expect(CLOCK_STATE_COUNT).toBe(9);
   });
 });
