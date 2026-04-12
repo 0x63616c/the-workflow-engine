@@ -51,5 +51,5 @@ const EVENTS = [
 ];
 
 console.log(`Seeding ${EVENTS.length} countdown events...`);
-db.insert(countdownEvents).values(EVENTS).run();
+await db.insert(countdownEvents).values(EVENTS);
 console.log(`Seeded ${EVENTS.length} countdown events`);
