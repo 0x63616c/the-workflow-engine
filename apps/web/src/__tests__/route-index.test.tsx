@@ -1,74 +1,29 @@
-import { useNavigationStore } from "@/stores/navigation-store";
-import { cleanup, render } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { useCardExpansionStore } from "@/stores/card-expansion-store";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/stores/navigation-store");
-vi.mock("@/components/art-clock/clock-state-carousel", () => ({
-  ClockStateCarousel: () => <div data-testid="clock-state-carousel" />,
-}));
 vi.mock("@/components/hub/widget-grid", () => ({
   WidgetGrid: () => <div data-testid="widget-grid" />,
 }));
-vi.mock("@/components/sonos/sonos-panel", () => ({
-  SonosPanel: () => <div data-testid="sonos-panel" />,
+vi.mock("@/components/hub/card-overlay", () => ({
+  CardOverlay: () => <div data-testid="card-overlay-mock" />,
 }));
 
-type View = "clock" | "hub" | "sonos";
-
-const mockUseNavigationStore = vi.mocked(useNavigationStore);
-
-function setupStore(view: View) {
-  mockUseNavigationStore.mockImplementation(
-    (
-      selector: (s: {
-        view: View;
-        setView: () => void;
-        clockStateIndex: number;
-        setClockStateIndex: () => void;
-      }) => unknown,
-    ) =>
-      selector({
-        view,
-        setView: vi.fn(),
-        clockStateIndex: 0,
-        setClockStateIndex: vi.fn(),
-      }) as never,
-  );
-}
+beforeEach(() => {
+  useCardExpansionStore.setState({ expandedCardId: null });
+});
 
 afterEach(() => {
   cleanup();
 });
 
-describe("route index — sonos layer", () => {
-  it("sonos layer is in DOM", async () => {
-    setupStore("clock");
+describe("route index", () => {
+  it("renders WidgetGrid and CardOverlay", async () => {
     const { Route } = await import("@/routes/index");
     const HomePage = Route.options.component;
     if (!HomePage) throw new Error("HomePage component not found on route");
-    const { container } = render(<HomePage />);
-    expect(container.querySelector("[data-testid='sonos-layer']")).toBeInTheDocument();
-  });
-
-  it("sonos layer has opacity 1 and pointer-events auto when view is sonos", async () => {
-    setupStore("sonos");
-    const { Route } = await import("@/routes/index");
-    const HomePage = Route.options.component;
-    if (!HomePage) throw new Error("HomePage component not found on route");
-    const { container } = render(<HomePage />);
-    const layer = container.querySelector("[data-testid='sonos-layer']") as HTMLElement;
-    expect(layer.style.opacity).toBe("1");
-    expect(layer.style.pointerEvents).toBe("auto");
-  });
-
-  it("sonos layer has opacity 0 and pointer-events none when view is hub", async () => {
-    setupStore("hub");
-    const { Route } = await import("@/routes/index");
-    const HomePage = Route.options.component;
-    if (!HomePage) throw new Error("HomePage component not found on route");
-    const { container } = render(<HomePage />);
-    const layer = container.querySelector("[data-testid='sonos-layer']") as HTMLElement;
-    expect(layer.style.opacity).toBe("0");
-    expect(layer.style.pointerEvents).toBe("none");
+    render(<HomePage />);
+    expect(screen.getByTestId("widget-grid")).toBeInTheDocument();
+    expect(screen.getByTestId("card-overlay-mock")).toBeInTheDocument();
   });
 });
