@@ -19,26 +19,18 @@ brew install qemu socket_vmnet
 
 ## Configure socket_vmnet (Bridged Mode)
 
-Default socket_vmnet uses shared/NAT mode (192.168.105.x subnet). For LAN device discovery, must use bridged mode on en1 (Ethernet).
+Default socket_vmnet uses shared/NAT mode (192.168.105.x subnet). For LAN device discovery, must use bridged mode on en1 (Wi-Fi).
 
-Update the launchd plist (requires sudo):
+Write the launchd plist to `/Library/LaunchDaemons/` (requires sudo):
 
 ```bash
-sudo tee /opt/homebrew/opt/socket_vmnet/homebrew.mxcl.socket_vmnet.plist << 'EOF'
+sudo tee /Library/LaunchDaemons/homebrew.mxcl.socket_vmnet.plist << 'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
 	<key>Label</key>
 	<string>homebrew.mxcl.socket_vmnet</string>
-	<key>LimitLoadToSessionType</key>
-	<array>
-		<string>Aqua</string>
-		<string>Background</string>
-		<string>LoginWindow</string>
-		<string>StandardIO</string>
-		<string>System</string>
-	</array>
 	<key>ProgramArguments</key>
 	<array>
 		<string>/opt/homebrew/opt/socket_vmnet/bin/socket_vmnet</string>
@@ -57,18 +49,27 @@ sudo tee /opt/homebrew/opt/socket_vmnet/homebrew.mxcl.socket_vmnet.plist << 'EOF
 EOF
 ```
 
-Start the service:
+Load and start the service via launchctl (not `brew services`, which is unreliable for this):
 
 ```bash
-sudo brew services start socket_vmnet
+sudo launchctl bootstrap system /Library/LaunchDaemons/homebrew.mxcl.socket_vmnet.plist
 ```
 
 Verify it's running in bridged mode:
 
 ```bash
-cat /opt/homebrew/var/log/socket_vmnet/stdout
-# Should show: "Initializing vmnet.framework (mode 1002)" and "Using network interface en1"
+ps aux | grep socket_vmnet
+# Should show: --vmnet-mode=bridged --vmnet-interface=en1
 ```
+
+To stop/restart, use `launchctl bootout` then `bootstrap` again:
+
+```bash
+sudo launchctl bootout system/homebrew.mxcl.socket_vmnet
+sudo launchctl bootstrap system /Library/LaunchDaemons/homebrew.mxcl.socket_vmnet.plist
+```
+
+There is also a one-shot fix script at `scripts/fix-socket-vmnet.sh` that handles everything (stop VM, fix socket_vmnet, restart VM, verify HA). Copy to homelab and run with `sudo bash fix-socket-vmnet.sh`.
 
 ## Download HAOS Image
 
@@ -158,7 +159,7 @@ chmod +x ~/homeassistant-os/start-haos.sh
 ```
 LAN (192.168.0.0/24)
   |
-  en1 (Mac Mini Ethernet, 192.168.0.147)
+  en1 (Mac Mini Wi-Fi, 192.168.0.147)
   |
   socket_vmnet (bridged mode, runs as root via launchd)
   |
@@ -227,7 +228,7 @@ Boot order: socket_vmnet starts first (system-level launchd), then HAOS starts (
 | `~/homeassistant-os/stop-haos.sh` | Graceful stop via PID |
 | `~/homeassistant-os/haos.pid` | Running process ID |
 | `~/Library/LaunchAgents/com.homeassistant.os.plist` | Auto-start HAOS on login |
-| `/opt/homebrew/opt/socket_vmnet/homebrew.mxcl.socket_vmnet.plist` | socket_vmnet bridged config (root service) |
+| `/Library/LaunchDaemons/homebrew.mxcl.socket_vmnet.plist` | socket_vmnet bridged config (root service) |
 
 ## Management
 
@@ -251,7 +252,7 @@ open http://homeassistant.local:8123
 ## Network Info
 
 - **HAOS IP**: Assigned by router DHCP (currently 192.168.0.38)
-- **LAN interface**: en1 (Ethernet)
+- **LAN interface**: en1 (Wi-Fi)
 - **Hue Bridge**: 192.168.0.23 (ecb5fa87de06.local, model BSB002)
 - **Access**: http://homeassistant.local:8123 or http://192.168.0.38:8123
 
