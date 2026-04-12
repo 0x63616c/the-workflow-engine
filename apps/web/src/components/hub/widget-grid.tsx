@@ -51,7 +51,7 @@ export function WidgetGrid() {
           />
         ))}
       </div>
-      <span className="absolute bottom-2 left-3 font-mono text-xs tabular-nums text-muted-foreground/30">
+      <span className="fixed bottom-2 left-3 font-mono text-xs tabular-nums text-muted-foreground/30">
         {remainingSeconds}
       </span>
     </div>
