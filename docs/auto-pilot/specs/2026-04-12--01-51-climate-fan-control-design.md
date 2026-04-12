@@ -11,11 +11,12 @@ A hub grid card that shows current HVAC state (temperature, mode) and provides a
 Decisions made autonomously (not specified in alignment doc):
 
 - **Single climate entity**: The card targets the first `climate.*` entity found. No multi-entity picker in v1. If multiple climate entities exist, the service returns the first one (alphabetical by entity_id).
-- **Fan toggle strategy**: Try `climate.set_hvac_mode` with `fan_only` / `off` first (HomeKit AC pattern). If a separate `fan.*` entity exists for the same device, use `fan.turn_on` / `fan.turn_off` instead. The service checks for `fan.*` entities at query time and picks the appropriate strategy.
+- **Fan toggle strategy**: `getClimateState` computes a `fanEntityId` field at query time by looking for a `fan.*` entity with an exact name match (e.g. `climate.living_room` matches only `fan.living_room`, not `fan.living_room_ceiling`). If found, `fanEntityId` is set; if not, it is `null`. The frontend passes `fanEntityId` to mutations. `turnFanOn`/`turnFanOff` accept an optional `fanEntityId` param: if provided, use `fan.turn_on`/`fan.turn_off`; if null, use `climate.set_hvac_mode`. This avoids re-fetching fan entities on every button press.
 - **Temperature unit**: Display whatever HA provides in `current_temperature`. No unit conversion. The `temperature_unit` attribute from the climate entity determines the suffix (F or C).
-- **Grid placement**: Replace the theme-toggle card slot. The 3x3 grid becomes: `weather weather clock / wifi lights lights / calendar music climate`. Theme toggle is a low-priority card compared to climate control on a wall panel.
+- **Grid placement**: Keep all existing cards. Expand grid from 3x3 to 4x3 by adding a 4th row. New layout: `"weather weather clock" / "wifi lights lights" / "calendar music theme" / "climate climate climate"`. Climate card spans the full bottom row.
 - **Poll interval**: 5000ms, matching lights and media player patterns.
 - **Fan state derivation**: Fan is "on" when `hvac_action` is `fan` or `hvac_mode` is `fan_only`. Fan is "off" otherwise.
+- **Fan off = unit off (limitation)**: When no dedicated `fan.*` entity exists, "Fan Off" sets `hvac_mode` to `"off"`, which turns the entire AC unit off. There is no HA API to restore the "previous" HVAC mode. This is acceptable for the wall panel use case: the user taps "Fan On" to run fan, taps "Fan Off" to stop the unit entirely. If finer control is needed later, the card can be extended with a mode selector (out of scope per alignment).
 - **No HVAC mode selector**: Alignment explicitly excludes detailed HVAC mode selection. Only fan on/off toggle.
 - **No target temperature display**: Alignment excludes temperature setpoint control. Only current temperature shown.
 - **Error handling**: Same pattern as lights. `HaError` caught in router, returns `{ error: "HA unavailable" }`.
@@ -70,6 +71,7 @@ export interface ClimateState {
   hvacMode: string;
   hvacAction: string | null;
   fanOn: boolean;
+  fanEntityId: string | null; // dedicated fan.* entity if found, else null
 }
 
 export async function getClimateState(): Promise<ClimateState | null> {
@@ -85,6 +87,13 @@ export async function getClimateState(): Promise<ClimateState | null> {
   const hvacAction = (attrs.hvac_action as string) ?? null;
   const fanOn = hvacMode === "fan_only" || hvacAction === "fan";
 
+  // Look for dedicated fan entity with exact name match
+  const climateName = entity.entity_id.replace("climate.", "");
+  const fanEntities = await ha.getEntities("fan");
+  const matchingFan = fanEntities.find(
+    (e) => e.entity_id.replace("fan.", "") === climateName
+  );
+
   return {
     entityId: entity.entity_id,
     friendlyName: (attrs.friendly_name as string) ?? entity.entity_id,
@@ -93,18 +102,16 @@ export async function getClimateState(): Promise<ClimateState | null> {
     hvacMode,
     hvacAction,
     fanOn,
+    fanEntityId: matchingFan?.entity_id ?? null,
   };
 }
 
-export async function turnFanOn(entityId: string): Promise<void> {
-  // Check if a dedicated fan entity exists
-  const fanEntities = await ha.getEntities("fan");
-  const matchingFan = fanEntities.find((e) =>
-    e.entity_id.includes(entityId.replace("climate.", ""))
-  );
-
-  if (matchingFan) {
-    await ha.callService("fan", "turn_on", { entity_id: matchingFan.entity_id });
+export async function turnFanOn(
+  entityId: string,
+  fanEntityId?: string | null,
+): Promise<void> {
+  if (fanEntityId) {
+    await ha.callService("fan", "turn_on", { entity_id: fanEntityId });
   } else {
     await ha.callService("climate", "set_hvac_mode", {
       entity_id: entityId,
@@ -113,15 +120,15 @@ export async function turnFanOn(entityId: string): Promise<void> {
   }
 }
 
-export async function turnFanOff(entityId: string): Promise<void> {
-  const fanEntities = await ha.getEntities("fan");
-  const matchingFan = fanEntities.find((e) =>
-    e.entity_id.includes(entityId.replace("climate.", ""))
-  );
-
-  if (matchingFan) {
-    await ha.callService("fan", "turn_off", { entity_id: matchingFan.entity_id });
+export async function turnFanOff(
+  entityId: string,
+  fanEntityId?: string | null,
+): Promise<void> {
+  if (fanEntityId) {
+    await ha.callService("fan", "turn_off", { entity_id: fanEntityId });
   } else {
+    // Note: this turns the entire unit off, not just the fan.
+    // There is no HA API to restore the previous HVAC mode.
     await ha.callService("climate", "set_hvac_mode", {
       entity_id: entityId,
       hvac_mode: "off",
@@ -145,10 +152,10 @@ climate: publicProcedure.query(async () => {
 }),
 
 fanOn: publicProcedure
-  .input(z.object({ entityId: z.string() }))
+  .input(z.object({ entityId: z.string(), fanEntityId: z.string().nullable().optional() }))
   .mutation(async ({ input }) => {
     try {
-      await turnFanOn(input.entityId);
+      await turnFanOn(input.entityId, input.fanEntityId);
     } catch (err) {
       if (err instanceof HaError) return { error: "HA unavailable" };
       throw err;
@@ -156,10 +163,10 @@ fanOn: publicProcedure
   }),
 
 fanOff: publicProcedure
-  .input(z.object({ entityId: z.string() }))
+  .input(z.object({ entityId: z.string(), fanEntityId: z.string().nullable().optional() }))
   .mutation(async ({ input }) => {
     try {
-      await turnFanOff(input.entityId);
+      await turnFanOff(input.entityId, input.fanEntityId);
     } catch (err) {
       if (err instanceof HaError) return { error: "HA unavailable" };
       throw err;
@@ -185,12 +192,13 @@ export function useClimate() {
   const fanOffMutation = trpc.devices.fanOff.useMutation();
 
   const data = climate.data;
-  const hasError = data != null && "error" in data;
+  const hasError = "error" in (data ?? {});
 
   const state = !hasError && data ? data : null;
 
   return {
     entityId: state?.entityId ?? null,
+    fanEntityId: state?.fanEntityId ?? null,
     friendlyName: state?.friendlyName ?? null,
     currentTemp: state?.currentTemp ?? null,
     tempUnit: state?.tempUnit ?? "F",
@@ -198,8 +206,10 @@ export function useClimate() {
     fanOn: state?.fanOn ?? false,
     isLoading: climate.isLoading,
     isError: hasError || climate.isError,
-    turnFanOn: (entityId: string) => fanOnMutation.mutate({ entityId }),
-    turnFanOff: (entityId: string) => fanOffMutation.mutate({ entityId }),
+    turnFanOn: (entityId: string, fanEntityId?: string | null) =>
+      fanOnMutation.mutate({ entityId, fanEntityId }),
+    turnFanOff: (entityId: string, fanEntityId?: string | null) =>
+      fanOffMutation.mutate({ entityId, fanEntityId }),
   };
 }
 ```
@@ -214,7 +224,7 @@ import { useClimate } from "@/hooks/use-climate";
 
 export function ClimateCard() {
   const {
-    entityId, currentTemp, tempUnit, hvacMode,
+    entityId, fanEntityId, currentTemp, tempUnit, hvacMode,
     fanOn, isLoading, isError, turnFanOn, turnFanOff,
   } = useClimate();
 
@@ -245,7 +255,7 @@ export function ClimateCard() {
             disabled={disabled}
             onClick={(e) => {
               e.stopPropagation();
-              if (entityId) turnFanOn(entityId);
+              if (entityId) turnFanOn(entityId, fanEntityId);
             }}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium border border-white/10 active:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed ${
               fanOn ? "text-white bg-white/10" : "text-white/60"
@@ -258,7 +268,7 @@ export function ClimateCard() {
             disabled={disabled}
             onClick={(e) => {
               e.stopPropagation();
-              if (entityId) turnFanOff(entityId);
+              if (entityId) turnFanOff(entityId, fanEntityId);
             }}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium border border-white/10 active:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed ${
               !fanOn ? "text-white bg-white/10" : "text-white/60"
@@ -276,8 +286,17 @@ export function ClimateCard() {
 ### 5. Widget Grid: `widget-grid.tsx` changes
 
 - Import `ClimateCard`
-- Replace `<ThemeToggleCard />` with `<ClimateCard />`
-- Update `gridTemplateAreas` to change `theme` to `climate`
+- Add `<ClimateCard />` after `<ThemeToggleCard />` (keep all existing cards)
+- Update grid from 3x3 to 4x3:
+  - `gridTemplateColumns`: stays `"1fr 1fr 1fr"`
+  - `gridTemplateRows`: changes to `"1fr 1fr 1fr 1fr"`
+  - `gridTemplateAreas`: becomes:
+    ```
+    "weather weather clock"
+    "wifi    lights  lights"
+    "calendar music  theme"
+    "climate climate climate"
+    ```
 
 ---
 
@@ -300,8 +319,8 @@ export function ClimateCard() {
 |------|--------|
 | `apps/api/src/services/ha-service.ts` | Add `ClimateState` interface, `getClimateState()`, `turnFanOn()`, `turnFanOff()` |
 | `apps/api/src/trpc/routers/devices.ts` | Add `climate` query, `fanOn` mutation, `fanOff` mutation |
-| `apps/web/src/components/hub/widget-grid.tsx` | Import ClimateCard, replace ThemeToggleCard, update grid areas |
-| `apps/web/src/__tests__/widget-grid.test.tsx` | Add `use-climate` mock, update card count assertion, add climate testId check |
+| `apps/web/src/components/hub/widget-grid.tsx` | Import ClimateCard, add to grid, expand to 4x3 layout (keep all existing cards) |
+| `apps/web/src/__tests__/widget-grid.test.tsx` | Add `use-climate` mock, update card count assertion to 8, add climate testId check |
 
 ---
 
@@ -321,10 +340,13 @@ Mock `ha.getEntities` and `ha.callService` (same pattern as existing lights test
 | `getClimateState() fanOn false when cooling` | Mock entity with state "cool", verify fanOn=false |
 | `getClimateState() handles missing current_temperature` | Mock entity without current_temperature, verify null |
 | `getClimateState() detects Celsius unit` | Mock entity with temperature_unit containing "C" |
-| `turnFanOn() uses climate.set_hvac_mode when no fan entity` | Mock empty fan entities, verify callService args |
-| `turnFanOn() uses fan.turn_on when matching fan entity exists` | Mock matching fan entity, verify fan domain call |
-| `turnFanOff() uses climate.set_hvac_mode off when no fan entity` | Verify hvac_mode "off" |
-| `turnFanOff() uses fan.turn_off when matching fan entity exists` | Verify fan domain call |
+| `getClimateState() sets fanEntityId when exact fan match exists` | Mock `fan.living_room` for `climate.living_room`, verify fanEntityId set |
+| `getClimateState() sets fanEntityId null when no fan match` | Mock no fan entities, verify fanEntityId null |
+| `getClimateState() does not match fan entity with partial name` | Mock `fan.living_room_ceiling` for `climate.living_room`, verify fanEntityId null |
+| `turnFanOn() uses climate.set_hvac_mode when fanEntityId null` | Pass null fanEntityId, verify callService args |
+| `turnFanOn() uses fan.turn_on when fanEntityId provided` | Pass fanEntityId, verify fan domain call |
+| `turnFanOff() uses climate.set_hvac_mode off when fanEntityId null` | Verify hvac_mode "off" (turns unit off) |
+| `turnFanOff() uses fan.turn_off when fanEntityId provided` | Verify fan domain call |
 
 ### Router Tests (`devices-climate.test.ts`)
 
@@ -335,9 +357,9 @@ Mock `ha-service` functions (same pattern as existing router tests).
 | `devices.climate returns ClimateState on success` | Verify pass-through |
 | `devices.climate returns error on HaError` | Verify error object |
 | `devices.climate returns null when no entities` | Verify null pass-through |
-| `devices.fanOn calls turnFanOn with entityId` | Verify mutation forwarding |
+| `devices.fanOn calls turnFanOn with entityId and fanEntityId` | Verify mutation forwarding with both params |
 | `devices.fanOn returns error on HaError` | Verify error handling |
-| `devices.fanOff calls turnFanOff with entityId` | Verify mutation forwarding |
+| `devices.fanOff calls turnFanOff with entityId and fanEntityId` | Verify mutation forwarding with both params |
 
 ### Hook Tests (`use-climate.test.ts`)
 
@@ -349,8 +371,8 @@ Mock `@/lib/trpc` (same pattern as `use-lights.test.ts`).
 | `returns climate data when query succeeds` | Verify all fields passed through |
 | `returns isError true when query fails` | Verify error state |
 | `returns isError true when data contains error field` | Verify HA error detection |
-| `turnFanOn calls fanOn mutation with entityId` | Verify mutation call |
-| `turnFanOff calls fanOff mutation with entityId` | Verify mutation call |
+| `turnFanOn calls fanOn mutation with entityId and fanEntityId` | Verify mutation call with both params |
+| `turnFanOff calls fanOff mutation with entityId and fanEntityId` | Verify mutation call with both params |
 
 ### Component Tests (`climate-card.test.tsx`)
 
@@ -371,7 +393,7 @@ Mock `use-climate` hook (same pattern as `lights-card.test.tsx`).
 ### Widget Grid Test Updates
 
 - Add `use-climate` mock to existing `widget-grid.test.tsx`
-- Update "renders all 7 widget cards" test to check for `widget-card-climate` instead of `widget-card-theme`
+- Update "renders all 7 widget cards" to "renders all 8 widget cards", add `widget-card-climate` assertion (keep `widget-card-theme`)
 
 ---
 
@@ -427,27 +449,21 @@ curl -s http://localhost:4201/health | jq .
 
 **PASS**: Returns `{ "status": "ok" }`.
 
-### Step 5: tRPC climate endpoint
+### Step 5: Visual verification via web UI
 
-```bash
-# Query climate state (via HTTP, not WebSocket for simplicity)
-curl -s 'http://localhost:4201/devices.climate' | jq .
-```
+Open `http://localhost:4200` in browser (or use `agent-browser`). Tap the clock to enter hub view.
 
-**PASS**: Returns either a `ClimateState` object with `entityId`, `currentTemp`, `fanOn` fields, or `null` if no climate entity exists in HA, or `{ "error": "HA unavailable" }` if HA is down.
-**FAIL**: 500 error or unexpected response shape.
+Verify:
+1. Grid has 4 rows (not 3). All 8 cards visible: weather, clock, wifi, lights, calendar, music, theme, climate.
+2. Climate card spans full bottom row.
+3. Climate card shows either a temperature value (e.g. "72F") or "Unavailable" if no climate entity in HA.
+4. Fan On / Fan Off buttons visible and not disabled (unless HA unavailable).
+5. Tapping Fan On / Fan Off does not crash the app.
 
-### Step 6: Visual verification
+Capture the web app window using `screencapture -x -l <windowID>` and save to `docs/screenshots/`.
 
-Capture the web app window (port 4200) using `screencapture -x -l <windowID>` and verify:
-
-1. Climate card visible in bottom-right grid slot
-2. Shows temperature value or "Unavailable"
-3. Fan On / Fan Off buttons visible
-4. Buttons respond to taps (fan state toggles)
-
-**PASS**: Card renders correctly with expected layout matching lights card pattern.
-**FAIL**: Card missing, broken layout, or buttons non-functional.
+**PASS**: All 8 cards render, climate card in bottom row, buttons functional.
+**FAIL**: Card missing, layout broken, buttons crash or non-functional.
 
 ---
 
