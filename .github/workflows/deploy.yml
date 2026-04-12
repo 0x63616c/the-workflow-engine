@@ -118,6 +118,22 @@ jobs:
     name: Lint, Typecheck, Test
     runs-on: ubuntu-latest
     needs: notify-start
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: workflow
+          POSTGRES_PASSWORD: workflow
+          POSTGRES_DB: workflow_engine_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://workflow:workflow@localhost:5432/workflow_engine_test
     outputs:
       duration: ${{ steps.duration.outputs.text }}
     steps:
@@ -295,8 +311,9 @@ jobs:
       - name: Update parent message with loading state
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | head -1)
+          COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | head -1)
           curl -s -X POST "https://slack.com/api/chat.update" \
             -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -H "Content-Type: application/json; charset=utf-8" \
@@ -395,6 +412,8 @@ jobs:
           INNGEST_EVENT_KEY: ${{ secrets.INNGEST_EVENT_KEY }}
           INNGEST_SIGNING_KEY: ${{ secrets.INNGEST_SIGNING_KEY }}
           HA_TOKEN: ${{ secrets.HA_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         run: kamal deploy
 
       - name: Calculate deploy duration
@@ -695,8 +714,9 @@ jobs:
         if: needs.deploy.result == 'cancelled'
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | head -1)
+          COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | head -1)
           DURATION="${{ steps.duration.outputs.text }}"
 
           curl -s -X POST "https://slack.com/api/chat.update" \
