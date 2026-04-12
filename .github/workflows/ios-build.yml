@@ -1,0 +1,113 @@
+name: iOS Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/ios/**'
+      - 'apps/web/capacitor.config.ts'
+      - 'apps/web/package.json'
+      - '.github/workflows/ios-build.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ios-build
+  cancel-in-progress: true
+
+env:
+  SLACK_CHANNEL: C0ASR5837ED
+
+jobs:
+  build:
+    name: Build & Upload to TestFlight
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: apps/web/ios
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+        working-directory: .
+
+      - name: Build web
+        run: bun run build
+        working-directory: apps/web
+
+      - name: Capacitor sync
+        run: bunx cap sync ios
+        working-directory: apps/web
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: apps/web/ios
+
+      - name: Build and upload to TestFlight
+        run: bundle exec fastlane release
+        env:
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+          BUILD_NUMBER: ${{ github.run_number }}
+
+      - name: Notify success
+        if: success()
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        run: |
+          curl -s -X POST "https://slack.com/api/chat.postMessage" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            -d "$(jq -n \
+              --arg channel "$SLACK_CHANNEL" \
+              --arg sha "${{ github.sha }}" \
+              --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              --arg build_number "${{ github.run_number }}" \
+              '{
+                channel: $channel,
+                text: "iOS build uploaded to TestFlight",
+                blocks: [
+                  {
+                    type: "context",
+                    elements: [
+                      { type: "mrkdwn", text: (":iphone: *iOS build #" + $build_number + " uploaded to TestFlight* — `#" + ($sha | .[:7]) + "` <" + $run_url + "|Build>") }
+                    ]
+                  }
+                ]
+              }')"
+
+      - name: Notify failure
+        if: failure()
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        run: |
+          curl -s -X POST "https://slack.com/api/chat.postMessage" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            -d "$(jq -n \
+              --arg channel "$SLACK_CHANNEL" \
+              --arg sha "${{ github.sha }}" \
+              --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              '{
+                channel: $channel,
+                text: "iOS build failed",
+                blocks: [
+                  {
+                    type: "section",
+                    text: {
+                      type: "mrkdwn",
+                      text: (":x: *iOS build failed* — `#" + ($sha | .[:7]) + "` <" + $run_url + "|Logs>")
+                    }
+                  }
+                ]
+              }')"
