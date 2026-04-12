@@ -36,7 +36,7 @@ Set up Fastlane + GitHub Actions CI pipeline that builds the Capacitor iOS app a
 - GitHub Secrets for CI (MATCH_PASSWORD, APPLE_ID, APP_STORE_CONNECT_API_KEY, etc.)
 
 ## Manual Steps Required from Calum (post-PR)
-1. Register App ID (com.theworkflowengine.app) in Apple Developer portal
+1. Register App ID (co.worldwidewebb.theworkflowengine) in Apple Developer portal
 2. Register iPad UDID in Apple Developer portal
 3. Create private GitHub repo for fastlane match certs (e.g. 0x63616c/certificates)
 4. Create App Store Connect API key (for CI uploads)
