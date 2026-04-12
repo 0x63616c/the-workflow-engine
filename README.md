@@ -10,6 +10,7 @@ Wall-mounted iPad Pro smart home panel. Living art that controls your home.
 - **Frontend**: React 19, TypeScript, TanStack Router, Tailwind CSS, shadcn/ui
 - **Backend**: Bun, tRPC v11, SQLite (Drizzle ORM)
 - **Infrastructure**: Capacitor (native iOS shell), Home Assistant, Inngest, Kamal
+- **Slack Bot**: Evee (deploy notifications, workspace: World Wide Webb)
 
 ## Development
 

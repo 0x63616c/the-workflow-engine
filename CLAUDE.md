@@ -80,6 +80,13 @@ Wall-mounted iPad Pro smart home panel. Living art, controls home.
 - **Local deploy** (emergency/hotfix): `bin/deploy` — fetches secrets from 1Password then runs `kamal deploy`
 - Never run `kamal deploy` directly from local (secrets won't be set)
 
+### Slack Bot (Evee)
+
+- **Evee** is the project's Slack bot in the World Wide Webb workspace (worldwidewebbco.slack.com)
+- Posts deploy pipeline notifications (start, checks, deploy status) to Slack
+- Credentials stored in 1Password (`op://Homelab/...`)
+- App manifest: `infra/evee/slack-manifest.yml`
+
 ## Ports
 
 | Service        | Port         |
