@@ -3,7 +3,7 @@
  * Enforces clean architecture import rules from CLAUDE.md.
  *
  * Rules:
- * - db/        → only drizzle-orm, bun:sqlite, @repo/shared
+ * - db/        → only drizzle-orm, pg, @repo/shared
  * - services/  → db/, integrations/types, @repo/shared
  * - trpc/routers/ → services/, @repo/shared, ../init, ../context
  * - inngest/functions/ → services/, @repo/shared
@@ -26,7 +26,8 @@ const rules: Rule[] = [
     label: "db/",
     allowed: [
       /^drizzle-orm/,
-      /^bun:sqlite/,
+      /^pg$/,
+      /^node:/,
       /^@repo\/shared/,
       /^\./, // relative imports within db/
     ],

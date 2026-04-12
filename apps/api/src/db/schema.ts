@@ -1,16 +1,15 @@
-import { sql } from "drizzle-orm";
-import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 
-export const systemInfo = sqliteTable("system_info", {
-  id: int().primaryKey({ autoIncrement: true }),
+export const systemInfo = pgTable("system_info", {
+  id: serial().primaryKey(),
   key: text().notNull().unique(),
   value: text().notNull(),
 });
 
-export const countdownEvents = sqliteTable("countdown_events", {
-  id: int().primaryKey({ autoIncrement: true }),
+export const countdownEvents = pgTable("countdown_events", {
+  id: serial().primaryKey(),
   title: text().notNull(),
   date: text().notNull(),
-  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
-  updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
