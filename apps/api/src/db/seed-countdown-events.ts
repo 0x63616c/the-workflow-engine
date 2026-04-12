@@ -1,0 +1,53 @@
+import { db } from "./client";
+import { countdownEvents } from "./schema";
+
+const EVENTS = [
+  { title: "New Year's Day", date: "2026-01-01" },
+  { title: "MLK Day", date: "2026-01-19" },
+  { title: "Valentine's Day", date: "2026-02-14" },
+  { title: "Presidents' Day", date: "2026-02-16" },
+  { title: "Daylight Saving Begins", date: "2026-03-08" },
+  { title: "Pi Day", date: "2026-03-14" },
+  { title: "St. Patrick's Day", date: "2026-03-17" },
+  { title: "Spring Equinox", date: "2026-03-20" },
+  { title: "April Fool's Day", date: "2026-04-01" },
+  { title: "Tax Day", date: "2026-04-15" },
+  { title: "Coachella W2", date: "2026-04-16" },
+  { title: "Earth Day", date: "2026-04-22" },
+  { title: "SF - SoFi Codathon", date: "2026-04-26" },
+  { title: "Disco Lines", date: "2026-05-02" },
+  { title: "Star Wars Day", date: "2026-05-04" },
+  { title: "Cinco de Mayo", date: "2026-05-05" },
+  { title: "Mother's Day", date: "2026-05-10" },
+  { title: "Memorial Day", date: "2026-05-25" },
+  { title: "World Environment Day", date: "2026-06-05" },
+  { title: "Juneteenth", date: "2026-06-19" },
+  { title: "Summer Solstice", date: "2026-06-20" },
+  { title: "Father's Day", date: "2026-06-21" },
+  { title: "Independence Day", date: "2026-07-04" },
+  { title: "Labor Day", date: "2026-09-07" },
+  { title: "Fall Equinox", date: "2026-09-22" },
+  { title: "International Music Day", date: "2026-10-01" },
+  { title: "Columbus Day", date: "2026-10-12" },
+  { title: "Halloween", date: "2026-10-31" },
+  { title: "Daylight Saving Ends", date: "2026-11-01" },
+  { title: "Election Day", date: "2026-11-03" },
+  { title: "Veterans Day", date: "2026-11-11" },
+  { title: "Thanksgiving", date: "2026-11-26" },
+  { title: "Black Friday", date: "2026-11-27" },
+  { title: "Cyber Monday", date: "2026-11-30" },
+  { title: "Winter Solstice", date: "2026-12-21" },
+  { title: "Christmas Eve", date: "2026-12-24" },
+  { title: "Christmas Day", date: "2026-12-25" },
+  { title: "New Year's Eve", date: "2026-12-31" },
+  { title: "Super Bowl LX", date: "2027-02-07" },
+  { title: "New Year 2025 (past)", date: "2025-01-01" },
+  { title: "Valentine's Day 2025 (past)", date: "2025-02-14" },
+  { title: "July 4th 2025 (past)", date: "2025-07-04" },
+  { title: "Christmas 2025 (past)", date: "2025-12-25" },
+  { title: "NYE 2025 (past)", date: "2025-12-31" },
+];
+
+console.log(`Seeding ${EVENTS.length} countdown events...`);
+db.insert(countdownEvents).values(EVENTS).run();
+console.log(`Seeded ${EVENTS.length} countdown events`);
