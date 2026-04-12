@@ -41,6 +41,22 @@ vi.mock("@/hooks/use-sonos", () => ({
   }),
 }));
 
+vi.mock("@/hooks/use-climate", () => ({
+  useClimate: () => ({
+    entityId: "climate.living_room",
+    fanEntityId: null,
+    friendlyName: "Living Room AC",
+    currentTemp: 72,
+    tempUnit: "F",
+    hvacMode: "cool",
+    fanOn: false,
+    isLoading: false,
+    isError: false,
+    turnFanOn: vi.fn(),
+    turnFanOff: vi.fn(),
+  }),
+}));
+
 describe("WidgetGrid", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -54,7 +70,7 @@ describe("WidgetGrid", () => {
     useCardExpansionStore.setState({ expandedCardId: null });
   });
 
-  it("renders all widget cards including timer", () => {
+  it("renders all widget cards including climate", () => {
     render(<WidgetGrid />);
 
     expect(screen.getByTestId("widget-card-weather")).toBeInTheDocument();
@@ -69,6 +85,7 @@ describe("WidgetGrid", () => {
     expect(screen.getByTestId("widget-card-system")).toBeInTheDocument();
     expect(screen.getByTestId("widget-card-quote")).toBeInTheDocument();
     expect(screen.getByTestId("widget-card-timer")).toBeInTheDocument();
+    expect(screen.getByTestId("widget-card-climate")).toBeInTheDocument();
   });
 
   it("uses 6-column grid layout", () => {
