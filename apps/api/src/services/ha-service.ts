@@ -28,6 +28,44 @@ export type MediaPlayerCommand = "play" | "pause" | "next" | "previous" | "shuff
 
 const REPEAT_CYCLE: Array<"off" | "one" | "all"> = ["off", "one", "all"];
 
+export interface ClimateState {
+  entityId: string;
+  friendlyName: string;
+  currentTemp: number | null;
+  tempUnit: "F" | "C";
+  hvacMode: string;
+  hvacAction: string | null;
+  fanOn: boolean;
+  fanEntityId: string | null;
+}
+
+export async function getClimateState(): Promise<ClimateState | null> {
+  const entities = await ha.getEntities("climate");
+  if (entities.length === 0) return null;
+
+  const entity = entities.sort((a, b) => a.entity_id.localeCompare(b.entity_id))[0];
+
+  const attrs = entity.attributes;
+  const hvacMode = entity.state;
+  const hvacAction = (attrs.hvac_action as string) ?? null;
+  const fanOn = hvacMode === "fan_only" || hvacAction === "fan";
+
+  const climateName = entity.entity_id.replace("climate.", "");
+  const fanEntities = await ha.getEntities("fan");
+  const matchingFan = fanEntities.find((e) => e.entity_id.replace("fan.", "") === climateName);
+
+  return {
+    entityId: entity.entity_id,
+    friendlyName: (attrs.friendly_name as string) ?? entity.entity_id,
+    currentTemp: (attrs.current_temperature as number) ?? null,
+    tempUnit: (attrs.temperature_unit as string)?.includes("C") ? "C" : "F",
+    hvacMode,
+    hvacAction,
+    fanOn,
+    fanEntityId: matchingFan?.entity_id ?? null,
+  };
+}
+
 export async function getLightsState(): Promise<LightsState> {
   const entities = await ha.getEntities("light");
   return {
