@@ -49,18 +49,18 @@ export function MusicCard() {
       <div className="flex flex-col justify-between h-full">
         <div>
           <div className="flex items-center justify-between mb-2">
-            <div className="text-sm text-muted-foreground">Music</div>
+            <div className="text-base text-muted-foreground">Music</div>
             <EqualizerBars active={isPlaying} />
           </div>
           {isError ? (
-            <div className="text-sm text-muted-foreground/50">Unavailable</div>
+            <div className="text-base text-muted-foreground/50">Unavailable</div>
           ) : players.length === 0 ? (
-            <div className="text-sm text-muted-foreground/50">No speakers</div>
+            <div className="text-base text-muted-foreground/50">No speakers</div>
           ) : (
             <>
-              <div className="text-sm text-foreground truncate">{track ?? "Not playing"}</div>
+              <div className="text-base text-foreground truncate">{track ?? "Not playing"}</div>
               {artist && (
-                <div className="text-xs text-muted-foreground/70 mt-0.5 truncate">{artist}</div>
+                <div className="text-sm text-muted-foreground/70 mt-0.5 truncate">{artist}</div>
               )}
             </>
           )}

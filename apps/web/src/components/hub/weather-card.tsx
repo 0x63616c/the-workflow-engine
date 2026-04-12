@@ -44,13 +44,13 @@ export function WeatherCard({ temp, condition, high, low }: WeatherCardProps) {
     >
       <div className="flex items-start justify-between">
         <div>
-          <span className="text-5xl font-light text-foreground tracking-tight">{temp}°</span>
+          <span className="text-6xl font-light text-foreground tracking-tight">{temp}°</span>
           <div className="mt-1 flex items-center gap-2">
-            <CloudSun size={16} className="text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">{condition}</span>
+            <CloudSun size={18} className="text-muted-foreground" />
+            <span className="text-base text-muted-foreground">{condition}</span>
           </div>
         </div>
-        <div className="text-right text-xs text-muted-foreground mt-2">
+        <div className="text-right text-sm text-muted-foreground mt-2">
           <div>H: {high}°</div>
           <div>L: {low}°</div>
         </div>

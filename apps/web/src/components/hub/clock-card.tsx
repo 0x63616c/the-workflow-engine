@@ -28,18 +28,18 @@ export function ClockCard() {
       className="flex flex-col items-center justify-center"
     >
       <div className="text-center">
-        <div className="text-6xl font-extralight tracking-tight text-foreground tabular-nums">
+        <div className="text-7xl font-extralight tracking-tight text-foreground tabular-nums">
           {hours}
           <span className="text-foreground/30 mx-1">:</span>
           {minutes}
         </div>
-        <div className="text-sm font-light text-muted-foreground/60 mt-2 tracking-wide">
+        <div className="text-base font-light text-muted-foreground/60 mt-2 tracking-wide">
           {period}
         </div>
       </div>
       <div className="mt-4 text-center">
-        <div className="text-sm font-light text-foreground/40">{dayName}</div>
-        <div className="text-xs text-muted-foreground/30 mt-0.5">{monthDay}</div>
+        <div className="text-base font-light text-foreground/40">{dayName}</div>
+        <div className="text-sm text-muted-foreground/30 mt-0.5">{monthDay}</div>
       </div>
     </BentoCard>
   );

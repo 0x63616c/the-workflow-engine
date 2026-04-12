@@ -278,6 +278,12 @@ Pre-push: blocks direct push to `main`.
 - Phased approach: tooling first -> test tooling -> solidify -> build app using everything set up.
 - Never skip ahead. Each phase tested before next begins.
 
+## Target Device & Testing Resolution
+
+- **iPad Pro 12.9" (4th gen, 2020)**: 2732x2048, 4:3 aspect ratio, LCD, always-on safe
+- All UI work MUST be tested at iPad resolution. Use browser dev tools device emulation or `screencapture` at this size.
+- Never design or test at laptop/desktop proportions. Cards, fonts, and layouts optimized for 4:3.
+
 ## Testing
 
 - **TDD always.** Red/green cycle. Write failing test first, implement, refactor.

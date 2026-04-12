@@ -18,7 +18,7 @@ export function PhotoCard() {
     >
       <div className="flex flex-col items-center justify-center h-full">
         <Image size={20} className="text-muted-foreground/50 mb-2" />
-        <span className="text-xs text-muted-foreground/40">Photo Frame</span>
+        <span className="text-sm text-muted-foreground/40">Photo Frame</span>
       </div>
     </BentoCard>
   );

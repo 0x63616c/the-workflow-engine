@@ -28,13 +28,13 @@ export function ArtClock() {
 
   return (
     <div className="flex h-full flex-col items-center justify-center">
-      <div className="flex items-baseline text-[12rem] font-[100] leading-none tracking-tight text-foreground">
+      <div className="flex items-baseline text-[14rem] font-[100] leading-none tracking-tight text-foreground">
         <span>{hours}</span>
         <span>:</span>
         <span>{minutes}</span>
-        <span className="ml-2 text-[6rem] font-[200] text-foreground">{period}</span>
+        <span className="ml-2 text-[7rem] font-[200] text-foreground">{period}</span>
       </div>
-      <div className="mt-4 text-lg font-[300] tracking-[0.25em] text-foreground">{dateStr}</div>
+      <div className="mt-4 text-xl font-[300] tracking-[0.25em] text-foreground">{dateStr}</div>
     </div>
   );
 }

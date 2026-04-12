@@ -38,14 +38,14 @@ export function CalendarCard() {
         />
       )}
       <div className="pl-2">
-        <div className="text-sm text-muted-foreground mb-2">Calendar</div>
+        <div className="text-base text-muted-foreground mb-2">Calendar</div>
         {event ? (
           <>
-            <div className="text-sm font-medium text-foreground truncate">{event.title}</div>
-            <div className="text-xs text-muted-foreground/70 mt-1">{event.time}</div>
+            <div className="text-base font-medium text-foreground truncate">{event.title}</div>
+            <div className="text-sm text-muted-foreground/70 mt-1">{event.time}</div>
           </>
         ) : (
-          <div className="text-sm text-muted-foreground/50">No events</div>
+          <div className="text-base text-muted-foreground/50">No events</div>
         )}
       </div>
     </BentoCard>
