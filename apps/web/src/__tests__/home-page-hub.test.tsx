@@ -22,11 +22,13 @@ describe("HomePage hub integration", () => {
     return render(<HomePage />);
   }
 
-  it("initially shows hub off-screen right", async () => {
+  it("initially shows clock visible and hub hidden", async () => {
     await renderHomePage();
 
+    const clockLayer = screen.getByTestId("clock-layer");
     const hubLayer = screen.getByTestId("hub-layer");
-    expect(hubLayer.style.transform).toBe("translateX(100%)");
+    expect(clockLayer.style.opacity).toBe("1");
+    expect(hubLayer.style.opacity).toBe("0");
   });
 
   it("initially has pointer-events auto on clock, none on hub", async () => {
@@ -44,7 +46,7 @@ describe("HomePage hub integration", () => {
     fireEvent.click(screen.getByTestId("clock-layer"));
 
     const hubLayer = screen.getByTestId("hub-layer");
-    expect(hubLayer.style.transform).toBe("translateX(0)");
+    expect(hubLayer.style.opacity).toBe("1");
     expect(hubLayer.style.pointerEvents).toBe("auto");
   });
 
