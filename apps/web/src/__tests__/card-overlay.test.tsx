@@ -1,6 +1,7 @@
 import { CardOverlay } from "@/components/hub/card-overlay";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("qrcode", () => ({
@@ -11,6 +12,26 @@ vi.mock("qrcode", () => ({
 
 vi.mock("@/hooks/use-build-hash", () => ({
   useBuildHash: () => ({ data: { hash: "abc1234", deployedAt: null } }),
+}));
+
+function makeMotionElement(tag: string) {
+  return function MotionEl({
+    children,
+    ...props
+  }: { children?: React.ReactNode; [key: string]: unknown }) {
+    const { initial: _i, animate: _a, exit: _e, transition: _t, ...rest } = props;
+    return React.createElement(tag, rest as Record<string, unknown>, children);
+  };
+}
+
+vi.mock("framer-motion", () => ({
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  motion: new Proxy(
+    {},
+    {
+      get: (_target, tag: string) => makeMotionElement(tag),
+    },
+  ),
 }));
 
 describe("CardOverlay", () => {
@@ -57,5 +78,18 @@ describe("CardOverlay", () => {
     render(<CardOverlay />);
     expect(screen.queryByTestId("card-overlay-backdrop")).not.toBeInTheDocument();
     expect(screen.getByTestId("card-overlay-content")).toBeInTheDocument();
+  });
+
+  it("clock overlay has dismiss button", () => {
+    useCardExpansionStore.setState({ expandedCardId: "clock" });
+    render(<CardOverlay />);
+    expect(screen.getByTestId("clock-dismiss")).toBeInTheDocument();
+  });
+
+  it("clock dismiss button calls contractCard", () => {
+    useCardExpansionStore.setState({ expandedCardId: "clock" });
+    render(<CardOverlay />);
+    fireEvent.click(screen.getByTestId("clock-dismiss"));
+    expect(useCardExpansionStore.getState().expandedCardId).toBeNull();
   });
 });
