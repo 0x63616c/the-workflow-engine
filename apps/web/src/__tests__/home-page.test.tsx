@@ -40,6 +40,22 @@ vi.mock("@/hooks/use-sonos", () => ({
   }),
 }));
 
+vi.mock("@/hooks/use-climate", () => ({
+  useClimate: () => ({
+    entityId: "climate.living_room",
+    fanEntityId: null,
+    friendlyName: "Living Room AC",
+    currentTemp: 72,
+    tempUnit: "F",
+    hvacMode: "cool",
+    fanOn: false,
+    isLoading: false,
+    isError: false,
+    turnFanOn: vi.fn(),
+    turnFanOff: vi.fn(),
+  }),
+}));
+
 describe("HomePage", () => {
   beforeEach(() => {
     vi.useFakeTimers();

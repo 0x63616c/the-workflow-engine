@@ -1,4 +1,5 @@
 import { CalendarCard } from "@/components/hub/calendar-card";
+import { ClimateCard } from "@/components/hub/climate-card";
 import { ClockCard } from "@/components/hub/clock-card";
 import { CountdownCardMini } from "@/components/hub/countdown-card";
 import { EmailCard } from "@/components/hub/email-card";
@@ -48,6 +49,7 @@ export function WidgetGrid() {
         <SystemStatusCard />
         <QuoteCard />
         <TimerCard />
+        <ClimateCard />
       </div>
       <span className="fixed bottom-2 left-3 font-mono text-xs tabular-nums text-muted-foreground/30">
         {remainingSeconds}
