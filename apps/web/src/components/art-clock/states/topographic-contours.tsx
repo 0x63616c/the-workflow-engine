@@ -130,6 +130,37 @@ export function TopographicContours() {
         }
       }
 
+      // Fade contour lines at all four edges so strokes taper out instead of hard-clipping.
+      const FADE_SIZE = GRID_CELL_SIZE * 3;
+      ctx.save();
+      ctx.globalCompositeOperation = "destination-out";
+
+      const fadeTop = ctx.createLinearGradient(0, 0, 0, FADE_SIZE);
+      fadeTop.addColorStop(0, "rgba(0,0,0,1)");
+      fadeTop.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = fadeTop;
+      ctx.fillRect(0, 0, w, FADE_SIZE);
+
+      const fadeBottom = ctx.createLinearGradient(0, h - FADE_SIZE, 0, h);
+      fadeBottom.addColorStop(0, "rgba(0,0,0,0)");
+      fadeBottom.addColorStop(1, "rgba(0,0,0,1)");
+      ctx.fillStyle = fadeBottom;
+      ctx.fillRect(0, h - FADE_SIZE, w, FADE_SIZE);
+
+      const fadeLeft = ctx.createLinearGradient(0, 0, FADE_SIZE, 0);
+      fadeLeft.addColorStop(0, "rgba(0,0,0,1)");
+      fadeLeft.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = fadeLeft;
+      ctx.fillRect(0, 0, FADE_SIZE, h);
+
+      const fadeRight = ctx.createLinearGradient(w - FADE_SIZE, 0, w, 0);
+      fadeRight.addColorStop(0, "rgba(0,0,0,0)");
+      fadeRight.addColorStop(1, "rgba(0,0,0,1)");
+      ctx.fillStyle = fadeRight;
+      ctx.fillRect(w - FADE_SIZE, 0, FADE_SIZE, h);
+
+      ctx.restore();
+
       rafRef.current = requestAnimationFrame(draw);
     };
 

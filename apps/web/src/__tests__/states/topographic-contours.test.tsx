@@ -14,14 +14,28 @@ const mockCtx = {
   moveTo: vi.fn(),
   lineTo: vi.fn(),
   stroke: vi.fn(),
+  save: vi.fn(),
+  restore: vi.fn(),
+  fillRect: vi.fn(),
+  createLinearGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
   strokeStyle: "",
   lineWidth: 0,
+  fillStyle: "",
+  globalCompositeOperation: "",
 };
 
 describe("TopographicContours", () => {
   beforeEach(() => {
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(mockCtx as never);
-    vi.spyOn(window, "requestAnimationFrame").mockReturnValue(1);
+    // Invoke the RAF callback only on the first call to trigger one draw pass.
+    let called = false;
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+      if (!called) {
+        called = true;
+        cb(performance.now());
+      }
+      return 1;
+    });
     vi.spyOn(window, "cancelAnimationFrame").mockImplementation(vi.fn());
   });
 
@@ -53,5 +67,11 @@ describe("TopographicContours", () => {
   it("renders time overlay", () => {
     render(<TopographicContours />);
     expect(screen.getByTestId("contours-time-overlay")).toBeInTheDocument();
+  });
+
+  it("applies edge fade vignette using save/restore and destination-out", () => {
+    render(<TopographicContours />);
+    expect(mockCtx.save).toHaveBeenCalled();
+    expect(mockCtx.restore).toHaveBeenCalled();
   });
 });
