@@ -65,18 +65,20 @@ export function CountdownCardMini({ nextEvent }: CountdownCardMiniProps) {
       <div className="flex flex-col justify-between h-full">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <Calendar size={14} className="text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Countdown</span>
+            <Calendar size={16} className="text-muted-foreground" />
+            <span className="text-base text-muted-foreground">Countdown</span>
           </div>
           {nextEvent ? (
             <>
-              <div className="text-sm font-medium text-foreground truncate">{nextEvent.title}</div>
-              <div className="text-2xl font-light text-foreground mt-1">
+              <div className="text-base font-medium text-foreground truncate">
+                {nextEvent.title}
+              </div>
+              <div className="text-3xl font-light text-foreground mt-1">
                 {formatDaysRemaining(daysUntil(nextEvent.date))}
               </div>
             </>
           ) : (
-            <div className="text-sm text-muted-foreground/50">No events</div>
+            <div className="text-base text-muted-foreground/50">No events</div>
           )}
         </div>
       </div>

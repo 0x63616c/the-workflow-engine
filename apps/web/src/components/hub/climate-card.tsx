@@ -28,10 +28,10 @@ export function ClimateCard() {
     <BentoCard testId="widget-card-climate">
       <div className="flex items-center justify-between h-full">
         <div>
-          <div className="text-sm text-muted-foreground mb-3">Climate</div>
-          <div className="text-lg font-light text-foreground">{tempLabel}</div>
+          <div className="text-base text-muted-foreground mb-3">Climate</div>
+          <div className="text-xl font-light text-foreground">{tempLabel}</div>
           {modeLabel && (
-            <div className="text-xs text-muted-foreground mt-1 capitalize">
+            <div className="text-sm text-muted-foreground mt-1 capitalize">
               {modeLabel.replace("_", " ")}
             </div>
           )}
@@ -44,7 +44,7 @@ export function ClimateCard() {
               e.stopPropagation();
               if (entityId) turnFanOn(entityId, fanEntityId);
             }}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium border border-white/10 active:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed ${
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium border border-white/10 active:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed ${
               fanOn ? "text-white bg-white/10" : "text-white/60"
             }`}
           >
@@ -57,7 +57,7 @@ export function ClimateCard() {
               e.stopPropagation();
               if (entityId) turnFanOff(entityId, fanEntityId);
             }}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium border border-white/10 active:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed ${
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium border border-white/10 active:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed ${
               !fanOn ? "text-white bg-white/10" : "text-white/60"
             }`}
           >

@@ -31,16 +31,16 @@ export function ClockCard() {
       className="flex flex-col items-center justify-center"
     >
       <div className="text-center">
-        <div className="text-4xl font-light tracking-tight text-foreground font-mono">
+        <div className="text-5xl font-light tracking-tight text-foreground font-mono">
           <span>{hours}</span>
           <span className="animate-[pulse-colon_2s_ease-in-out_infinite]">:</span>
           <span>{minutes}</span>
         </div>
-        <div className="text-xs text-muted-foreground mt-0.5 uppercase tracking-wider">
+        <div className="text-sm text-muted-foreground mt-0.5 uppercase tracking-wider">
           {period}
         </div>
       </div>
-      <div className="text-xs text-muted-foreground/60 mt-3">{date}</div>
+      <div className="text-sm text-muted-foreground/60 mt-3">{date}</div>
     </BentoCard>
   );
 }

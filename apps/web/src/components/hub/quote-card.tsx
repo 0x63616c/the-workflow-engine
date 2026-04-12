@@ -19,10 +19,10 @@ export function QuoteCard() {
       <div className="flex items-start gap-3">
         <Quote size={14} className="text-muted-foreground/40 mt-0.5 shrink-0" />
         <div>
-          <p className="text-sm text-foreground/80 italic leading-relaxed">
+          <p className="text-base text-foreground/80 italic leading-relaxed">
             The best way to predict the future is to invent it.
           </p>
-          <p className="text-xs text-muted-foreground/50 mt-2">Alan Kay</p>
+          <p className="text-sm text-muted-foreground/50 mt-2">Alan Kay</p>
         </div>
       </div>
     </BentoCard>

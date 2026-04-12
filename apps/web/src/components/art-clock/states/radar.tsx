@@ -152,15 +152,15 @@ export function Radar() {
           className="flex items-baseline gap-1"
           style={{ fontFamily: "'GeistMono', monospace", fontWeight: 100 }}
         >
-          <span className="text-6xl">{hours}</span>
-          <span className="text-6xl">:</span>
-          <span className="text-6xl">{minutes}</span>
-          <span className="ml-2 text-3xl" style={{ fontWeight: 200 }}>
+          <span className="text-8xl">{hours}</span>
+          <span className="text-8xl">:</span>
+          <span className="text-8xl">{minutes}</span>
+          <span className="ml-2 text-4xl" style={{ fontWeight: 200 }}>
             {period}
           </span>
         </div>
         <div
-          className="mt-2 text-xs tracking-widest"
+          className="mt-2 text-sm tracking-widest"
           style={{ fontFamily: "'GeistMono', monospace", fontWeight: 300 }}
         >
           {dateStr}

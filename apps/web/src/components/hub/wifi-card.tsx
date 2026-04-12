@@ -84,11 +84,11 @@ export function WifiCard() {
                     <Wifi size={16} className="text-foreground" />
                     <div className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-green-500" />
                   </div>
-                  <span className="text-sm text-muted-foreground">WiFi</span>
+                  <span className="text-base text-muted-foreground">WiFi</span>
                 </div>
-                <div className="text-sm font-medium text-foreground">{WIFI_SSID}</div>
+                <div className="text-base font-medium text-foreground">{WIFI_SSID}</div>
               </div>
-              <div className="text-[10px] text-muted-foreground/40 mt-2">tap to share</div>
+              <div className="text-xs text-muted-foreground/40 mt-2">tap to share</div>
             </div>
           </BentoCard>
         </div>
@@ -107,11 +107,11 @@ export function WifiCard() {
               <div className="space-y-2">
                 <div className="flex items-center gap-1.5">
                   <Wifi size={12} className="text-accent" />
-                  <span className="text-xs font-medium text-foreground">{WIFI_SSID}</span>
+                  <span className="text-sm font-medium text-foreground">{WIFI_SSID}</span>
                 </div>
 
                 <div className="flex items-center gap-1">
-                  <span className="text-[11px] font-mono text-muted-foreground">
+                  <span className="text-sm font-mono text-muted-foreground">
                     {showPassword ? WIFI_PASSWORD : "\u2022".repeat(WIFI_PASSWORD.length)}
                   </span>
                   <button
@@ -134,7 +134,7 @@ export function WifiCard() {
                   type="button"
                   onClick={handleCopy}
                   className="
-                    w-full py-1.5 rounded-lg text-[11px] font-medium
+                    w-full py-1.5 rounded-lg text-sm font-medium
                     bg-accent/15 text-accent hover:bg-accent/25
                     transition-colors flex items-center justify-center gap-1
                   "
@@ -162,7 +162,7 @@ export function WifiCard() {
               </div>
             </div>
             {countdown > 0 && (
-              <span className="absolute bottom-2 right-3 font-mono text-[10px] tabular-nums text-muted-foreground/25">
+              <span className="absolute bottom-2 right-3 font-mono text-xs tabular-nums text-muted-foreground/25">
                 {countdown}
               </span>
             )}

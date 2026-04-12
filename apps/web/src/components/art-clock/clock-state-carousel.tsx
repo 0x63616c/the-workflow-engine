@@ -64,7 +64,13 @@ class ClockStateBoundary extends Component<ClockStateBoundaryProps, ClockStateBo
   }
 }
 
-export function ClockStateCarousel() {
+const CONTROLS_FADE_DURATION_MS = 300;
+
+interface ClockStateCarouselProps {
+  controlsVisible?: boolean;
+}
+
+export function ClockStateCarousel({ controlsVisible = true }: ClockStateCarouselProps) {
   const clockStateIndex = useNavigationStore((s) => s.clockStateIndex);
   const setClockStateIndex = useNavigationStore((s) => s.setClockStateIndex);
 
@@ -84,6 +90,12 @@ export function ClockStateCarousel() {
     [clockStateIndex, setClockStateIndex],
   );
 
+  const controlStyle = {
+    opacity: controlsVisible ? 1 : 0,
+    transition: `opacity ${CONTROLS_FADE_DURATION_MS}ms ease`,
+    pointerEvents: (controlsVisible ? "auto" : "none") as React.CSSProperties["pointerEvents"],
+  };
+
   const ActiveState = CLOCK_STATES[clockStateIndex] ?? CLOCK_STATES[0];
 
   return (
@@ -97,6 +109,7 @@ export function ClockStateCarousel() {
         data-testid="clock-prev"
         onClick={goPrev}
         className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+        style={controlStyle}
       >
         <ChevronLeft className="w-6 h-6 text-white/60" />
       </button>
@@ -106,6 +119,7 @@ export function ClockStateCarousel() {
         data-testid="clock-next"
         onClick={goNext}
         className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+        style={controlStyle}
       >
         <ChevronRight className="w-6 h-6 text-white/60" />
       </button>
@@ -114,6 +128,7 @@ export function ClockStateCarousel() {
         count={CLOCK_STATE_COUNT}
         activeIndex={clockStateIndex}
         onDotClick={setClockStateIndex}
+        visible={controlsVisible}
       />
     </div>
   );

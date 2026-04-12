@@ -18,6 +18,10 @@ vi.mock("qrcode", () => ({
   },
 }));
 
+vi.mock("@/hooks/use-build-hash", () => ({
+  useBuildHash: () => ({ data: { hash: "abc1234", deployedAt: null } }),
+}));
+
 vi.mock("@/hooks/use-lights", () => ({
   useLights: () => ({
     onCount: 0,

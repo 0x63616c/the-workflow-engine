@@ -19,9 +19,9 @@ export function EmailCard() {
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Mail size={14} className="text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Email</span>
+            <span className="text-base text-muted-foreground">Email</span>
           </div>
-          <div className="text-lg font-light text-foreground">3 unread</div>
+          <div className="text-xl font-light text-foreground">3 unread</div>
         </div>
       </div>
     </BentoCard>
