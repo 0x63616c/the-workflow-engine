@@ -34,7 +34,7 @@ compactor:
   retention_enabled: true
   compaction_interval: 10m
   retention_delete_delay: 2h
-  retention_delete_worker_count: 150
+  retention_delete_worker_count: 10
 
 querier:
   max_concurrent: 4
