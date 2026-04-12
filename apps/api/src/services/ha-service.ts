@@ -66,6 +66,28 @@ export async function getClimateState(): Promise<ClimateState | null> {
   };
 }
 
+export async function turnFanOn(entityId: string, fanEntityId?: string | null): Promise<void> {
+  if (fanEntityId) {
+    await ha.callService("fan", "turn_on", { entity_id: fanEntityId });
+  } else {
+    await ha.callService("climate", "set_hvac_mode", {
+      entity_id: entityId,
+      hvac_mode: "fan_only",
+    });
+  }
+}
+
+export async function turnFanOff(entityId: string, fanEntityId?: string | null): Promise<void> {
+  if (fanEntityId) {
+    await ha.callService("fan", "turn_off", { entity_id: fanEntityId });
+  } else {
+    await ha.callService("climate", "set_hvac_mode", {
+      entity_id: entityId,
+      hvac_mode: "off",
+    });
+  }
+}
+
 export async function getLightsState(): Promise<LightsState> {
   const entities = await ha.getEntities("light");
   return {
