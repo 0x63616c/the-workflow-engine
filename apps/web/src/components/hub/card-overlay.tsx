@@ -1,6 +1,7 @@
 import { ClockStateCarousel } from "@/components/art-clock/clock-state-carousel";
 import { CountdownCardExpanded } from "@/components/hub/countdown-card";
 import { SonosAlbumArt } from "@/components/sonos/sonos-album-art";
+import { TimerPanel } from "@/components/timer/timer-panel";
 import { SonosControls } from "@/components/sonos/sonos-controls";
 import { SonosProgressBar } from "@/components/sonos/sonos-progress-bar";
 import { SonosSpeakerList } from "@/components/sonos/sonos-speaker-list";
@@ -121,6 +122,7 @@ const EXPANDED_VIEWS: Record<string, () => React.JSX.Element> = {
   lights: ExpandedLights,
   music: ExpandedMusic,
   calendar: ExpandedCalendar,
+  timer: TimerPanel,
 };
 
 export function CardOverlay() {
