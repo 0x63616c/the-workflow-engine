@@ -258,7 +258,6 @@ Expected: FAIL because `../services/countdown-events` does not exist.
 Create `apps/api/src/services/countdown-events.ts`:
 
 ```typescript
-import { type TRPCError } from "@trpc/server";
 import { asc, desc, gte, lt, sql } from "drizzle-orm";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
@@ -1841,8 +1840,76 @@ git push
 - Modify: `apps/web/src/components/hub/calendar-card.tsx`
 - Modify: `apps/web/src/components/hub/music-card.tsx`
 - Modify: `apps/web/src/components/hub/theme-toggle-card.tsx`
+- Create: `apps/web/src/__tests__/card-expand-behavior.test.tsx`
 
-- [ ] **Step 1: Update WeatherCard**
+- [ ] **Step 1: Write the failing tests**
+
+Create `apps/web/src/__tests__/card-expand-behavior.test.tsx`:
+
+```typescript
+import { CalendarCard } from "@/components/hub/calendar-card";
+import { ClockCard } from "@/components/hub/clock-card";
+import { LightsCard } from "@/components/hub/lights-card";
+import { MusicCard } from "@/components/hub/music-card";
+import { WeatherCard } from "@/components/hub/weather-card";
+import { useCardExpansionStore } from "@/stores/card-expansion-store";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+describe("card expand behavior", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 3, 11, 14, 23, 0));
+    useCardExpansionStore.setState({ expandedCardId: null });
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+    useCardExpansionStore.setState({ expandedCardId: null });
+  });
+
+  it("weather card tap calls expandCard with 'weather'", () => {
+    render(<WeatherCard temp={72} condition="Sunny" high={78} low={64} />);
+    fireEvent.click(screen.getByTestId("widget-card-weather"));
+    expect(useCardExpansionStore.getState().expandedCardId).toBe("weather");
+  });
+
+  it("clock card tap calls expandCard with 'clock'", () => {
+    render(<ClockCard />);
+    fireEvent.click(screen.getByTestId("widget-card-clock"));
+    expect(useCardExpansionStore.getState().expandedCardId).toBe("clock");
+  });
+
+  it("lights card tap calls expandCard with 'lights'", () => {
+    render(<LightsCard />);
+    fireEvent.click(screen.getByTestId("widget-card-lights"));
+    expect(useCardExpansionStore.getState().expandedCardId).toBe("lights");
+  });
+
+  it("calendar card tap calls expandCard with 'calendar'", () => {
+    render(<CalendarCard />);
+    fireEvent.click(screen.getByTestId("widget-card-calendar"));
+    expect(useCardExpansionStore.getState().expandedCardId).toBe("calendar");
+  });
+
+  it("music card tap calls expandCard with 'music'", () => {
+    render(<MusicCard />);
+    fireEvent.click(screen.getByTestId("widget-card-music"));
+    expect(useCardExpansionStore.getState().expandedCardId).toBe("music");
+  });
+});
+```
+
+- [ ] **Step 2: Run test to verify it FAILS**
+
+```bash
+cd apps/web && bun run test
+```
+
+Expected: FAIL because existing cards still use `useNavigationStore` and `gridArea`, not `useCardExpansionStore` and `expandCard`.
+
+- [ ] **Step 3: Update WeatherCard**
 
 Replace `apps/web/src/components/hub/weather-card.tsx`:
 
@@ -1892,7 +1959,7 @@ export function WeatherCard({ temp, condition, high, low }: WeatherCardProps) {
 }
 ```
 
-- [ ] **Step 2: Update ClockCard**
+- [ ] **Step 4: Update ClockCard**
 
 Replace `apps/web/src/components/hub/clock-card.tsx`:
 
@@ -1942,30 +2009,188 @@ export function ClockCard() {
 }
 ```
 
-- [ ] **Step 3: Update WifiCard**
+- [ ] **Step 5: Update WifiCard**
 
-In `apps/web/src/components/hub/wifi-card.tsx`, replace the gridArea usage with card-registry config. Change the outer div to use card registry grid positioning:
-
-Replace the outer div's `style={{ gridArea: "wifi" }}` with:
+Replace `apps/web/src/components/hub/wifi-card.tsx`:
 
 ```typescript
+import { BentoCard } from "@/components/hub/bento-card";
 import { getCardConfig } from "@/components/hub/card-registry";
+import { Check, Copy, Eye, EyeOff, Wifi } from "lucide-react";
+import QRCode from "qrcode";
+import { useCallback, useEffect, useState } from "react";
 
-// Inside component, at top:
-const config = getCardConfig("wifi");
+const WIFI_SSID = "HomeNet";
+const WIFI_PASSWORD = "welcome2024";
+const WIFI_ENCRYPTION = "WPA";
+const AUTO_FLIP_BACK_MS = 300_000;
 
-// Replace outer div:
-<div
-  data-testid="widget-card-wifi"
-  className="[perspective:600px]"
-  style={{
-    gridColumn: config?.gridColumn,
-    gridRow: config?.gridRow,
-  }}
->
+function generateWifiUri(ssid: string, password: string, encryption: string): string {
+  return `WIFI:T:${encryption};S:${ssid};P:${password};;`;
+}
+
+export function WifiCard() {
+  const config = getCardConfig("wifi");
+  const [flipped, setFlipped] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [qrSvg, setQrSvg] = useState<string>("");
+  const [countdown, setCountdown] = useState(0);
+
+  useEffect(() => {
+    const uri = generateWifiUri(WIFI_SSID, WIFI_PASSWORD, WIFI_ENCRYPTION);
+    QRCode.toString(uri, {
+      type: "svg",
+      width: 80,
+      margin: 1,
+      color: { dark: "#000000", light: "#ffffff" },
+    }).then(setQrSvg);
+  }, []);
+
+  const handleCopy = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await navigator.clipboard.writeText(WIFI_PASSWORD);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, []);
+
+  useEffect(() => {
+    if (flipped) {
+      setCountdown(Math.ceil(AUTO_FLIP_BACK_MS / 1000));
+      const tick = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            setFlipped(false);
+            setShowPassword(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(tick);
+    }
+    setCountdown(0);
+  }, [flipped]);
+
+  const handleFlip = () => {
+    setFlipped(!flipped);
+    if (flipped) setShowPassword(false);
+  };
+
+  return (
+    <div
+      data-testid="widget-card-wifi"
+      className="[perspective:600px]"
+      style={{
+        gridColumn: config?.gridColumn,
+        gridRow: config?.gridRow,
+      }}
+    >
+      <div
+        className="relative w-full h-full transition-transform duration-500 [transform-style:preserve-3d]"
+        style={{ transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
+      >
+        {/* Front */}
+        <div className="absolute inset-0 [backface-visibility:hidden]">
+          <BentoCard testId="widget-card-wifi-front" onClick={handleFlip} className="h-full">
+            <div className="flex flex-col justify-between h-full">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="relative">
+                    <Wifi size={16} className="text-foreground" />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-green-500" />
+                  </div>
+                  <span className="text-sm text-muted-foreground">WiFi</span>
+                </div>
+                <div className="text-sm font-medium text-foreground">{WIFI_SSID}</div>
+              </div>
+              <div className="text-[10px] text-muted-foreground/40 mt-2">tap to share</div>
+            </div>
+          </BentoCard>
+        </div>
+
+        {/* Back */}
+        <div
+          className="absolute inset-0 [backface-visibility:hidden]"
+          style={{ transform: "rotateY(180deg)" }}
+        >
+          <BentoCard
+            testId="widget-card-wifi-back"
+            onClick={handleFlip}
+            className="relative h-full overflow-hidden"
+          >
+            <div className="flex flex-col justify-between h-full">
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5">
+                  <Wifi size={12} className="text-accent" />
+                  <span className="text-xs font-medium text-foreground">{WIFI_SSID}</span>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <span className="text-[11px] font-mono text-muted-foreground">
+                    {showPassword ? WIFI_PASSWORD : "\u2022".repeat(WIFI_PASSWORD.length)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowPassword(!showPassword);
+                    }}
+                    className="p-0.5 rounded hover:bg-muted transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff size={10} className="text-muted-foreground" />
+                    ) : (
+                      <Eye size={10} className="text-muted-foreground" />
+                    )}
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="
+                    w-full py-1.5 rounded-lg text-[11px] font-medium
+                    bg-accent/15 text-accent hover:bg-accent/25
+                    transition-colors flex items-center justify-center gap-1
+                  "
+                >
+                  {copied ? (
+                    <>
+                      <Check size={10} />
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={10} />
+                      Copy
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="flex justify-center">
+                <div
+                  className="rounded-md overflow-hidden bg-white p-1"
+                  // biome-ignore lint/security/noDangerouslySetInnerHtml: QR SVG from trusted qrcode library
+                  dangerouslySetInnerHTML={{ __html: qrSvg }}
+                />
+              </div>
+            </div>
+            {countdown > 0 && (
+              <span className="absolute bottom-2 right-3 font-mono text-[10px] tabular-nums text-muted-foreground/25">
+                {countdown}
+              </span>
+            )}
+          </BentoCard>
+        </div>
+      </div>
+    </div>
+  );
+}
 ```
 
-- [ ] **Step 4: Update LightsCard**
+- [ ] **Step 6: Update LightsCard**
 
 Replace `apps/web/src/components/hub/lights-card.tsx`:
 
@@ -2021,7 +2246,7 @@ export function LightsCard() {
 }
 ```
 
-- [ ] **Step 5: Update CalendarCard**
+- [ ] **Step 7: Update CalendarCard**
 
 Replace `apps/web/src/components/hub/calendar-card.tsx`:
 
@@ -2082,7 +2307,7 @@ export function CalendarCard() {
 }
 ```
 
-- [ ] **Step 6: Update MusicCard**
+- [ ] **Step 8: Update MusicCard**
 
 Replace `apps/web/src/components/hub/music-card.tsx`:
 
@@ -2165,7 +2390,7 @@ export function MusicCard() {
 }
 ```
 
-- [ ] **Step 7: Update ThemeToggleCard**
+- [ ] **Step 9: Update ThemeToggleCard**
 
 Replace `apps/web/src/components/hub/theme-toggle-card.tsx`:
 
@@ -2215,7 +2440,7 @@ export function ThemeToggleCard() {
 }
 ```
 
-- [ ] **Step 8: Run all tests**
+- [ ] **Step 10: Run all tests**
 
 ```bash
 cd apps/web && bun run test
@@ -2223,10 +2448,10 @@ cd apps/web && bun run test
 
 Expected: PASS (some existing tests may need minor updates if they check gridArea, handled in Task 13)
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 11: Commit**
 
 ```bash
-git add apps/web/src/components/hub/weather-card.tsx apps/web/src/components/hub/clock-card.tsx apps/web/src/components/hub/wifi-card.tsx apps/web/src/components/hub/lights-card.tsx apps/web/src/components/hub/calendar-card.tsx apps/web/src/components/hub/music-card.tsx apps/web/src/components/hub/theme-toggle-card.tsx
+git add apps/web/src/components/hub/weather-card.tsx apps/web/src/components/hub/clock-card.tsx apps/web/src/components/hub/wifi-card.tsx apps/web/src/components/hub/lights-card.tsx apps/web/src/components/hub/calendar-card.tsx apps/web/src/components/hub/music-card.tsx apps/web/src/components/hub/theme-toggle-card.tsx apps/web/src/__tests__/card-expand-behavior.test.tsx
 git commit -m "feat: update existing cards with expansion pattern and color schemes"
 git push
 ```
