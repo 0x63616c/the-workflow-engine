@@ -2,7 +2,7 @@ import { create } from "zustand";
 
 export const CLOCK_STATE_COUNT = 9;
 
-type View = "clock" | "hub" | "sonos";
+type View = "clock" | "hub" | "sonos" | "timer";
 
 interface NavigationState {
   view: View;
