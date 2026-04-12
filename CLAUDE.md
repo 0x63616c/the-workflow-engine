@@ -1,3 +1,7 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # CRITICAL: FIRST ACTION EVERY SESSION
 
 **Before doing ANYTHING else, before reading files, before answering questions, before planning, you MUST invoke `/caveman:caveman` as your very first action.** This is non-negotiable. No exceptions. Every single session starts with caveman mode. If you skip this, the entire session is wrong. Do it first. Always.
@@ -24,148 +28,201 @@ Wall-mounted iPad Pro smart home panel. Living art, controls home.
 - **Bundler / Dev server**: Vite
 - **UI**: React 19, TypeScript
 - **Routing**: TanStack Router (file-based, Vite plugin)
-- **Data fetching / server state**: TanStack Query
+- **Data fetching / server state**: TanStack Query via tRPC React bindings
 - **Client state**: Zustand
 - **Styling**: Tailwind CSS v4, shadcn/ui (style: new-york, base: neutral)
+- **3D**: Three.js via @react-three/fiber + @react-three/drei (used in art clock states)
+- **Animation**: Framer Motion
 - **Icons**: `lucide-react`
 - **Fonts**: Geist (`geist` package)
-- **Testing**: Vitest
+- **Testing**: Vitest + @testing-library/react (jsdom)
 - **Linting / formatting**: Biome
 
 ### Backend (apps/api)
 
 - **Runtime**: Bun
-- **Framework**: tRPC v11 (WebSocket subscriptions, real-time)
-- **Database**: SQLite via Drizzle ORM
+- **Framework**: tRPC v11 (HTTP batch + SSE subscriptions via `splitLink`)
+- **Database**: SQLite via Drizzle ORM (Bun SQLite driver)
 - **Auth**: PIN code, hashed, long-lived token
 - **Validation**: Zod
 - **Env config**: Validated via Zod in `src/env.ts`. Never read `.env` directly.
+
+### Shared Library (libs/shared)
+
+- `@repo/shared` workspace package, re-exports from `src/types/` and `src/schemas/`
+- Used by both apps for shared Zod schemas and TypeScript types
 
 ### Native Shell
 
 - **Currently running as PWA** on iPad (Capacitor native shell planned for later)
 - **Capacitor** wraps the PWA in a native iOS shell (WKWebView)
 - Enables native API access (screen brightness, camera, haptics) via JS-to-native bridge
-- Produces a real `.ipa` with bundle ID for Single App Mode kiosk
 - iPad runs in **MDM Single App Mode** (via Apple Configurator 2, no subscription needed)
 - Presence detection: motion sensor via Home Assistant (not camera), triggers UI wake/sleep
-- OLED iPad Pro: full black = pixels off, acts as screen-off when idle
 
 ### Event/Workflow Engine
 
-- **Inngest** (self-hosted, open source) for all background work, event-driven functions, cron jobs
-- Replaces need for separate worker service
-- All async work (polling HA, AI parsing, notification dispatch, theme transitions) = Inngest functions
-- API emits events, Inngest orchestrates, calls functions back via HTTP
+- **Inngest** (self-hosted via Docker) for background work, event-driven functions, cron jobs
+- Runs as Docker container in both dev (via docker-compose.yml) and prod
+- API registers Inngest handler at `/api/inngest` endpoint
+- Inngest dev server calls back to API via `host.docker.internal`
 
 ### Infrastructure
 
-- **Device layer**: Home Assistant (REST + WebSocket API)
-- **Local dev**: Tilt
-- **Prod**: Docker Compose on Mac Mini (includes Inngest server container)
-- **AI**: Undecided (Claude, OpenRouter/Gemma, etc.). Design for swappable LLM provider.
+- **Device layer**: Home Assistant (REST API, accessed from API service)
+- **Local dev**: Tilt (orchestrates docker-compose + local bun processes)
+- **Prod**: Docker Compose on Mac Mini (Kamal deploy, GHCR images)
+- **CI**: GitHub Actions on PRs to main (lint, typecheck, test, boundary check)
 
 ## Ports
 
-| Service        | Port |
-| -------------- | ---- |
-| web (Vite)     | 4200 |
-| api (tRPC)     | 4201 |
-| Home Assistant | 8123 |
+| Service        | Port         |
+| -------------- | ------------ |
+| web (Vite)     | 4200         |
+| api (tRPC)     | 4201         |
+| Inngest dev    | 8288         |
+| Home Assistant | 8123         |
 
-## Directory Structure
+Port isolation for parallel agents: set `PORT_OFFSET` env var. Tiltfile adds offset to all ports. API reads `PORT_OFFSET` from env and adds to base port via `EFFECTIVE_PORT`.
+
+## Monorepo Structure
 
 ```
-apps/web/    # React PWA (iPad panel UI)
-apps/api/    # tRPC backend (Bun + SQLite)
-libs/        # Shared internal libraries
-infra/       # Docker Compose, Tilt config
-docs/        # Project documentation, screenshots
+apps/web/          # React PWA (iPad panel UI)
+apps/api/          # tRPC backend (Bun + SQLite)
+libs/shared/       # @repo/shared - types and schemas
+scripts/           # check-boundaries.ts (import rule enforcement)
+docs/              # Screenshots, architecture docs
 ```
 
-## Local Development (Tilt)
+Bun workspaces configured in root `package.json` (`"workspaces": ["apps/*", "libs/*"]`).
+
+## Local Development
 
 ```bash
-tilt up       # Start Home Assistant, API, and web dev server
-tilt down     # Stop all services
+tilt up           # Start Inngest (Docker), API (bun --watch), web (Vite)
+tilt down         # Stop all
 ```
 
+Tilt starts services in order: docker-compose (Inngest) -> api -> web. Vite proxies `/trpc` to API (configured in `vite.config.ts`).
+
 ## Common Commands
+
+### Root (monorepo)
+
+```bash
+bun run test              # Run all workspace tests
+bun run lint:fix          # Biome check + fix entire repo
+bun run typecheck         # Typecheck all workspaces
+bun run check:boundaries  # Verify import boundary rules
+```
 
 ### apps/web
 
 ```bash
-bun run dev        # Start dev server (port 4200)
-bun run build      # Type-check and build for production
-bun run test       # Run Vitest test suite
-bun run lint:fix   # Run Biome lint and auto-fix
+cd apps/web
+bun run dev               # Vite dev server (port 4200)
+bun run build             # tsc -b && vite build
+bun run test              # vitest run
+bun run test:watch        # vitest (watch mode)
+bun run lint:fix          # biome check --write src/
 ```
 
 ### apps/api
 
 ```bash
-bun run dev         # Start API server (port 4201, hot-reload)
-bun run db:generate # Generate Drizzle migration files
-bun run db:migrate  # Apply pending migrations
-bun run db:push     # Push schema directly (dev only)
-bun run db:studio   # Open Drizzle Studio
-bun run test        # Run Vitest test suite
-bun run lint:fix    # Run Biome lint and auto-fix
+cd apps/api
+bun run dev               # bun --watch src/server.ts (port 4201)
+bun run test              # vitest run
+bun run test:watch        # vitest (watch mode)
+bun run lint:fix          # biome check --write src/
+bun run db:generate       # Drizzle migration generation
+bun run db:migrate        # Apply migrations
+bun run db:push           # Push schema directly (dev only)
+bun run db:studio         # Open Drizzle Studio
+bun run db:seed           # Seed countdown events
 ```
+
+### Run single test file
+
+```bash
+cd apps/web && bunx vitest run src/__tests__/timer-card.test.tsx
+cd apps/api && bunx vitest run src/__tests__/services/ha-service.test.ts
+```
+
+## Architecture
+
+### Frontend Data Flow
+
+```
+App (trpc.Provider + QueryClient + ThemeProvider)
+  -> RouterProvider (TanStack Router, file-based routes in src/routes/)
+    -> HomePage (src/routes/index.tsx)
+      -> WidgetGrid (6x4 CSS grid of BentoCard components)
+      -> CardOverlay (fullscreen expanded view, rendered when card tapped)
+```
+
+- **Path alias**: `@` maps to `apps/web/src/` (configured in vite.config.ts)
+- **tRPC client**: `src/lib/trpc.ts` creates React-aware tRPC client with `splitLink` (HTTP batch for queries/mutations, SSE for subscriptions)
+- **Stores** (Zustand): `card-expansion-store.ts` (expand/contract cards), `theme-store.ts` (palette management), `navigation-store.ts`, `timer-store.ts`
+- **Card system**: `card-registry.ts` defines grid positions and color schemes for all cards. `CardOverlay` maps card IDs to expanded view components.
+- **Art Clock**: Idle timeout (45s) auto-expands clock card. Clock has carousel of animated states (black hole, constellation, pendulum, radar, topographic, waveform, wireframe globe, particle drift).
+
+### Backend Data Flow
+
+```
+Bun.serve (src/server.ts)
+  -> /trpc/*      -> fetchRequestHandler -> appRouter
+  -> /api/inngest -> Inngest serve handler
+  -> (production) -> static file serving from public/
+```
+
+- **Router structure**: `appRouter` merges `health`, `countdownEvents`, `devices` routers
+- **Service layer**: `services/ha-service.ts` wraps HA integration with typed functions (lights, media players)
+- **Integration interface**: `integrations/types.ts` defines `Integration` (id, name, init, getState, execute, subscribe). HomeAssistant is the only implementation.
+- **HA integration**: Singleton `ha` instance initialized at server start. All HA calls go through typed wrapper methods (getEntities, getEntity, callService).
+- **Context**: tRPC context provides `db` (Drizzle instance). No auth middleware yet.
+
+### Import Boundaries (Enforced)
+
+Checked by `scripts/check-boundaries.ts` in pre-commit and CI:
+
+| Layer | Can Import |
+|-------|-----------|
+| `db/` | drizzle-orm, bun:sqlite, @repo/shared, relative |
+| `services/` | db/, integrations/types, @repo/shared, drizzle-orm |
+| `trpc/routers/` | services/, @trpc/, zod, @repo/shared, ../init, ../context |
+| `inngest/functions/` | services/, inngest, @repo/shared, ../client |
+| `integrations/` | @repo/shared, own files |
+
+Routers and Inngest functions are **thin wrappers** calling services. Never put business logic in routers.
+
+### Test Setup
+
+- **API tests**: `src/__tests__/setup.ts` sets `HA_TOKEN` and `HA_URL` env vars if not present. Tests mock HA calls.
+- **Web tests**: `src/test-setup.ts` configures jsdom environment. Uses @testing-library/react.
+- Tests live in `src/__tests__/` in both apps.
 
 ## Key Conventions
 
-- `biome.json` at repo root.
+- `biome.json` at repo root: 2-space indent, 100 char line width, recommended rules.
 - `routeTree.gen.ts` committed (auto-generated by TanStack Router Vite plugin).
 - Use `bun` / `bunx`, never `npm` / `npx`.
+- Numeric constants must have unit suffix (`_MS`, `_SECONDS`, `_BYTES`, etc.).
 - New features = plugins registering w/ core systems (Notification System, Theme Engine, Integration Hub, Scene/Layout System).
 
-## Testing
+## Pre-commit Hooks (Lefthook)
 
-- **TDD always.** Red/green cycle. Write failing test first, implement, refactor.
-- **Vitest** for unit + integration tests (API services, frontend components).
-- **Browser automation** (agent-browser CLI or equivalent) for E2E and manual visual verification after every UI task.
-- No task is "done" until tests pass AND browser automation confirms visually.
-- API tests: hit real endpoints (SQLite in-memory for test DB).
-- Frontend tests: Vitest + Testing Library for units, browser automation for flows.
-
-## Architecture Principles
-
-### Clean Architecture
-
-- **Services** contain business logic. tRPC routes and Inngest functions are thin wrappers that call services.
-- **Import boundaries enforced:**
-  - `db/` files: only Drizzle imports. No tRPC, no Inngest, no HTTP.
-  - `services/`: can import from `db/`, `integrations/types`, shared types. No tRPC, no Inngest.
-  - `trpc/routers/`: can import from `services/`. No direct DB access.
-  - `inngest/functions/`: can import from `services/`. No direct DB access.
-  - `integrations/`: implement plugin interface. Can import shared types only.
-- Enforce import restrictions via Biome rules or lint scripts in pre-commit hooks.
-- Dependencies point inward: infrastructure → services → domain. Never reverse.
-
-### Extensibility Over Scale
-
-- "Scalable" here means easy to extend, not serving 100M users.
-- Plugin architecture: adding a new integration = new folder under `integrations/`, new Inngest functions, register with hub. No core changes.
-- Notification system is a bus: anything can push to it.
-- Theme engine is pluggable: driven by time-of-day now, weather/music/calendar later.
-
-## Guard Rails
-
-### Pre-commit Hooks
-
-- Biome lint + format (auto-fix)
+Runs in parallel:
+- Biome lint + format (auto-fix, stages fixed files)
 - TypeScript type-check (`tsc --noEmit`)
-- Vitest run affected tests
-- Import boundary check (no cross-layer violations)
+- Vitest run changed tests
+- Import boundary check
 - Block `.env` files from commits
+- SwiftFormat for `.swift` files
+- plutil lint for `.plist` files
 
-### Agent-Friendly Repo
-
-- Skills in `.claude/skills/` for working on specific areas (frontend, API, integrations, tests)
-- CLAUDE.md kept up to date with all conventions
-- Good comments where logic is non-obvious (not everywhere)
-- Docs in `docs/` for architecture decisions and plugin authoring
+Pre-push: blocks direct push to `main`.
 
 ## Agent Development
 
@@ -178,19 +235,21 @@ bun run lint:fix    # Run Biome lint and auto-fix
 
 ### Build Phases
 
-- Phased approach: tooling first → test tooling → solidify → build app using everything set up.
+- Phased approach: tooling first -> test tooling -> solidify -> build app using everything set up.
 - Never skip ahead. Each phase tested before next begins.
 
-## Metrics and Monitoring
+## Testing
 
-- Health endpoints per service.
-- Event logs in SQLite (Inngest provides function execution history).
-- System management UI: hidden scene in web app (PIN-protected or swipe gesture).
-- Shows: service health, Inngest function status, HA connection, recent errors, disk usage.
+- **TDD always.** Red/green cycle. Write failing test first, implement, refactor.
+- **Vitest** for unit + integration tests (API services, frontend components).
+- **Browser automation** (agent-browser CLI or equivalent) for E2E and manual visual verification after every UI task.
+- No task is "done" until tests pass AND browser automation confirms visually.
+- API tests: hit real endpoints (SQLite in-memory for test DB).
+- Frontend tests: Vitest + Testing Library for units, browser automation for flows.
 
 ## Core Systems
 
 1. **Notification System** - Central bus, plugins push notifications, persisted to SQLite
-2. **Theme Engine** - Time-of-day aware palette/visuals, smooth transitions, art aesthetic
+2. **Theme Engine** - Zustand store with palette registration, midnight/daylight built-in, localStorage persistence
 3. **Integration Hub** - Plugin interface for device integrations (init, getState, execute, subscribe)
-4. **Scene/Layout System** - Swipeable views (home control, music, ambient art, notifications)
+4. **Scene/Layout System** - Bento grid of cards with overlay expansion, idle-to-clock carousel
