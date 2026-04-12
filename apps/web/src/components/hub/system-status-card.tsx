@@ -24,7 +24,7 @@ export function SystemStatusCard() {
             </div>
             <span className="text-base text-muted-foreground">System</span>
           </div>
-          <div className="text-sm text-muted-foreground/70">All systems OK</div>
+          <div className="text-base text-muted-foreground/70">All systems OK</div>
         </div>
       </div>
     </BentoCard>

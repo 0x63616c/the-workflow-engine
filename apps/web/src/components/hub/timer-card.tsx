@@ -24,7 +24,7 @@ export function TimerCard() {
     <BentoCard testId="widget-card-timer" onClick={() => expandCard("timer")}>
       <div className="flex flex-col justify-between h-full">
         <div className="text-base text-muted-foreground">Timer</div>
-        <div className="text-3xl font-[200] text-foreground tabular-nums">{value}</div>
+        <div className="text-4xl font-[200] text-foreground tabular-nums">{value}</div>
       </div>
     </BentoCard>
   );
