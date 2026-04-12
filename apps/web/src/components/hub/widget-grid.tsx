@@ -49,6 +49,9 @@ export function WidgetGrid() {
       <span className="fixed bottom-2 left-3 font-mono text-xs tabular-nums text-muted-foreground/30">
         {remainingSeconds}
       </span>
+      <span className="fixed top-2 right-3 font-mono text-xs tabular-nums text-muted-foreground/30">
+        {remainingSeconds}
+      </span>
     </div>
   );
 }
