@@ -1,5 +1,5 @@
 import { WidgetGrid } from "@/components/hub/widget-grid";
-import { useNavigationStore } from "@/stores/navigation-store";
+import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -35,25 +35,37 @@ describe("WidgetGrid", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 3, 11, 14, 23, 0));
-    useNavigationStore.setState({ view: "hub" });
+    useCardExpansionStore.setState({ expandedCardId: null });
   });
 
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
-    useNavigationStore.setState({ view: "clock" });
+    useCardExpansionStore.setState({ expandedCardId: null });
   });
 
-  it("renders all 7 widget cards", () => {
+  it("renders all 12 widget cards", () => {
     render(<WidgetGrid />);
 
     expect(screen.getByTestId("widget-card-weather")).toBeInTheDocument();
     expect(screen.getByTestId("widget-card-clock")).toBeInTheDocument();
+    expect(screen.getByTestId("widget-card-countdown")).toBeInTheDocument();
+    expect(screen.getByTestId("widget-card-photo")).toBeInTheDocument();
     expect(screen.getByTestId("widget-card-wifi")).toBeInTheDocument();
     expect(screen.getByTestId("widget-card-lights")).toBeInTheDocument();
-    expect(screen.getByTestId("widget-card-calendar")).toBeInTheDocument();
     expect(screen.getByTestId("widget-card-music")).toBeInTheDocument();
+    expect(screen.getByTestId("widget-card-calendar")).toBeInTheDocument();
+    expect(screen.getByTestId("widget-card-email")).toBeInTheDocument();
+    expect(screen.getByTestId("widget-card-system")).toBeInTheDocument();
+    expect(screen.getByTestId("widget-card-quote")).toBeInTheDocument();
     expect(screen.getByTestId("widget-card-theme")).toBeInTheDocument();
+  });
+
+  it("uses 6-column grid layout", () => {
+    render(<WidgetGrid />);
+
+    const grid = screen.getByTestId("widget-grid");
+    expect(grid.style.gridTemplateColumns).toBe("repeat(6, 1fr)");
   });
 
   it("renders weather data", () => {
@@ -69,12 +81,6 @@ describe("WidgetGrid", () => {
     expect(screen.getByText("2")).toBeInTheDocument();
     expect(screen.getByText("23")).toBeInTheDocument();
     expect(screen.getByText("PM")).toBeInTheDocument();
-  });
-
-  it("renders lights count", () => {
-    render(<WidgetGrid />);
-
-    expect(screen.getByText("3 of 5 on")).toBeInTheDocument();
   });
 
   it("has hub-container and widget-grid test IDs", () => {
