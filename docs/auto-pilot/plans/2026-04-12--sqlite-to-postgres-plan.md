@@ -67,9 +67,9 @@ Tasks must be executed in this order:
 **Files:**
 - Modify: `docker-compose.yml`
 
-- [ ] **Step 1: Add postgres service and volume**
+- [ ] **Step 1: Add postgres service and volumes key alongside existing inngest service**
 
-  Replace the contents of `docker-compose.yml` with:
+  Add the `postgres` service and top-level `volumes` key to `docker-compose.yml`. Do NOT remove or change the `inngest` service. The complete final file should be:
   ```yaml
   services:
     inngest:
@@ -207,19 +207,28 @@ Tasks must be executed in this order:
 
   Run: `rm /Users/calum/code/github.com/0x63616c/the-workflow-engine/.claude/worktrees/feat/sqlite-to-postgres/apps/api/src/db/migrations/0001_add_countdown_events.sql`
 
-- [ ] **Step 2: Generate new Postgres migration**
+- [ ] **Step 2: Delete migrations journal (if it exists)**
+
+  Run: `rm -rf /Users/calum/code/github.com/0x63616c/the-workflow-engine/.claude/worktrees/feat/sqlite-to-postgres/apps/api/src/db/migrations/meta`
+
+  This removes the drizzle-kit journal (`meta/_journal.json`) which tracks which migrations have been generated. If the SQLite journal is left in place, drizzle-kit may generate the wrong migration number (e.g. `0002_...` instead of `0000_...`) or fail with a dialect mismatch.
+
+  PASS: command exits 0 (whether or not the directory existed)
+  FAIL: any error other than "No such file or directory"
+
+- [ ] **Step 3: Generate new Postgres migration**
 
   Run: `cd /Users/calum/code/github.com/0x63616c/the-workflow-engine/.claude/worktrees/feat/sqlite-to-postgres/apps/api && DATABASE_URL=postgresql://workflow:workflow@localhost:5432/workflow_engine bun run db:generate`
   Expected: exits 0, creates a new `.sql` file in `src/db/migrations/` (e.g. `0000_init.sql`) containing `CREATE TABLE` statements for `system_info` and `countdown_events` with PG syntax (`SERIAL PRIMARY KEY`, `TIMESTAMP`, etc.)
 
-- [ ] **Step 3: Verify migration SQL looks correct**
+- [ ] **Step 4: Verify migration SQL looks correct**
 
   Read the generated file. It should contain:
   - `CREATE TABLE "system_info"` with `serial`, `text` columns
   - `CREATE TABLE "countdown_events"` with `serial`, `text`, `timestamp` columns
   - No `INTEGER PRIMARY KEY AUTOINCREMENT` or `datetime('now')` anywhere
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
   ```
   git add apps/api/src/db/migrations/
   git commit -m "feat: generate postgres drizzle migration"
@@ -312,6 +321,8 @@ Tasks must be executed in this order:
 
   The `z.string().url()` tightening is intentional: any non-URL value (including the old `./data.db`) will throw at startup, preventing silent misconfiguration.
 
+  Note: `apps/api/src/__tests__/env.test.ts` exists and tests `HA_URL` and `HA_TOKEN` validation, but does NOT test `DATABASE_URL`. No changes to that test file are needed.
+
 - [ ] **Step 2: Commit**
   ```
   git add apps/api/src/env.ts
@@ -326,14 +337,21 @@ Tasks must be executed in this order:
 **Files:**
 - Modify: `apps/api/src/server.ts`
 
-- [ ] **Step 1: Add runMigrations import and call**
+- [ ] **Step 1: Add runMigrations import, startup call, and graceful shutdown**
 
-  In `apps/api/src/server.ts`:
-
-  Add this import at the top (after the `node:path` import, before other imports):
+  In `apps/api/src/server.ts`, the complete updated import section at the top of the file must be exactly:
   ```ts
+  import { resolve } from "node:path";
+  import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+  import { serve } from "inngest/bun";
+
+  import { EFFECTIVE_PORT, env } from "./env";
   import { pool } from "./db/client";
   import { runMigrations } from "./db/migrate";
+  import { inngest } from "./inngest/client";
+  import { ha } from "./integrations/homeassistant";
+  import { createContext } from "./trpc/context";
+  import { appRouter } from "./trpc/routers";
   ```
 
   Replace the current startup sequence (line 11: `await ha.init();`) with:
@@ -586,12 +604,14 @@ Tasks must be executed in this order:
 
 Prerequisites: Postgres must be running (Task 2 completed). Run `docker-compose up -d postgres` if not already running.
 
-Also need to create test DB. Run:
-```bash
-docker exec -i $(docker ps -qf name=postgres) psql -U workflow -d workflow_engine -c "CREATE DATABASE workflow_engine_test;" 2>/dev/null || true
-```
+- [ ] **Step 1: Create the test database**
 
-- [ ] **Step 1: Update global-setup.ts**
+  Run: `docker exec -i $(docker ps -qf name=postgres) psql -U workflow -d workflow_engine -c "CREATE DATABASE workflow_engine_test;"`
+
+  PASS: prints `CREATE DATABASE`
+  FAIL: any error — if the DB already exists, it will print `ERROR: database "workflow_engine_test" already exists` which is also acceptable (re-run is safe). Any other error must be investigated before proceeding.
+
+- [ ] **Step 2: Update global-setup.ts**
 
   Replace the entire contents of `apps/api/src/__tests__/global-setup.ts` with:
   ```ts
@@ -604,21 +624,22 @@ docker exec -i $(docker ps -qf name=postgres) psql -U workflow -d workflow_engin
   }
   ```
 
-- [ ] **Step 2: Run test to verify FAIL state**
+- [ ] **Step 3: Confirm tests fail before rewriting**
   Run: `cd /Users/calum/code/github.com/0x63616c/the-workflow-engine/.claude/worktrees/feat/sqlite-to-postgres/apps/api && bun run test`
-  Expected: FAIL — tests still use `better-sqlite3` which is removed. This confirms the test rewrite is needed.
+  Expected: FAIL — the existing test file still imports `better-sqlite3` which was removed in Task 1. This is not a TDD red step; it's a baseline confirmation that the existing tests are broken and the rewrite is needed. Note which tests fail before continuing.
 
-- [ ] **Step 3: Rewrite countdown-events.test.ts**
+- [ ] **Step 4: Rewrite countdown-events.test.ts**
 
   Replace the entire contents of `apps/api/src/__tests__/countdown-events.test.ts` with:
   ```ts
+  import { resolve } from "node:path";
   import { Pool } from "pg";
   import { drizzle } from "drizzle-orm/node-postgres";
   import { migrate } from "drizzle-orm/node-postgres/migrator";
-  import { resolve } from "node:path";
   import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
   import * as schema from "../db/schema";
+  import { runMigrations } from "../db/migrate";
   import {
     createCountdownEvent,
     getCountdownEventById,
@@ -907,18 +928,17 @@ docker exec -i $(docker ps -qf name=postgres) psql -U workflow -d workflow_engin
     });
 
     it("runMigrations is idempotent", async () => {
-      const { runMigrations } = await import("../db/migrate");
       await expect(runMigrations()).resolves.not.toThrow();
       await expect(runMigrations()).resolves.not.toThrow();
     });
   });
   ```
 
-- [ ] **Step 4: Run tests to verify PASS**
+- [ ] **Step 5: Run tests to verify PASS**
   Run: `cd /Users/calum/code/github.com/0x63616c/the-workflow-engine/.claude/worktrees/feat/sqlite-to-postgres/apps/api && bun run test`
   Expected: all tests pass, 0 failures
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
   ```
   git add apps/api/src/__tests__/global-setup.ts apps/api/src/__tests__/countdown-events.test.ts
   git commit -m "test: rewrite countdown-events tests for postgres with real pg instance"
@@ -1095,9 +1115,9 @@ docker exec -i $(docker ps -qf name=postgres) psql -U workflow -d workflow_engin
 - Modify: `.github/workflows/ci.yml`
 - Modify: `.github/workflows/deploy.yml`
 
-- [ ] **Step 1: Update ci.yml — add Postgres service and DATABASE_URL**
+- [ ] **Step 1: Update ci.yml — replace the entire check job definition**
 
-  In `.github/workflows/ci.yml`, replace the `check` job definition. Add a `services` block and `DATABASE_URL` env to the job. The updated `check` job:
+  In `.github/workflows/ci.yml`, replace the entire `check` job (from `check:` through the last step) with the complete definition below. The only changes from the current file are the added `services` block and `env` block at the job level:
   ```yaml
   jobs:
     check:
@@ -1139,50 +1159,102 @@ docker exec -i $(docker ps -qf name=postgres) psql -U workflow -d workflow_engin
           run: bun run check:boundaries
   ```
 
-- [ ] **Step 2: Update deploy.yml — add Postgres service to check job**
+- [ ] **Step 2: Update deploy.yml — replace the entire check job definition**
 
-  In `.github/workflows/deploy.yml`, the `check` job (starting at line 117) needs the same additions. Add `services` and `env` blocks to the `check` job, after `runs-on: ubuntu-latest` and before `needs: notify-start`:
+  In `.github/workflows/deploy.yml`, replace the entire `check` job (lines 117–159) with the complete definition below. The changes from the current file are: `services` block added, `env` block added, all existing steps kept verbatim:
   ```yaml
-  check:
-    name: Lint, Typecheck, Test
-    runs-on: ubuntu-latest
-    needs: notify-start
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: workflow
-          POSTGRES_PASSWORD: workflow
-          POSTGRES_DB: workflow_engine_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-    env:
-      DATABASE_URL: postgresql://workflow:workflow@localhost:5432/workflow_engine_test
-    outputs:
-      duration: ${{ steps.duration.outputs.text }}
-    steps:
-      # ... rest of steps unchanged
+    check:
+      name: Lint, Typecheck, Test
+      runs-on: ubuntu-latest
+      needs: notify-start
+      services:
+        postgres:
+          image: postgres:16-alpine
+          env:
+            POSTGRES_USER: workflow
+            POSTGRES_PASSWORD: workflow
+            POSTGRES_DB: workflow_engine_test
+          ports:
+            - 5432:5432
+          options: >-
+            --health-cmd pg_isready
+            --health-interval 5s
+            --health-timeout 5s
+            --health-retries 10
+      env:
+        DATABASE_URL: postgresql://workflow:workflow@localhost:5432/workflow_engine_test
+      outputs:
+        duration: ${{ steps.duration.outputs.text }}
+      steps:
+        - name: Record start time
+          id: timer
+          run: echo "start_time=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+        - uses: actions/checkout@v6
+
+        - uses: oven-sh/setup-bun@v2
+
+        - run: bun install --frozen-lockfile
+
+        - name: Biome CI
+          run: bunx biome ci .
+
+        - name: Typecheck
+          run: bun run typecheck
+
+        - name: Test
+          run: bun run test
+
+        - name: Check import boundaries
+          run: bun run check:boundaries
+
+        - name: Calculate duration
+          id: duration
+          if: always()
+          run: |
+            START=${{ steps.timer.outputs.start_time }}
+            NOW=$(date +%s)
+            ELAPSED=$((NOW - START))
+            MINUTES=$((ELAPSED / 60))
+            SECONDS=$((ELAPSED % 60))
+            if [ "$MINUTES" -gt 0 ]; then
+              echo "text=${MINUTES}m ${SECONDS}s" >> "$GITHUB_OUTPUT"
+            else
+              echo "text=${SECONDS}s" >> "$GITHUB_OUTPUT"
+            fi
   ```
 
-  Also add `DATABASE_URL` and `POSTGRES_PASSWORD` to the `Deploy with Kamal` step's `env` block (the step that runs `kamal deploy`):
+  Also update the `Deploy with Kamal` step in the `deploy` job to add `DATABASE_URL` and `POSTGRES_PASSWORD` to its `env` block:
   ```yaml
-  - name: Deploy with Kamal
-    env:
-      KAMAL_REGISTRY_PASSWORD: ${{ secrets.GHRC_TOKEN }}
-      INNGEST_EVENT_KEY: ${{ secrets.INNGEST_EVENT_KEY }}
-      INNGEST_SIGNING_KEY: ${{ secrets.INNGEST_SIGNING_KEY }}
-      HA_TOKEN: ${{ secrets.HA_TOKEN }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-    run: kamal deploy
+        - name: Deploy with Kamal
+          env:
+            KAMAL_REGISTRY_PASSWORD: ${{ secrets.GHRC_TOKEN }}
+            INNGEST_EVENT_KEY: ${{ secrets.INNGEST_EVENT_KEY }}
+            INNGEST_SIGNING_KEY: ${{ secrets.INNGEST_SIGNING_KEY }}
+            HA_TOKEN: ${{ secrets.HA_TOKEN }}
+            DATABASE_URL: ${{ secrets.DATABASE_URL }}
+            POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          run: kamal deploy
   ```
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Add required GitHub repo secrets (manual step)**
+
+  Before this PR can deploy successfully, two new secrets must be added to the GitHub repository. This is a manual step that cannot be scripted without a GitHub token.
+
+  Add via GitHub UI (Settings -> Secrets and variables -> Actions -> New repository secret) or via CLI:
+  ```bash
+  gh secret set DATABASE_URL --body "postgresql://workflow:<PROD_PASSWORD>@localhost:5432/workflow_engine"
+  gh secret set POSTGRES_PASSWORD --body "<PROD_PASSWORD>"
+  ```
+
+  Replace `<PROD_PASSWORD>` with the production Postgres password (store it in 1Password under `op://Homelab/...` first).
+
+  PASS: both secrets appear in the repository secrets list
+  FAIL: secrets missing — the deploy job will fail at `kamal deploy` with an env var error
+
+  Note: The `DATABASE_URL` secret must use `localhost:5432` since both the app container and the Postgres accessory run on the same host (`homelab`) in Kamal's bridge network.
+
+- [ ] **Step 4: Commit**
   ```
   git add .github/workflows/ci.yml .github/workflows/deploy.yml
   git commit -m "ci: add postgres service container to check jobs"
