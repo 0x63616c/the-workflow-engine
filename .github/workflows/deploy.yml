@@ -23,10 +23,20 @@ jobs:
     outputs:
       thread_ts: ${{ steps.slack.outputs.ts }}
       start_time: ${{ steps.timer.outputs.start_time }}
+      bufo: ${{ steps.bufo.outputs.emoji }}
     steps:
       - name: Record start time
         id: timer
         run: echo "start_time=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: Pick bufo spinner
+        id: bufo
+        run: |
+          if [ $((RANDOM % 4)) -eq 0 ]; then
+            echo "emoji=:bufo-offers-a-loading-spinner-spinning:" >> "$GITHUB_OUTPUT"
+          else
+            echo "emoji=:bufo-offers-a-loading-spinner:" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Post pipeline start to Slack
         id: slack
@@ -43,13 +53,14 @@ jobs:
               --arg sha "${{ github.sha }}" \
               --arg commit_url "${{ github.event.head_commit.url }}" \
               --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              --arg bufo "${{ steps.bufo.outputs.emoji }}" \
               '{
                 channel: $channel,
                 text: ("Pipeline started: " + $commit),
                 blocks: [
                   {
                     type: "header",
-                    text: { type: "plain_text", text: ":rocket: Deploy Pipeline", emoji: true }
+                    text: { type: "plain_text", text: (":rocket: Deploy Pipeline " + $bufo), emoji: true }
                   },
                   {
                     type: "context",
@@ -215,15 +226,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Pick bufo spinner
-        id: bufo
-        run: |
-          if [ $((RANDOM % 10)) -eq 0 ]; then
-            echo "emoji=:bufo-offers-a-loading-spinner-spinning:" >> "$GITHUB_OUTPUT"
-          else
-            echo "emoji=:bufo-offers-a-loading-spinner:" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Update parent message with loading state
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
@@ -239,7 +241,7 @@ jobs:
               --arg sha "${{ github.sha }}" \
               --arg commit_url "${{ github.event.head_commit.url }}" \
               --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-              --arg bufo "${{ steps.bufo.outputs.emoji }}" \
+              --arg bufo "${{ needs.notify-start.outputs.bufo }}" \
               '{
                 channel: $channel,
                 ts: $ts,
@@ -275,7 +277,7 @@ jobs:
             -d "$(jq -n \
               --arg channel "$SLACK_CHANNEL" \
               --arg thread_ts "${{ needs.notify-start.outputs.thread_ts }}" \
-              --arg bufo "${{ steps.bufo.outputs.emoji }}" \
+              --arg bufo "${{ needs.notify-start.outputs.bufo }}" \
               '{
                 channel: $channel,
                 thread_ts: $thread_ts,
@@ -376,6 +378,9 @@ jobs:
           elif [ "${{ needs.deploy.result }}" = "failure" ]; then
             STATE="failure"
             DESC="Deploy pipeline failed"
+          elif [ "${{ needs.deploy.result }}" = "cancelled" ]; then
+            STATE="failure"
+            DESC="Deploy pipeline cancelled"
           else
             STATE="failure"
             DESC="Deploy skipped — checks failed"
@@ -619,4 +624,82 @@ jobs:
                 channel: $channel,
                 timestamp: $timestamp,
                 name: "no_entry_sign"
+              }')"
+
+      - name: Pipeline cancelled
+        if: needs.deploy.result == 'cancelled'
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        run: |
+          COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | head -1)
+          DURATION="${{ steps.duration.outputs.text }}"
+
+          curl -s -X POST "https://slack.com/api/chat.update" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            -d "$(jq -n \
+              --arg channel "$SLACK_CHANNEL" \
+              --arg ts "${{ needs.notify-start.outputs.thread_ts }}" \
+              --arg commit "$COMMIT_MSG" \
+              --arg sha "${{ github.sha }}" \
+              --arg commit_url "${{ github.event.head_commit.url }}" \
+              --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              --arg duration "$DURATION" \
+              '{
+                channel: $channel,
+                ts: $ts,
+                text: ("Pipeline cancelled: " + $commit),
+                blocks: [
+                  {
+                    type: "header",
+                    text: { type: "plain_text", text: ":rocket: Deploy Pipeline :black_square_for_stop:", emoji: true }
+                  },
+                  {
+                    type: "context",
+                    elements: [
+                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "`") },
+                      { type: "plain_text", text: $commit }
+                    ]
+                  },
+                  {
+                    type: "context",
+                    elements: [
+                      { type: "mrkdwn", text: ("<" + $commit_url + "|Commit> | <" + $run_url + "|Pipeline> | " + $duration) }
+                    ]
+                  }
+                ]
+              }')"
+
+          curl -s -X POST "https://slack.com/api/chat.postMessage" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            -d "$(jq -n \
+              --arg channel "$SLACK_CHANNEL" \
+              --arg thread_ts "${{ needs.notify-start.outputs.thread_ts }}" \
+              --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              --arg duration "$DURATION" \
+              '{
+                channel: $channel,
+                thread_ts: $thread_ts,
+                text: "Pipeline cancelled",
+                blocks: [
+                  {
+                    type: "context",
+                    elements: [
+                      { type: "mrkdwn", text: (":black_square_for_stop:  *Pipeline cancelled* (" + $duration + ") — <" + $run_url + "|Logs>") }
+                    ]
+                  }
+                ]
+              }')"
+
+          curl -s -X POST "https://slack.com/api/reactions.add" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            -d "$(jq -n \
+              --arg channel "$SLACK_CHANNEL" \
+              --arg timestamp "${{ needs.notify-start.outputs.thread_ts }}" \
+              '{
+                channel: $channel,
+                timestamp: $timestamp,
+                name: "black_square_for_stop"
               }')"
