@@ -8,7 +8,7 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   return (
-    <div className="relative h-full">
+    <div className="relative min-h-full">
       <WidgetGrid />
       <CardOverlay />
     </div>

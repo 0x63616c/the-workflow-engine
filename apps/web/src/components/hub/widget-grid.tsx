@@ -5,8 +5,18 @@ import { useAppConfig } from "@/hooks/use-app-config";
 import { useIdleTimeout } from "@/hooks/use-idle-timeout";
 import { trpc } from "@/lib/trpc";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
+import { useEffect, useRef, useState } from "react";
 
 const DEFAULT_IDLE_TIMEOUT_MS = 45_000;
+const GRID_COLS = 6;
+const GRID_ROWS = 4;
+const GRID_PADDING_PX = 40; // p-5 = 20px each side
+const GRID_GAP_PX = 12; // gap-3 = 12px
+
+function computeCellSize(containerWidth: number): number {
+  const totalGaps = (GRID_COLS - 1) * GRID_GAP_PX;
+  return (containerWidth - GRID_PADDING_PX - totalGaps) / GRID_COLS;
+}
 
 export function WidgetGrid() {
   const expandCard = useCardExpansionStore((s) => s.expandCard);
@@ -16,6 +26,21 @@ export function WidgetGrid() {
   const { get: getConfig } = useAppConfig();
   const idleTimeout_MS =
     (getConfig("display.idleTimeout_MS") as number | null) ?? DEFAULT_IDLE_TIMEOUT_MS;
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [cellSize_PX, setCellSize_PX] = useState(0);
+
+  useEffect(() => {
+    const el = gridRef.current;
+    if (!el) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width ?? el.clientWidth;
+      setCellSize_PX(computeCellSize(width));
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const { remainingSeconds } = useIdleTimeout(() => expandCard("clock"), idleTimeout_MS, {
     enabled: expandedCardId === null,
@@ -24,15 +49,34 @@ export function WidgetGrid() {
   const cards = getRegisteredCards();
 
   return (
-    <div data-testid="hub-container" className="relative h-full bg-background">
+    <div data-testid="hub-container" className="relative min-h-full bg-background">
       <div
+        ref={gridRef}
         data-testid="widget-grid"
-        className="relative grid gap-3 p-5 h-full"
+        className="relative grid gap-3 p-5 min-h-full"
         style={{
-          gridTemplateColumns: "repeat(6, 1fr)",
-          gridTemplateRows: "repeat(4, 1fr)",
+          gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`,
+          gridAutoRows: cellSize_PX > 0 ? `${cellSize_PX}px` : undefined,
         }}
       >
+        {Array.from({ length: GRID_COLS * GRID_ROWS }, (_, i) => {
+          const col = (i % GRID_COLS) + 1;
+          const row = Math.floor(i / GRID_COLS) + 1;
+          return (
+            <div
+              key={`placeholder-${col}-${row}`}
+              data-testid={`grid-placeholder-${col}-${row}`}
+              aria-hidden="true"
+              className="rounded-2xl border"
+              style={{
+                gridColumn: `${col} / ${col + 1}`,
+                gridRow: `${row} / ${row + 1}`,
+                borderColor: "color-mix(in srgb, var(--color-foreground) 3%, transparent)",
+                backgroundColor: "color-mix(in srgb, var(--color-foreground) 1%, transparent)",
+              }}
+            />
+          );
+        })}
         {cards.map((card) => {
           if (card.id === "countdown") {
             return <CountdownCardMini key={card.id} nextEvent={nextEvent} />;
