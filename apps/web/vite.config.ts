@@ -7,6 +7,9 @@ import { defineConfig } from "vite";
 const apiPort = process.env.API_PORT ?? "4201";
 
 export default defineConfig({
+  optimizeDeps: {
+    include: ["simplex-noise"],
+  },
   plugins: [TanStackRouterVite({ target: "react" }), react(), tailwindcss()],
   resolve: {
     alias: {
