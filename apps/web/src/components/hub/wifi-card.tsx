@@ -29,9 +29,7 @@ export function WifiCard() {
       type: "svg",
       width: 80,
       margin: 1,
-      color: isDark
-        ? { dark: "#ffffff", light: "#000000" }
-        : { dark: "#000000", light: "#ffffff" },
+      color: isDark ? { dark: "#ffffff", light: "#000000" } : { dark: "#000000", light: "#ffffff" },
     }).then(setQrSvg);
   }, [isDark]);
 
