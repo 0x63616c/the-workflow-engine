@@ -1,0 +1,87 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "labels": ["dependencies"],
+  "rangeStrategy": "replace",
+  "schedule": ["before 9am on monday"],
+  "timezone": "Pacific/Auckland",
+  "separateMajorMinor": true,
+  "separateMultipleMajor": true,
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 9am on monday"]
+  },
+  "packageRules": [
+    {
+      "description": "Group all non-major updates into one PR",
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "all non-major",
+      "groupSlug": "all-minor-patch"
+    },
+    {
+      "description": "Keep React packages in sync",
+      "matchPackageNames": ["react", "react-dom", "@types/react", "@types/react-dom"],
+      "groupName": "react"
+    },
+    {
+      "description": "Keep TanStack packages in sync",
+      "matchPackageNames": [
+        "@tanstack/react-query",
+        "@tanstack/react-router",
+        "@tanstack/router-plugin"
+      ],
+      "groupName": "tanstack"
+    },
+    {
+      "description": "Keep Three.js packages in sync",
+      "matchPackageNames": ["three", "@types/three", "@react-three/fiber", "@react-three/drei"],
+      "groupName": "three.js"
+    },
+    {
+      "description": "Keep tRPC packages in sync",
+      "matchPackageNames": ["@trpc/server", "@trpc/client", "@trpc/react-query"],
+      "groupName": "trpc"
+    },
+    {
+      "description": "Keep Capacitor packages in sync",
+      "matchPackageNames": [
+        "@capacitor/core",
+        "@capacitor/cli",
+        "@capacitor/ios",
+        "@capacitor/haptics",
+        "@capacitor/status-bar"
+      ],
+      "groupName": "capacitor"
+    },
+    {
+      "description": "Keep Drizzle packages in sync",
+      "matchPackageNames": ["drizzle-orm", "drizzle-kit"],
+      "groupName": "drizzle"
+    },
+    {
+      "description": "Keep test tooling in sync",
+      "matchPackageNames": [
+        "vitest",
+        "@testing-library/react",
+        "@testing-library/jest-dom",
+        "jsdom"
+      ],
+      "groupName": "testing"
+    },
+    {
+      "description": "Keep Tailwind packages in sync",
+      "matchPackageNames": ["tailwindcss", "@tailwindcss/vite"],
+      "groupName": "tailwind"
+    },
+    {
+      "description": "Keep build tooling in sync",
+      "matchPackageNames": ["vite", "@vitejs/plugin-react"],
+      "groupName": "vite"
+    },
+    {
+      "description": "Pin GitHub Actions digests for security",
+      "matchManagers": ["github-actions"],
+      "enabled": true
+    }
+  ]
+}
