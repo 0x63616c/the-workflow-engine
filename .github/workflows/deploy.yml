@@ -64,18 +64,9 @@ jobs:
                     ]
                   },
                   {
-                    type: "actions",
+                    type: "context",
                     elements: [
-                      {
-                        type: "button",
-                        text: { type: "plain_text", text: "View Commit", emoji: true },
-                        url: $commit_url
-                      },
-                      {
-                        type: "button",
-                        text: { type: "plain_text", text: "View Pipeline", emoji: true },
-                        url: $run_url
-                      }
+                      { type: "mrkdwn", text: ("<" + $commit_url + "|View Commit> | <" + $run_url + "|View Pipeline>") }
                     ]
                   },
                   { type: "divider" }
@@ -163,13 +154,7 @@ jobs:
                     type: "section",
                     text: {
                       type: "mrkdwn",
-                      text: ":x:  *Checks failed*"
-                    },
-                    accessory: {
-                      type: "button",
-                      text: { type: "plain_text", text: "View Logs" },
-                      url: $run_url,
-                      style: "danger"
+                      text: (":x:  *Checks failed* — <" + $run_url + "|View Logs>")
                     }
                   }
                 ]
@@ -307,14 +292,7 @@ jobs:
                     type: "section",
                     text: {
                       type: "mrkdwn",
-                      text: ":x:  *Deploy failed*"
-                    },
-                    accessory: {
-                      type: "button",
-                      text: { type: "plain_text", text: "View Logs" },
-                      url: $run_url,
-                      style: "danger"
-                    }
+                      text: (":x:  *Deploy failed* — <" + $run_url + "|View Logs>")
                   }
                 ]
               }')"
@@ -352,13 +330,7 @@ jobs:
                     type: "section",
                     text: {
                       type: "mrkdwn",
-                      text: ":no_entry_sign:  *Deploy skipped* — checks failed"
-                    },
-                    accessory: {
-                      type: "button",
-                      text: { type: "plain_text", text: "View Logs" },
-                      url: $run_url
-                    }
+                      text: (":no_entry_sign:  *Deploy skipped* — <" + $run_url + "|View Logs>")
                   }
                 ]
               }')"
