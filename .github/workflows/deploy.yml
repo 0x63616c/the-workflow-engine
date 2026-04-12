@@ -43,39 +43,39 @@ jobs:
           branch: ${{ github.ref_name }}
 
   check:
-    name: Lint, Typecheck, Test
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     needs: notify-start
-    outputs:
-      duration: ${{ steps.duration.outputs.text }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Lint
+            command: bunx biome ci .
+          - name: Typecheck
+            command: bun run typecheck
+          - name: Test
+            command: bun run test
+          - name: Boundaries
+            command: bun run check:boundaries
     steps:
-      - name: Record start time
-        id: timer
-        run: echo "start_time=$(date +%s)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: ${{ matrix.command }}
 
+  notify-checks:
+    name: Notify Checks Result
+    runs-on: ubuntu-latest
+    needs: [notify-start, check]
+    if: always()
+    steps:
       - uses: actions/checkout@v6
 
-      - uses: oven-sh/setup-bun@v2
-
-      - run: bun install --frozen-lockfile
-
-      - name: Biome CI
-        run: bunx biome ci .
-
-      - name: Typecheck
-        run: bun run typecheck
-
-      - name: Test
-        run: bun run test
-
-      - name: Check import boundaries
-        run: bun run check:boundaries
-
-      - name: Calculate duration
+      - name: Calculate checks duration
         id: duration
-        if: always()
         run: |
-          START=${{ steps.timer.outputs.start_time }}
+          START=${{ needs.notify-start.outputs.start_time }}
           NOW=$(date +%s)
           ELAPSED=$((NOW - START))
           MINUTES=$((ELAPSED / 60))
@@ -86,21 +86,13 @@ jobs:
             echo "text=${SECONDS}s" >> "$GITHUB_OUTPUT"
           fi
 
-  notify-checks:
-    name: Notify Checks Result
-    runs-on: ubuntu-latest
-    needs: [notify-start, check]
-    if: always()
-    steps:
-      - uses: actions/checkout@v6
-
       - name: Checks passed
         if: needs.check.result == 'success'
         uses: ./.github/actions/slack-notify-thread
         with:
           channel: ${{ env.SLACK_CHANNEL }}
           thread_ts: ${{ needs.notify-start.outputs.thread_ts }}
-          message: 'Checks passed — lint, typecheck, tests, boundaries (${{ needs.check.outputs.duration }})'
+          message: 'Checks passed — lint, typecheck, tests, boundaries (${{ steps.duration.outputs.text }})'
           emoji: ':white_check_mark:'
           slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
 
@@ -116,7 +108,7 @@ jobs:
               --arg channel "$SLACK_CHANNEL" \
               --arg thread_ts "${{ needs.notify-start.outputs.thread_ts }}" \
               --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-              --arg duration "${{ needs.check.outputs.duration }}" \
+              --arg duration "${{ steps.duration.outputs.text }}" \
               '{
                 channel: $channel,
                 thread_ts: $thread_ts,
@@ -152,7 +144,7 @@ jobs:
     name: Build Logging Images
     runs-on: ubuntu-latest
     needs: [check, check-logging-changes]
-    if: needs.check-logging-changes.outputs.changed == 'true'
+    if: needs.check.result == 'success' && needs.check-logging-changes.outputs.changed == 'true'
     steps:
       - uses: actions/checkout@v4
 

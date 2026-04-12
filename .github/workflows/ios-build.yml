@@ -8,6 +8,8 @@ on:
       - 'apps/web/capacitor.config.ts'
       - 'apps/web/package.json'
       - '.github/workflows/ios-build.yml'
+  schedule:
+    - cron: '0 12 1 * *' # 1st of every month at noon UTC, keeps TestFlight build fresh (90-day expiry)
   workflow_dispatch:
 
 concurrency:
