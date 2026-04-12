@@ -4,9 +4,9 @@
 # Use this when deploying from your local machine.
 # CI deploys directly via `kamal deploy` with secrets injected as env vars by GitHub Actions.
 #
-# Usage: bin/deploy [kamal options]
-#   e.g. bin/deploy
-#        bin/deploy --skip-push
+# Usage: scripts/deploy [kamal options]
+#   e.g. scripts/deploy
+#        scripts/deploy --skip-push
 
 set -e
 

@@ -3,7 +3,7 @@
 # Parses accessory names from the deploy config, checks each one,
 # and boots any that aren't running.
 #
-# Usage: bin/ensure-accessories
+# Usage: scripts/ensure-accessories
 #
 # Exit codes:
 #   0 — all accessories running (or successfully booted)
