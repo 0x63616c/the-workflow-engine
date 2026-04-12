@@ -11,6 +11,52 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Pre-React recovery: if the app fails to load (stale assets after deploy),
+      // detect it and hard-reload before React even tries to mount.
+      (function () {
+        var STORAGE_KEY = "wfe:build-hash";
+        var MAX_RELOAD_ATTEMPTS = 3;
+        var ATTEMPT_KEY = "wfe:reload-attempts";
+
+        var attempts = parseInt(sessionStorage.getItem(ATTEMPT_KEY) || "0", 10);
+
+        // Listen for script load failures (stale hashed assets that no longer exist)
+        window.addEventListener("error", function (e) {
+          if (e.target && (e.target.tagName === "SCRIPT" || e.target.tagName === "LINK")) {
+            console.warn("[WFE] Asset failed to load:", e.target.src || e.target.href);
+            if (attempts < MAX_RELOAD_ATTEMPTS) {
+              sessionStorage.setItem(ATTEMPT_KEY, String(attempts + 1));
+              window.location.reload();
+            }
+          }
+        }, true); // capture phase to catch resource errors
+
+        // On successful load, reset the attempt counter
+        window.addEventListener("load", function () {
+          sessionStorage.removeItem(ATTEMPT_KEY);
+        });
+
+        // Check build hash against server — works even if React never mounts
+        fetch("/trpc/health.buildHash", { cache: "no-store" })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            var serverHash = data && data.result && data.result.data && data.result.data.hash;
+            if (!serverHash) return;
+
+            var storedHash = localStorage.getItem(STORAGE_KEY);
+            if (storedHash && storedHash !== serverHash && attempts < MAX_RELOAD_ATTEMPTS) {
+              console.warn("[WFE] Build hash changed:", storedHash, "->", serverHash);
+              localStorage.setItem(STORAGE_KEY, serverHash);
+              sessionStorage.setItem(ATTEMPT_KEY, String(attempts + 1));
+              window.location.reload();
+              return;
+            }
+            localStorage.setItem(STORAGE_KEY, serverHash);
+          })
+          .catch(function () { /* API not reachable yet — React will handle it */ });
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

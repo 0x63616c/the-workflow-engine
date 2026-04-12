@@ -18,6 +18,23 @@ const inngestHandler = serve({
 const isProduction = env.NODE_ENV === "production";
 const publicDir = resolve(import.meta.dir, "../public");
 
+function cacheHeaders(filePath: string): Headers {
+  const headers = new Headers();
+  if (filePath.endsWith(".html")) {
+    // HTML must never be cached — it's the entry point that references hashed assets
+    headers.set("Cache-Control", "no-cache, no-store, must-revalidate");
+    headers.set("Pragma", "no-cache");
+    headers.set("Expires", "0");
+  } else if (/\.[a-f0-9]{8,}\.(js|css|woff2?|png|jpg|svg)$/.test(filePath)) {
+    // Vite hashed assets are immutable — cache forever
+    headers.set("Cache-Control", "public, max-age=31536000, immutable");
+  } else {
+    // Other static files (manifest.json, favicon, etc.) — short cache with revalidation
+    headers.set("Cache-Control", "public, max-age=3600, must-revalidate");
+  }
+  return headers;
+}
+
 const server = Bun.serve({
   port: EFFECTIVE_PORT,
   async fetch(req) {
@@ -40,9 +57,16 @@ const server = Bun.serve({
     if (isProduction) {
       const filePath = url.pathname === "/" ? "/index.html" : url.pathname;
       const file = Bun.file(resolve(publicDir, `.${filePath}`));
-      if (await file.exists()) return new Response(file);
+
+      if (await file.exists()) {
+        const headers = cacheHeaders(filePath);
+        return new Response(file, { headers });
+      }
+
       // SPA fallback: serve index.html for client-side routes
-      return new Response(Bun.file(resolve(publicDir, "index.html")));
+      return new Response(Bun.file(resolve(publicDir, "index.html")), {
+        headers: cacheHeaders("/index.html"),
+      });
     }
 
     return new Response("Not Found", { status: 404 });

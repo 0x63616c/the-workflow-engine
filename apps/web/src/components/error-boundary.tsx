@@ -38,7 +38,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   scheduleAutoRetry() {
-    if (this.state.retryCount >= MAX_AUTO_RETRIES) return;
+    if (this.state.retryCount >= MAX_AUTO_RETRIES) {
+      // Retries exhausted — check if a new deploy happened and auto-reload
+      this.checkForNewVersion();
+      return;
+    }
 
     this.retryTimeout = setTimeout(() => {
       this.setState((prev) => ({
@@ -49,6 +53,21 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     }, RETRY_DELAY_MS);
   }
 
+  checkForNewVersion() {
+    fetch("/trpc/health.buildHash", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data) => {
+        const serverHash = data?.result?.data?.hash;
+        if (!serverHash) return;
+        const storedHash = localStorage.getItem("wfe:build-hash");
+        if (storedHash && storedHash !== serverHash) {
+          console.warn("[ErrorBoundary] New version detected, reloading...");
+          this.handleFullReload();
+        }
+      })
+      .catch(() => {});
+  }
+
   handleManualRetry = () => {
     if (this.retryTimeout) {
       clearTimeout(this.retryTimeout);
@@ -57,6 +76,14 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   };
 
   handleFullReload = () => {
+    // Clear any stale build hash so the pre-React check in index.html
+    // will re-fetch from the server on the next load
+    try {
+      localStorage.removeItem("wfe:build-hash");
+      sessionStorage.removeItem("wfe:reload-attempts");
+    } catch {
+      // Storage may be unavailable
+    }
     window.location.reload();
   };
 
