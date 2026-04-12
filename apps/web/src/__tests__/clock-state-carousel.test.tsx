@@ -1,0 +1,92 @@
+import { ClockStateCarousel } from "@/components/art-clock/clock-state-carousel";
+import { useNavigationStore } from "@/stores/navigation-store";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+// Mock all state components so they render identifiable divs without canvas/WebGL
+vi.mock("@/components/art-clock/art-clock", () => ({
+  ArtClock: () => <div data-testid="state-default-clock" />,
+}));
+vi.mock("@/components/art-clock/states/wireframe-globe", () => ({
+  WireframeGlobe: () => <div data-testid="state-wireframe-globe" />,
+}));
+vi.mock("@/components/art-clock/states/constellation-map", () => ({
+  ConstellationMap: () => <div data-testid="state-constellation-map" />,
+}));
+vi.mock("@/components/art-clock/states/topographic-contours", () => ({
+  TopographicContours: () => <div data-testid="state-topographic-contours" />,
+}));
+vi.mock("@/components/art-clock/states/pendulum", () => ({
+  Pendulum: () => <div data-testid="state-pendulum" />,
+}));
+vi.mock("@/components/art-clock/states/waveform-pulse", () => ({
+  WaveformPulse: () => <div data-testid="state-waveform-pulse" />,
+}));
+vi.mock("@/components/art-clock/states/particle-drift", () => ({
+  ParticleDrift: () => <div data-testid="state-particle-drift" />,
+}));
+vi.mock("@/components/art-clock/states/black-hole", () => ({
+  BlackHole: () => <div data-testid="state-black-hole" />,
+}));
+vi.mock("@/components/art-clock/states/radar", () => ({
+  Radar: () => <div data-testid="state-radar" />,
+}));
+
+// Mock framer-motion to avoid animation issues in jsdom
+vi.mock("framer-motion", () => ({
+  motion: {
+    div: ({
+      children,
+      onPointerDown,
+      ...props
+    }: React.ComponentPropsWithRef<"div"> & { onDragEnd?: unknown }) => (
+      <div {...props} onPointerDown={onPointerDown as React.PointerEventHandler}>
+        {children}
+      </div>
+    ),
+  },
+  useMotionValue: () => ({ get: () => 0, set: vi.fn() }),
+  useTransform: (_mv: unknown, _fn: unknown) => ({ get: () => 0 }),
+  animate: vi.fn(),
+}));
+
+describe("ClockStateCarousel", () => {
+  beforeEach(() => {
+    useNavigationStore.setState({ view: "clock", clockStateIndex: 0 });
+  });
+
+  afterEach(() => {
+    cleanup();
+    useNavigationStore.setState({ view: "clock", clockStateIndex: 0 });
+  });
+
+  it("renders state-default-clock when clockStateIndex is 0", () => {
+    render(<ClockStateCarousel />);
+    expect(screen.getByTestId("state-default-clock")).toBeInTheDocument();
+  });
+
+  it("renders state-wireframe-globe when clockStateIndex is 1", () => {
+    useNavigationStore.setState({ clockStateIndex: 1 });
+    render(<ClockStateCarousel />);
+    expect(screen.getByTestId("state-wireframe-globe")).toBeInTheDocument();
+  });
+
+  it("renders state-radar when clockStateIndex is 8", () => {
+    useNavigationStore.setState({ clockStateIndex: 8 });
+    render(<ClockStateCarousel />);
+    expect(screen.getByTestId("state-radar")).toBeInTheDocument();
+  });
+
+  it("renders StateIndicatorDots with matching activeIndex", () => {
+    useNavigationStore.setState({ clockStateIndex: 5 });
+    render(<ClockStateCarousel />);
+    const activeDot = screen.getByTestId("state-dot-5");
+    expect(activeDot).toHaveStyle({ opacity: "1" });
+  });
+
+  it("renders 9 indicator dots", () => {
+    render(<ClockStateCarousel />);
+    const dots = screen.getAllByTestId(/^state-dot-/);
+    expect(dots).toHaveLength(9);
+  });
+});
