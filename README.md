@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/0x63616c/the-workflow-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/0x63616c/the-workflow-engine/actions/workflows/ci.yml)
 [![Deploy](https://github.com/0x63616c/the-workflow-engine/actions/workflows/deploy.yml/badge.svg)](https://github.com/0x63616c/the-workflow-engine/actions/workflows/deploy.yml)
+[![iOS Build](https://github.com/0x63616c/the-workflow-engine/actions/workflows/ios-build.yml/badge.svg)](https://github.com/0x63616c/the-workflow-engine/actions/workflows/ios-build.yml)
 
 Wall-mounted iPad Pro smart home panel. Living art that controls your home.
 
