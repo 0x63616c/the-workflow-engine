@@ -4,9 +4,13 @@ import { useEffect, useRef } from "react";
 import { createNoise3D } from "simplex-noise";
 
 const CLOCK_UPDATE_INTERVAL_MS = 1000;
-const NOISE_TIME_SPEED = 0.0002;
-const GRID_CELL_SIZE = 80;
-const CONTOUR_LEVELS = [-0.9, -0.75, -0.6, -0.45, -0.3, -0.15, 0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9];
+const NOISE_TIME_SPEED = 0.00015;
+const GRID_CELL_SIZE = 28;
+const NOISE_SCALE = 0.04;
+const CONTOUR_LEVELS = [
+  -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8,
+  0.9,
+];
 
 // Marching squares edge table: edges: 0=top, 1=right, 2=bottom, 3=left
 const MARCHING_EDGES: [number, number][][] = [
@@ -80,14 +84,16 @@ export function TopographicContours() {
       for (let row = 0; row < rows; row++) {
         grid[row] = [];
         for (let col = 0; col < cols; col++) {
-          grid[row][col] = noise3D(col * 0.12, row * 0.12, t);
+          grid[row][col] = noise3D(col * NOISE_SCALE, row * NOISE_SCALE, t);
         }
       }
 
       for (const level of CONTOUR_LEVELS) {
-        const opacity = 0.2 + 0.6 * Math.abs(level);
+        const absLevel = Math.abs(level);
+        const opacity = 0.12 + 0.55 * absLevel;
+        const isMajor = Math.abs(level * 10) % 5 < 0.1;
         ctx.strokeStyle = `rgba(255,255,255,${opacity})`;
-        ctx.lineWidth = 0.5;
+        ctx.lineWidth = isMajor ? 1.2 : 0.6;
 
         for (let row = 0; row < rows - 1; row++) {
           for (let col = 0; col < cols - 1; col++) {
