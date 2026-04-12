@@ -17,16 +17,44 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  SLACK_CHANNEL: C0ASR5837ED
+  SLACK_CHANNEL: C0ASD1161UJ
 
 jobs:
+  notify-start:
+    name: Notify Build Start
+    runs-on: ubuntu-latest
+    outputs:
+      thread_ts: ${{ steps.notify.outputs.thread_ts }}
+      start_time: ${{ steps.notify.outputs.start_time }}
+      bufo: ${{ steps.notify.outputs.bufo }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Notify start
+        id: notify
+        uses: ./.github/actions/slack-notify-start
+        with:
+          channel: ${{ env.SLACK_CHANNEL }}
+          title: iOS Build
+          emoji: ':iphone:'
+          slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
+          commit_message: ${{ github.event.head_commit.message }}
+          sha: ${{ github.sha }}
+          commit_url: ${{ github.event.head_commit.url }}
+          run_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          author: ${{ github.event.head_commit.author.name }}
+          branch: ${{ github.ref_name }}
+
   build:
     name: Build & Upload to TestFlight
     runs-on: macos-15
+    needs: notify-start
     defaults:
       run:
         working-directory: apps/web/ios
     timeout-minutes: 30
+    outputs:
+      build_duration: ${{ steps.build-duration.outputs.text }}
     steps:
       - uses: actions/checkout@v6
 
@@ -51,6 +79,19 @@ jobs:
           bundler-cache: true
           working-directory: apps/web/ios
 
+      - name: Notify building in thread
+        uses: ./.github/actions/slack-notify-thread
+        with:
+          channel: ${{ env.SLACK_CHANNEL }}
+          thread_ts: ${{ needs.notify-start.outputs.thread_ts }}
+          message: Building for TestFlight...
+          emoji: ${{ needs.notify-start.outputs.bufo }}
+          slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
+
+      - name: Record build start time
+        id: build-timer
+        run: echo "start_time=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - name: Build and upload to TestFlight
         run: bundle exec fastlane release
         env:
@@ -62,54 +103,42 @@ jobs:
           ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
           BUILD_NUMBER: ${{ github.run_number }}
 
-      - name: Notify success
-        if: success()
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      - name: Calculate build duration
+        id: build-duration
+        if: always()
         run: |
-          curl -s -X POST "https://slack.com/api/chat.postMessage" \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            -d "$(jq -n \
-              --arg channel "$SLACK_CHANNEL" \
-              --arg sha "${{ github.sha }}" \
-              --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-              --arg build_number "${{ github.run_number }}" \
-              '{
-                channel: $channel,
-                text: "iOS build uploaded to TestFlight",
-                blocks: [
-                  {
-                    type: "context",
-                    elements: [
-                      { type: "mrkdwn", text: (":iphone: *iOS build #" + $build_number + " uploaded to TestFlight* — `#" + ($sha | .[:7]) + "` <" + $run_url + "|Build>") }
-                    ]
-                  }
-                ]
-              }')"
+          START=${{ steps.build-timer.outputs.start_time }}
+          NOW=$(date +%s)
+          ELAPSED=$((NOW - START))
+          MINUTES=$((ELAPSED / 60))
+          SECONDS=$((ELAPSED % 60))
+          if [ "$MINUTES" -gt 0 ]; then
+            echo "text=${MINUTES}m ${SECONDS}s" >> "$GITHUB_OUTPUT"
+          else
+            echo "text=${SECONDS}s" >> "$GITHUB_OUTPUT"
+          fi
 
-      - name: Notify failure
-        if: failure()
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-        run: |
-          curl -s -X POST "https://slack.com/api/chat.postMessage" \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            -d "$(jq -n \
-              --arg channel "$SLACK_CHANNEL" \
-              --arg sha "${{ github.sha }}" \
-              --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-              '{
-                channel: $channel,
-                text: "iOS build failed",
-                blocks: [
-                  {
-                    type: "section",
-                    text: {
-                      type: "mrkdwn",
-                      text: (":x: *iOS build failed* — `#" + ($sha | .[:7]) + "` <" + $run_url + "|Logs>")
-                    }
-                  }
-                ]
-              }')"
+  notify-result:
+    name: Notify Build Result
+    runs-on: ubuntu-latest
+    needs: [notify-start, build]
+    if: always()
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Notify result
+        uses: ./.github/actions/slack-notify-result
+        with:
+          channel: ${{ env.SLACK_CHANNEL }}
+          thread_ts: ${{ needs.notify-start.outputs.thread_ts }}
+          start_time: ${{ needs.notify-start.outputs.start_time }}
+          result: ${{ needs.build.result }}
+          title: iOS Build
+          emoji: ':iphone:'
+          slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
+          commit_message: ${{ github.event.head_commit.message }}
+          sha: ${{ github.sha }}
+          commit_url: ${{ github.event.head_commit.url }}
+          run_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          step_duration: ${{ needs.build.outputs.build_duration }}
+          result_message: 'Build #${{ github.run_number }} uploaded to TestFlight'

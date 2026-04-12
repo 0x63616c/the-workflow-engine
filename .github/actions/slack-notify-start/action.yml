@@ -1,0 +1,154 @@
+name: Slack Notify Start
+description: Post pipeline/build start notification to Slack with header, context thread, and bufo spinner
+
+inputs:
+  channel:
+    description: Slack channel ID
+    required: true
+  title:
+    description: 'Header title (e.g. "Deploy Pipeline", "iOS Build")'
+    required: true
+  emoji:
+    description: 'Header emoji (e.g. ":rocket:", ":iphone:")'
+    required: true
+  slack_bot_token:
+    description: Slack bot token
+    required: true
+  commit_message:
+    description: Full commit message
+    required: true
+  sha:
+    description: Commit SHA
+    required: true
+  commit_url:
+    description: URL to the commit
+    required: true
+  run_url:
+    description: URL to the workflow run
+    required: true
+  author:
+    description: Commit author name
+    required: true
+  branch:
+    description: Branch name
+    required: true
+
+outputs:
+  thread_ts:
+    description: Slack thread timestamp for threading replies
+    value: ${{ steps.slack.outputs.ts }}
+  bufo:
+    description: Selected bufo spinner emoji
+    value: ${{ steps.bufo.outputs.emoji }}
+  start_time:
+    description: Unix timestamp of pipeline start
+    value: ${{ steps.timer.outputs.start_time }}
+
+runs:
+  using: composite
+  steps:
+    - name: Record start time
+      id: timer
+      shell: bash
+      run: echo "start_time=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+    - name: Pick bufo spinner
+      id: bufo
+      shell: bash
+      run: |
+        if [ $((RANDOM % 4)) -eq 0 ]; then
+          echo "emoji=:bufo-offers-a-loading-spinner-spinning:" >> "$GITHUB_OUTPUT"
+        else
+          echo "emoji=:bufo-offers-a-loading-spinner:" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Post start to Slack
+      id: slack
+      shell: bash
+      env:
+        SLACK_BOT_TOKEN: ${{ inputs.slack_bot_token }}
+        COMMIT_MESSAGE: ${{ inputs.commit_message }}
+        INPUT_CHANNEL: ${{ inputs.channel }}
+        INPUT_SHA: ${{ inputs.sha }}
+        INPUT_COMMIT_URL: ${{ inputs.commit_url }}
+        INPUT_RUN_URL: ${{ inputs.run_url }}
+        INPUT_EMOJI: ${{ inputs.emoji }}
+        INPUT_TITLE: ${{ inputs.title }}
+        INPUT_BUFO: ${{ steps.bufo.outputs.emoji }}
+      run: |
+        COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | head -1)
+        RESPONSE=$(curl -s -X POST "https://slack.com/api/chat.postMessage" \
+          -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+          -H "Content-Type: application/json; charset=utf-8" \
+          -d "$(jq -n \
+            --arg channel "$INPUT_CHANNEL" \
+            --arg commit "$COMMIT_MSG" \
+            --arg sha "$INPUT_SHA" \
+            --arg commit_url "$INPUT_COMMIT_URL" \
+            --arg run_url "$INPUT_RUN_URL" \
+            --arg bufo "$INPUT_BUFO" \
+            --arg emoji "$INPUT_EMOJI" \
+            --arg title "$INPUT_TITLE" \
+            '{
+              channel: $channel,
+              text: ($title + " started: " + $commit),
+              blocks: [
+                {
+                  type: "header",
+                  text: { type: "plain_text", text: ($emoji + " " + $title + " " + $bufo), emoji: true }
+                },
+                {
+                  type: "context",
+                  elements: [
+                    { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "` " + $commit) }
+                  ]
+                },
+                {
+                  type: "context",
+                  elements: [
+                    { type: "mrkdwn", text: ("<" + $commit_url + "|Commit> | <" + $run_url + "|Pipeline>") }
+                  ]
+                }
+              ]
+            }')")
+        TS=$(echo "$RESPONSE" | jq -r '.ts')
+        echo "ts=$TS" >> "$GITHUB_OUTPUT"
+        if [ "$TS" = "null" ] || [ -z "$TS" ]; then
+          echo "::warning::Slack notification failed"
+          echo "$RESPONSE" | jq .
+        fi
+
+    - name: Post context to thread
+      shell: bash
+      env:
+        SLACK_BOT_TOKEN: ${{ inputs.slack_bot_token }}
+        INPUT_CHANNEL: ${{ inputs.channel }}
+        INPUT_THREAD_TS: ${{ steps.slack.outputs.ts }}
+        INPUT_AUTHOR: ${{ inputs.author }}
+        INPUT_BRANCH: ${{ inputs.branch }}
+        INPUT_SHA: ${{ inputs.sha }}
+      run: |
+        curl -s -X POST "https://slack.com/api/chat.postMessage" \
+          -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+          -H "Content-Type: application/json; charset=utf-8" \
+          -d "$(jq -n \
+            --arg channel "$INPUT_CHANNEL" \
+            --arg thread_ts "$INPUT_THREAD_TS" \
+            --arg author "$INPUT_AUTHOR" \
+            --arg branch "$INPUT_BRANCH" \
+            --arg sha "$INPUT_SHA" \
+            '{
+              channel: $channel,
+              thread_ts: $thread_ts,
+              text: "Context",
+              blocks: [
+                {
+                  type: "context",
+                  elements: [
+                    { type: "mrkdwn", text: ("*Author:* " + $author) },
+                    { type: "mrkdwn", text: ("*Branch:* `" + $branch + "`") },
+                    { type: "mrkdwn", text: ("*Commit:* `" + ($sha | .[:7]) + "`") }
+                  ]
+                }
+              ]
+            }')"

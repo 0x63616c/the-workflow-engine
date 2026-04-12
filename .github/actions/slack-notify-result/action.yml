@@ -1,0 +1,238 @@
+name: Slack Notify Result
+description: Update parent message with final status, post result to thread, and add reaction
+
+inputs:
+  channel:
+    description: Slack channel ID
+    required: true
+  thread_ts:
+    description: Parent message timestamp
+    required: true
+  start_time:
+    description: Unix timestamp of pipeline start (for duration calculation)
+    required: true
+  result:
+    description: 'Job result: success, failure, cancelled, skipped'
+    required: true
+  title:
+    description: 'Header title (e.g. "Deploy Pipeline", "iOS Build")'
+    required: true
+  emoji:
+    description: 'Header emoji (e.g. ":rocket:", ":iphone:")'
+    required: true
+  slack_bot_token:
+    description: Slack bot token
+    required: true
+  commit_message:
+    description: Full commit message
+    required: true
+  sha:
+    description: Commit SHA
+    required: true
+  commit_url:
+    description: URL to the commit
+    required: true
+  run_url:
+    description: URL to the workflow run
+    required: true
+  step_duration:
+    description: 'Duration of the main step (build/deploy), shown in thread message'
+    required: false
+    default: ''
+  result_message:
+    description: 'Custom success message for thread (e.g. "Deployed — the app is now live", "Build #5 uploaded to TestFlight")'
+    required: false
+    default: ''
+  extra_links:
+    description: 'Extra links for success footer (e.g. "<http://homelab|App>")'
+    required: false
+    default: ''
+
+outputs:
+  duration:
+    description: Total pipeline duration text
+    value: ${{ steps.duration.outputs.text }}
+
+runs:
+  using: composite
+  steps:
+    - name: Calculate duration
+      id: duration
+      shell: bash
+      run: |
+        START=${{ inputs.start_time }}
+        NOW=$(date +%s)
+        ELAPSED=$((NOW - START))
+        MINUTES=$((ELAPSED / 60))
+        SECONDS=$((ELAPSED % 60))
+        if [ "$MINUTES" -gt 0 ]; then
+          echo "text=${MINUTES}m ${SECONDS}s" >> "$GITHUB_OUTPUT"
+        else
+          echo "text=${SECONDS}s" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Map result to status
+      id: status
+      shell: bash
+      env:
+        INPUT_RESULT: ${{ inputs.result }}
+      run: |
+        case "$INPUT_RESULT" in
+          success)
+            echo "icon=:white_check_mark:" >> "$GITHUB_OUTPUT"
+            echo "reaction=white_check_mark" >> "$GITHUB_OUTPUT"
+            echo "verb=succeeded" >> "$GITHUB_OUTPUT"
+            ;;
+          failure)
+            echo "icon=:x:" >> "$GITHUB_OUTPUT"
+            echo "reaction=x" >> "$GITHUB_OUTPUT"
+            echo "verb=failed" >> "$GITHUB_OUTPUT"
+            ;;
+          cancelled)
+            echo "icon=:black_square_for_stop:" >> "$GITHUB_OUTPUT"
+            echo "reaction=black_square_for_stop" >> "$GITHUB_OUTPUT"
+            echo "verb=cancelled" >> "$GITHUB_OUTPUT"
+            ;;
+          skipped)
+            echo "icon=:no_entry_sign:" >> "$GITHUB_OUTPUT"
+            echo "reaction=no_entry_sign" >> "$GITHUB_OUTPUT"
+            echo "verb=skipped" >> "$GITHUB_OUTPUT"
+            ;;
+        esac
+
+    - name: Update parent message
+      shell: bash
+      env:
+        SLACK_BOT_TOKEN: ${{ inputs.slack_bot_token }}
+        COMMIT_MESSAGE: ${{ inputs.commit_message }}
+        INPUT_CHANNEL: ${{ inputs.channel }}
+        INPUT_TS: ${{ inputs.thread_ts }}
+        INPUT_SHA: ${{ inputs.sha }}
+        INPUT_COMMIT_URL: ${{ inputs.commit_url }}
+        INPUT_RUN_URL: ${{ inputs.run_url }}
+        INPUT_EMOJI: ${{ inputs.emoji }}
+        INPUT_TITLE: ${{ inputs.title }}
+        INPUT_EXTRA_LINKS: ${{ inputs.extra_links }}
+        STATUS_ICON: ${{ steps.status.outputs.icon }}
+        STATUS_VERB: ${{ steps.status.outputs.verb }}
+        DURATION: ${{ steps.duration.outputs.text }}
+      run: |
+        COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | head -1)
+
+        FOOTER_PARTS="<${INPUT_COMMIT_URL}|Commit> | <${INPUT_RUN_URL}|Pipeline>"
+        if [ -n "$INPUT_EXTRA_LINKS" ]; then
+          FOOTER_PARTS="${FOOTER_PARTS} | ${INPUT_EXTRA_LINKS}"
+        fi
+        FOOTER_PARTS="${FOOTER_PARTS} | ${DURATION}"
+
+        curl -s -X POST "https://slack.com/api/chat.update" \
+          -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+          -H "Content-Type: application/json; charset=utf-8" \
+          -d "$(jq -n \
+            --arg channel "$INPUT_CHANNEL" \
+            --arg ts "$INPUT_TS" \
+            --arg commit "$COMMIT_MSG" \
+            --arg sha "$INPUT_SHA" \
+            --arg emoji "$INPUT_EMOJI" \
+            --arg title "$INPUT_TITLE" \
+            --arg icon "$STATUS_ICON" \
+            --arg verb "$STATUS_VERB" \
+            --arg footer "$FOOTER_PARTS" \
+            '{
+              channel: $channel,
+              ts: $ts,
+              text: ($title + " " + $verb + ": " + $commit),
+              blocks: [
+                {
+                  type: "header",
+                  text: { type: "plain_text", text: ($emoji + " " + $title + " " + $icon), emoji: true }
+                },
+                {
+                  type: "context",
+                  elements: [
+                    { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "` " + $commit) }
+                  ]
+                },
+                {
+                  type: "context",
+                  elements: [
+                    { type: "mrkdwn", text: $footer }
+                  ]
+                }
+              ]
+            }')"
+
+    - name: Post result to thread
+      shell: bash
+      env:
+        SLACK_BOT_TOKEN: ${{ inputs.slack_bot_token }}
+        INPUT_CHANNEL: ${{ inputs.channel }}
+        INPUT_THREAD_TS: ${{ inputs.thread_ts }}
+        INPUT_RUN_URL: ${{ inputs.run_url }}
+        INPUT_RESULT: ${{ inputs.result }}
+        INPUT_RESULT_MESSAGE: ${{ inputs.result_message }}
+        INPUT_TITLE: ${{ inputs.title }}
+        STATUS_ICON: ${{ steps.status.outputs.icon }}
+        STATUS_VERB: ${{ steps.status.outputs.verb }}
+        STEP_DURATION: ${{ inputs.step_duration }}
+        DURATION: ${{ steps.duration.outputs.text }}
+      run: |
+        DISPLAY_DURATION="${STEP_DURATION:-$DURATION}"
+
+        if [ "$INPUT_RESULT" = "success" ] && [ -n "$INPUT_RESULT_MESSAGE" ]; then
+          TEXT="${STATUS_ICON}  *${INPUT_RESULT_MESSAGE}* (${DISPLAY_DURATION})"
+        elif [ "$INPUT_RESULT" = "success" ]; then
+          TEXT="${STATUS_ICON}  *${INPUT_TITLE} succeeded* (${DISPLAY_DURATION})"
+        else
+          TEXT="${STATUS_ICON}  *${INPUT_TITLE} ${STATUS_VERB}* (${DISPLAY_DURATION}) — <${INPUT_RUN_URL}|Logs>"
+        fi
+
+        if [ "$INPUT_RESULT" = "success" ]; then
+          BLOCK_TYPE="context"
+          BLOCK=$(jq -n --arg text "$TEXT" '{
+            type: "context",
+            elements: [{ type: "mrkdwn", text: $text }]
+          }')
+        else
+          BLOCK_TYPE="section"
+          BLOCK=$(jq -n --arg text "$TEXT" '{
+            type: "section",
+            text: { type: "mrkdwn", text: $text }
+          }')
+        fi
+
+        curl -s -X POST "https://slack.com/api/chat.postMessage" \
+          -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+          -H "Content-Type: application/json; charset=utf-8" \
+          -d "$(jq -n \
+            --arg channel "$INPUT_CHANNEL" \
+            --arg thread_ts "$INPUT_THREAD_TS" \
+            --arg fallback_text "${INPUT_TITLE} ${STATUS_VERB}" \
+            --argjson block "$BLOCK" \
+            '{
+              channel: $channel,
+              thread_ts: $thread_ts,
+              text: $fallback_text,
+              blocks: [$block]
+            }')"
+
+    - name: Add reaction
+      shell: bash
+      env:
+        SLACK_BOT_TOKEN: ${{ inputs.slack_bot_token }}
+        INPUT_CHANNEL: ${{ inputs.channel }}
+        INPUT_THREAD_TS: ${{ inputs.thread_ts }}
+        REACTION: ${{ steps.status.outputs.reaction }}
+      run: |
+        curl -s -X POST "https://slack.com/api/reactions.add" \
+          -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+          -H "Content-Type: application/json; charset=utf-8" \
+          -d "$(jq -n \
+            --arg channel "$INPUT_CHANNEL" \
+            --arg timestamp "$INPUT_THREAD_TS" \
+            --arg name "$REACTION" \
+            '{
+              channel: $channel,
+              timestamp: $timestamp,
+              name: $name
+            }')"

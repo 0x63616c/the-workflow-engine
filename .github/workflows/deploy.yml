@@ -21,98 +21,26 @@ jobs:
     name: Notify Pipeline Start
     runs-on: ubuntu-latest
     outputs:
-      thread_ts: ${{ steps.slack.outputs.ts }}
-      start_time: ${{ steps.timer.outputs.start_time }}
-      bufo: ${{ steps.bufo.outputs.emoji }}
+      thread_ts: ${{ steps.notify.outputs.thread_ts }}
+      start_time: ${{ steps.notify.outputs.start_time }}
+      bufo: ${{ steps.notify.outputs.bufo }}
     steps:
-      - name: Record start time
-        id: timer
-        run: echo "start_time=$(date +%s)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v6
 
-      - name: Pick bufo spinner
-        id: bufo
-        run: |
-          if [ $((RANDOM % 4)) -eq 0 ]; then
-            echo "emoji=:bufo-offers-a-loading-spinner-spinning:" >> "$GITHUB_OUTPUT"
-          else
-            echo "emoji=:bufo-offers-a-loading-spinner:" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Post pipeline start to Slack
-        id: slack
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-        run: |
-          COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | head -1)
-          RESPONSE=$(curl -s -X POST "https://slack.com/api/chat.postMessage" \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            -d "$(jq -n \
-              --arg channel "$SLACK_CHANNEL" \
-              --arg commit "$COMMIT_MSG" \
-              --arg sha "${{ github.sha }}" \
-              --arg commit_url "${{ github.event.head_commit.url }}" \
-              --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-              --arg bufo "${{ steps.bufo.outputs.emoji }}" \
-              '{
-                channel: $channel,
-                text: ("Pipeline started: " + $commit),
-                blocks: [
-                  {
-                    type: "header",
-                    text: { type: "plain_text", text: (":rocket: Deploy Pipeline " + $bufo), emoji: true }
-                  },
-                  {
-                    type: "context",
-                    elements: [
-                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "` " + $commit) }
-                    ]
-                  },
-                  {
-                    type: "context",
-                    elements: [
-                      { type: "mrkdwn", text: ("<" + $commit_url + "|Commit> | <" + $run_url + "|Pipeline>") }
-                    ]
-                  }
-                ]
-              }')")
-          TS=$(echo "$RESPONSE" | jq -r '.ts')
-          echo "ts=$TS" >> "$GITHUB_OUTPUT"
-          if [ "$TS" = "null" ] || [ -z "$TS" ]; then
-            echo "::warning::Slack notification failed"
-            echo "$RESPONSE" | jq .
-          fi
-
-      - name: Post context to thread
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          COMMIT_AUTHOR: ${{ github.event.head_commit.author.name }}
-        run: |
-          curl -s -X POST "https://slack.com/api/chat.postMessage" \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            -d "$(jq -n \
-              --arg channel "$SLACK_CHANNEL" \
-              --arg thread_ts "${{ steps.slack.outputs.ts }}" \
-              --arg author "$COMMIT_AUTHOR" \
-              --arg branch "${{ github.ref_name }}" \
-              --arg sha "${{ github.sha }}" \
-              '{
-                channel: $channel,
-                thread_ts: $thread_ts,
-                text: "Deploy context",
-                blocks: [
-                  {
-                    type: "context",
-                    elements: [
-                      { type: "mrkdwn", text: ("*Author:* " + $author) },
-                      { type: "mrkdwn", text: ("*Branch:* `" + $branch + "`") },
-                      { type: "mrkdwn", text: ("*Commit:* `" + ($sha | .[:7]) + "`") }
-                    ]
-                  }
-                ]
-              }')"
+      - name: Notify start
+        id: notify
+        uses: ./.github/actions/slack-notify-start
+        with:
+          channel: ${{ env.SLACK_CHANNEL }}
+          title: Deploy Pipeline
+          emoji: ':rocket:'
+          slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
+          commit_message: ${{ github.event.head_commit.message }}
+          sha: ${{ github.sha }}
+          commit_url: ${{ github.event.head_commit.url }}
+          run_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          author: ${{ github.event.head_commit.author.name }}
+          branch: ${{ github.ref_name }}
 
   check:
     name: ${{ matrix.name }}
@@ -142,6 +70,8 @@ jobs:
     needs: [notify-start, check]
     if: always()
     steps:
+      - uses: actions/checkout@v6
+
       - name: Calculate checks duration
         id: duration
         run: |
@@ -158,29 +88,13 @@ jobs:
 
       - name: Checks passed
         if: needs.check.result == 'success'
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-        run: |
-          curl -s -X POST "https://slack.com/api/chat.postMessage" \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            -d "$(jq -n \
-              --arg channel "$SLACK_CHANNEL" \
-              --arg thread_ts "${{ needs.notify-start.outputs.thread_ts }}" \
-              --arg duration "${{ steps.duration.outputs.text }}" \
-              '{
-                channel: $channel,
-                thread_ts: $thread_ts,
-                text: "Checks passed",
-                blocks: [
-                  {
-                    type: "context",
-                    elements: [
-                      { type: "mrkdwn", text: (":white_check_mark:  *Checks passed* — lint, typecheck, tests, boundaries (" + $duration + ")") }
-                    ]
-                  }
-                ]
-              }')"
+        uses: ./.github/actions/slack-notify-thread
+        with:
+          channel: ${{ env.SLACK_CHANNEL }}
+          thread_ts: ${{ needs.notify-start.outputs.thread_ts }}
+          message: 'Checks passed — lint, typecheck, tests, boundaries (${{ steps.duration.outputs.text }})'
+          emoji: ':white_check_mark:'
+          slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
 
       - name: Checks failed
         if: needs.check.result == 'failure'
@@ -326,29 +240,13 @@ jobs:
               }')"
 
       - name: Notify deploying in thread
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-        run: |
-          curl -s -X POST "https://slack.com/api/chat.postMessage" \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            -d "$(jq -n \
-              --arg channel "$SLACK_CHANNEL" \
-              --arg thread_ts "${{ needs.notify-start.outputs.thread_ts }}" \
-              --arg bufo "${{ needs.notify-start.outputs.bufo }}" \
-              '{
-                channel: $channel,
-                thread_ts: $thread_ts,
-                text: "Deploying to homelab...",
-                blocks: [
-                  {
-                    type: "context",
-                    elements: [
-                      { type: "mrkdwn", text: ($bufo + "  *Deploying to homelab...*") }
-                    ]
-                  }
-                ]
-              }')"
+        uses: ./.github/actions/slack-notify-thread
+        with:
+          channel: ${{ env.SLACK_CHANNEL }}
+          thread_ts: ${{ needs.notify-start.outputs.thread_ts }}
+          message: Deploying to homelab...
+          emoji: ${{ needs.notify-start.outputs.bufo }}
+          slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
 
       - name: Connect to Tailscale
         uses: tailscale/github-action@v4
@@ -419,22 +317,9 @@ jobs:
     needs: [notify-start, deploy]
     if: always()
     steps:
-      - name: Calculate pipeline duration
-        id: duration
-        run: |
-          START=${{ needs.notify-start.outputs.start_time }}
-          NOW=$(date +%s)
-          ELAPSED=$((NOW - START))
-          MINUTES=$((ELAPSED / 60))
-          SECONDS=$((ELAPSED % 60))
-          if [ "$MINUTES" -gt 0 ]; then
-            echo "text=${MINUTES}m ${SECONDS}s" >> "$GITHUB_OUTPUT"
-          else
-            echo "text=${SECONDS}s" >> "$GITHUB_OUTPUT"
-          fi
+      - uses: actions/checkout@v6
 
       - name: Set commit status
-        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -457,315 +342,20 @@ jobs:
             -f description="$DESC" \
             -f context="deploy/pipeline"
 
-      - name: Deploy succeeded
-        if: needs.deploy.result == 'success'
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-        run: |
-          COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | head -1)
-          DURATION="${{ steps.duration.outputs.text }}"
-
-          curl -s -X POST "https://slack.com/api/chat.update" \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            -d "$(jq -n \
-              --arg channel "$SLACK_CHANNEL" \
-              --arg ts "${{ needs.notify-start.outputs.thread_ts }}" \
-              --arg commit "$COMMIT_MSG" \
-              --arg sha "${{ github.sha }}" \
-              --arg commit_url "${{ github.event.head_commit.url }}" \
-              --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-              --arg duration "$DURATION" \
-              '{
-                channel: $channel,
-                ts: $ts,
-                text: ("Deploy succeeded: " + $commit),
-                blocks: [
-                  {
-                    type: "header",
-                    text: { type: "plain_text", text: ":rocket: Deploy Pipeline :white_check_mark:", emoji: true }
-                  },
-                  {
-                    type: "context",
-                    elements: [
-                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "` " + $commit) }
-                    ]
-                  },
-                  {
-                    type: "context",
-                    elements: [
-                      { type: "mrkdwn", text: ("<" + $commit_url + "|Commit> | <" + $run_url + "|Pipeline> | <http://homelab|App> | " + $duration) }
-                    ]
-                  }
-                ]
-              }')"
-
-          curl -s -X POST "https://slack.com/api/chat.postMessage" \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            -d "$(jq -n \
-              --arg channel "$SLACK_CHANNEL" \
-              --arg thread_ts "${{ needs.notify-start.outputs.thread_ts }}" \
-              --arg deploy_duration "${{ needs.deploy.outputs.deploy_duration }}" \
-              '{
-                channel: $channel,
-                thread_ts: $thread_ts,
-                text: "Deployed successfully",
-                blocks: [
-                  {
-                    type: "context",
-                    elements: [
-                      { type: "mrkdwn", text: (":white_check_mark:  *Deployed — the app is now live* (" + $deploy_duration + ") — <http://homelab|Open App>") }
-                    ]
-                  }
-                ]
-              }')"
-
-          curl -s -X POST "https://slack.com/api/reactions.add" \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            -d "$(jq -n \
-              --arg channel "$SLACK_CHANNEL" \
-              --arg timestamp "${{ needs.notify-start.outputs.thread_ts }}" \
-              '{
-                channel: $channel,
-                timestamp: $timestamp,
-                name: "white_check_mark"
-              }')"
-
-      - name: Deploy failed
-        if: needs.deploy.result == 'failure'
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-        run: |
-          COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | head -1)
-          DURATION="${{ steps.duration.outputs.text }}"
-
-          curl -s -X POST "https://slack.com/api/chat.update" \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            -d "$(jq -n \
-              --arg channel "$SLACK_CHANNEL" \
-              --arg ts "${{ needs.notify-start.outputs.thread_ts }}" \
-              --arg commit "$COMMIT_MSG" \
-              --arg sha "${{ github.sha }}" \
-              --arg commit_url "${{ github.event.head_commit.url }}" \
-              --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-              --arg duration "$DURATION" \
-              '{
-                channel: $channel,
-                ts: $ts,
-                text: ("Deploy failed: " + $commit),
-                blocks: [
-                  {
-                    type: "header",
-                    text: { type: "plain_text", text: ":rocket: Deploy Pipeline :x:", emoji: true }
-                  },
-                  {
-                    type: "context",
-                    elements: [
-                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "` " + $commit) }
-                    ]
-                  },
-                  {
-                    type: "context",
-                    elements: [
-                      { type: "mrkdwn", text: ("<" + $commit_url + "|Commit> | <" + $run_url + "|Pipeline> | " + $duration) }
-                    ]
-                  }
-                ]
-              }')"
-
-          curl -s -X POST "https://slack.com/api/chat.postMessage" \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            -d "$(jq -n \
-              --arg channel "$SLACK_CHANNEL" \
-              --arg thread_ts "${{ needs.notify-start.outputs.thread_ts }}" \
-              --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-              --arg deploy_duration "${{ needs.deploy.outputs.deploy_duration }}" \
-              '{
-                channel: $channel,
-                thread_ts: $thread_ts,
-                text: "Deploy failed",
-                blocks: [
-                  {
-                    type: "section",
-                    text: {
-                      type: "mrkdwn",
-                      text: (":x:  *Deploy failed* (" + $deploy_duration + ") — <" + $run_url + "|Logs>")
-                    }
-                  }
-                ]
-              }')"
-
-          curl -s -X POST "https://slack.com/api/reactions.add" \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            -d "$(jq -n \
-              --arg channel "$SLACK_CHANNEL" \
-              --arg timestamp "${{ needs.notify-start.outputs.thread_ts }}" \
-              '{
-                channel: $channel,
-                timestamp: $timestamp,
-                name: "x"
-              }')"
-
-      - name: Deploy skipped (checks failed)
-        if: needs.deploy.result == 'skipped'
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-        run: |
-          COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | head -1)
-          DURATION="${{ steps.duration.outputs.text }}"
-
-          curl -s -X POST "https://slack.com/api/chat.update" \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            -d "$(jq -n \
-              --arg channel "$SLACK_CHANNEL" \
-              --arg ts "${{ needs.notify-start.outputs.thread_ts }}" \
-              --arg commit "$COMMIT_MSG" \
-              --arg sha "${{ github.sha }}" \
-              --arg commit_url "${{ github.event.head_commit.url }}" \
-              --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-              --arg duration "$DURATION" \
-              '{
-                channel: $channel,
-                ts: $ts,
-                text: ("Deploy skipped: " + $commit),
-                blocks: [
-                  {
-                    type: "header",
-                    text: { type: "plain_text", text: ":rocket: Deploy Pipeline :no_entry_sign:", emoji: true }
-                  },
-                  {
-                    type: "context",
-                    elements: [
-                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "` " + $commit) }
-                    ]
-                  },
-                  {
-                    type: "context",
-                    elements: [
-                      { type: "mrkdwn", text: ("<" + $commit_url + "|Commit> | <" + $run_url + "|Pipeline> | " + $duration) }
-                    ]
-                  }
-                ]
-              }')"
-
-          curl -s -X POST "https://slack.com/api/chat.postMessage" \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            -d "$(jq -n \
-              --arg channel "$SLACK_CHANNEL" \
-              --arg thread_ts "${{ needs.notify-start.outputs.thread_ts }}" \
-              --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-              --arg pipeline_duration "$DURATION" \
-              '{
-                channel: $channel,
-                thread_ts: $thread_ts,
-                text: "Deploy skipped — checks failed",
-                blocks: [
-                  {
-                    type: "section",
-                    text: {
-                      type: "mrkdwn",
-                      text: (":no_entry_sign:  *Deploy skipped* (" + $pipeline_duration + ") — <" + $run_url + "|Logs>")
-                    }
-                  }
-                ]
-              }')"
-
-          curl -s -X POST "https://slack.com/api/reactions.add" \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            -d "$(jq -n \
-              --arg channel "$SLACK_CHANNEL" \
-              --arg timestamp "${{ needs.notify-start.outputs.thread_ts }}" \
-              '{
-                channel: $channel,
-                timestamp: $timestamp,
-                name: "no_entry_sign"
-              }')"
-
-      - name: Pipeline cancelled
-        if: needs.deploy.result == 'cancelled'
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-        run: |
-          COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | head -1)
-          DURATION="${{ steps.duration.outputs.text }}"
-
-          curl -s -X POST "https://slack.com/api/chat.update" \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            -d "$(jq -n \
-              --arg channel "$SLACK_CHANNEL" \
-              --arg ts "${{ needs.notify-start.outputs.thread_ts }}" \
-              --arg commit "$COMMIT_MSG" \
-              --arg sha "${{ github.sha }}" \
-              --arg commit_url "${{ github.event.head_commit.url }}" \
-              --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-              --arg duration "$DURATION" \
-              '{
-                channel: $channel,
-                ts: $ts,
-                text: ("Pipeline cancelled: " + $commit),
-                blocks: [
-                  {
-                    type: "header",
-                    text: { type: "plain_text", text: ":rocket: Deploy Pipeline :black_square_for_stop:", emoji: true }
-                  },
-                  {
-                    type: "context",
-                    elements: [
-                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "` " + $commit) }
-                    ]
-                  },
-                  {
-                    type: "context",
-                    elements: [
-                      { type: "mrkdwn", text: ("<" + $commit_url + "|Commit> | <" + $run_url + "|Pipeline> | " + $duration) }
-                    ]
-                  }
-                ]
-              }')"
-
-          curl -s -X POST "https://slack.com/api/chat.postMessage" \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            -d "$(jq -n \
-              --arg channel "$SLACK_CHANNEL" \
-              --arg thread_ts "${{ needs.notify-start.outputs.thread_ts }}" \
-              --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-              --arg duration "$DURATION" \
-              '{
-                channel: $channel,
-                thread_ts: $thread_ts,
-                text: "Pipeline cancelled",
-                blocks: [
-                  {
-                    type: "context",
-                    elements: [
-                      { type: "mrkdwn", text: (":black_square_for_stop:  *Pipeline cancelled* (" + $duration + ") — <" + $run_url + "|Logs>") }
-                    ]
-                  }
-                ]
-              }')"
-
-          curl -s -X POST "https://slack.com/api/reactions.add" \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            -d "$(jq -n \
-              --arg channel "$SLACK_CHANNEL" \
-              --arg timestamp "${{ needs.notify-start.outputs.thread_ts }}" \
-              '{
-                channel: $channel,
-                timestamp: $timestamp,
-                name: "black_square_for_stop"
-              }')"
+      - name: Notify result
+        uses: ./.github/actions/slack-notify-result
+        with:
+          channel: ${{ env.SLACK_CHANNEL }}
+          thread_ts: ${{ needs.notify-start.outputs.thread_ts }}
+          start_time: ${{ needs.notify-start.outputs.start_time }}
+          result: ${{ needs.deploy.result }}
+          title: Deploy Pipeline
+          emoji: ':rocket:'
+          slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
+          commit_message: ${{ github.event.head_commit.message }}
+          sha: ${{ github.sha }}
+          commit_url: ${{ github.event.head_commit.url }}
+          run_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          step_duration: ${{ needs.deploy.outputs.deploy_duration }}
+          result_message: 'Deployed — the app is now live'
+          extra_links: '<http://homelab|App>'
