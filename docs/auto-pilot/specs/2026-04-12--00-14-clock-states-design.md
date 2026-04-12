@@ -10,10 +10,10 @@ Build a swipe-navigable clock state machine with 9 ambient visual states for the
 
 Decisions made autonomously (not specified in the alignment doc):
 
-- **State index stored in Zustand**: `clockStateIndex: number` added to `navigation-store.ts`. No separate store. Keeps clock state co-located with the existing view state.
+- **State index stored in Zustand**: `clockStateIndex: number` added to `navigation-store.ts`. No separate store. Keeps clock state co-located with the existing view state. Indices are 0-based internally; user-facing state numbers are 1-based (State 1 = index 0, State 9 = index 8).
 - **framer-motion version**: 11.x (latest stable). Added as a new dependency to `apps/web/package.json`.
 - **@react-three/fiber + @react-three/drei + three**: Added as new dependencies. Three.js for the two 3D states (globe, constellation). Canvas 2D for the remaining 6 generative states.
-- **simplex-noise**: Used for topographic contour Perlin/simplex noise field. Lightweight, zero-dependency npm package.
+- **simplex-noise**: Used for topographic contour Perlin/simplex noise field. Lightweight, zero-dependency npm package. ESM-only — implementer must add it to `optimizeDeps.include` in `vite.config.ts` if Vite pre-bundling fails. Fallback: `fast-simplex-noise` (CJS-compatible drop-in).
 - **State transition container**: A single `ClockStateCarousel` component in `components/art-clock/` replaces the direct `<ArtClock />` render in `routes/index.tsx`. It holds the framer-motion drag logic and renders the active state component.
 - **State indicator dots**: 9 thin dots centered at the bottom of the screen (1px tall thin lines for aesthetic consistency). Active dot is white at full opacity; inactive dots are white at 20% opacity. Hidden when hub is open.
 - **Transition mechanics**: framer-motion `useDragControls` + `motion.div` with `drag="x"`. During drag, the active state slides with finger. On release, spring physics settle to previous or next state based on velocity and displacement threshold. The entering state slides in from the appropriate side simultaneously (virtual carousel effect).
@@ -21,7 +21,7 @@ Decisions made autonomously (not specified in the alignment doc):
 - **Spring config**: `stiffness: 400, damping: 40, mass: 1` — snappy but not jarring. Same spring used for snap-back.
 - **Canvas 2D states use `requestAnimationFrame` loops**: Started on mount, cancelled on unmount via `useEffect` cleanup.
 - **Three.js states use `@react-three/fiber` `useFrame` loop**: Canvas rendered into a `<Canvas>` filling the full viewport.
-- **Clock text rendering in visualization states**: Each state component is responsible for rendering its own time text, positioned as described in the alignment doc. All states import and call `useCurrentTime` and `formatTime`/`formatDate` from `components/art-clock/art-clock.tsx` (which exports these already). No new time logic needed.
+- **Clock text rendering in visualization states**: Each state component is responsible for rendering its own time text, positioned as described in the alignment doc. All states import `useCurrentTime` from `@/hooks/use-current-time` and `formatTime`/`formatDate` from `@/components/art-clock/art-clock` (which exports these already). No new time logic needed.
 - **City timezone data for globe**: Hardcoded in the component. Timezones via `Intl.DateTimeFormat` with `timeZone` option — no timezone library needed.
 - **Constellation data**: Hardcoded star coordinates (normalized 0–1 screen space) and line segment pairs for 8 constellations. Not real astronomical coordinates — stylized positions that look good on a 4:3 screen.
 - **Tap-to-hub preserved**: The `onClick` handler that triggers `setView("hub")` stays on the clock-layer wrapper in `routes/index.tsx`, so it fires from any clock state.
@@ -115,13 +115,17 @@ interface NavigationActions {
 The central orchestration component. Responsibilities:
 - Reads `clockStateIndex` from Zustand.
 - Holds `dragX: MotionValue` from `useMotionValue(0)`.
-- Uses framer-motion `motion.div` with `drag="x"`, `dragConstraints={{ left: 0, right: 0 }}` (constraints removed; drag is free but spring-snapped on release).
+- Uses framer-motion `motion.div` with `drag="x"`. No `dragConstraints` — drag is free on x-axis and spring-snapped on release.
+- **Event bubbling**: The carousel sits inside the `clock-layer` div which has `onClick={() => setView("hub")}`. To prevent drag interactions from bubbling up and opening the hub mid-swipe, the carousel's `motion.div` must call `e.stopPropagation()` in its `onPointerDown` handler. This intercepts the touch before it can reach the `clock-layer` onClick.
 - `onDragEnd` handler: reads `dragX.get()` and `info.velocity.x`. If displacement > 80px or velocity > 300px/s, commits to next/prev state by calling `setClockStateIndex`. Otherwise, animates dragX back to 0 via spring.
 - During an active transition, renders two state components: the outgoing (sliding away) and the incoming (sliding in from the edge). After spring settles, only the current state is rendered.
 - Transition state is local React state (`transitionState: null | { from: number; to: number; dragX: number }`).
 
 **Drag-to-transition logic (pseudocode):**
 ```
+onPointerDown(e):
+  e.stopPropagation()  // prevent clock-layer onClick from firing
+
 onDragEnd(_, info):
   dx = dragX.get()
   vx = info.velocity.x
@@ -133,8 +137,12 @@ onDragEnd(_, info):
     animate(dragX, 0, SPRING_CONFIG)  // snap back
 
 commitTransition(newIndex):
-  setClockStateIndex(newIndex)
-  animate(dragX, 0, SPRING_CONFIG)
+  // Animate dragX to ±screenWidth (slide the outgoing state off-screen),
+  // then update clockStateIndex and reset dragX to 0.
+  // The incoming state slides in from the opposite edge simultaneously
+  // using useTransform(dragX, ...) for its x position.
+  animate(dragX, direction * screenWidth, SPRING_CONFIG)
+    .then(() => { setClockStateIndex(newIndex); dragX.set(0) })
 ```
 
 The outgoing state is positioned absolutely at `x: dragX` (it moves with finger), and the incoming state is positioned at `x: dragX + screenWidth` (for left swipe) or `x: dragX - screenWidth` (for right swipe). Both use `useTransform` on `dragX`.
@@ -430,9 +438,15 @@ agent-browser screenshot http://localhost:4200
 
 ### Step 7: Visual Verification — Swipe to State 1 (Wireframe Globe)
 
+Use agent-browser `mouse` actions to simulate a left swipe (drag from right to left across the viewport). The viewport is 1366x1024 at default scale.
+
 ```bash
-agent-browser swipe http://localhost:4200 --direction=left
-agent-browser screenshot http://localhost:4200
+agent-browser open http://localhost:4200
+agent-browser mouse move 1000 512
+agent-browser mouse down
+agent-browser mouse move 300 512
+agent-browser mouse up
+agent-browser screenshot docs/screenshots/state-1-wireframe-globe.png
 ```
 
 **PASS**:
@@ -441,11 +455,11 @@ agent-browser screenshot http://localhost:4200
 - Time text in bottom third
 - State indicator shows second dot active
 
-**FAIL**: White screen, error overlay, no globe.
+**FAIL**: White screen, error overlay, no globe, still showing default clock.
 
 ### Step 8: Visual Verification — Navigate All States
 
-Navigate left through states 2–8 one at a time, take a screenshot after each:
+Repeat the mouse drag sequence from Step 7 to navigate left through states 2–8 one at a time, taking a screenshot after each. Save screenshots to `docs/screenshots/state-N-*.png`.
 
 State 2 (Constellation Map): Star dots and connecting lines visible. Constellation names in small caps.
 State 3 (Topographic Contours): Flowing white contour lines at varying opacities.
@@ -472,22 +486,40 @@ Attempt to swipe right from State 0 (Default Clock):
 
 ### Step 10: Visual Verification — Tap-to-Hub
 
-From any clock state, click/tap the screen:
+From any clock state, click/tap the center of the screen. Use a short single click (not a drag) so it registers as a tap, not a swipe. The viewport center at default 1366x1024 is approximately (683, 512).
 
 ```bash
-agent-browser click http://localhost:4200 --x=683 --y=512
-agent-browser screenshot http://localhost:4200
+agent-browser open http://localhost:4200
+agent-browser mouse move 683 512
+agent-browser mouse down
+agent-browser mouse up
+agent-browser screenshot docs/screenshots/hub-open.png
 ```
 
 **PASS**: Hub overlay appears (widget grid visible). State indicator dots not visible when hub is open.
 **FAIL**: Hub does not appear, or state indicator still visible over hub.
 
+Note: if the mouse down/up approach does not register as a click, use `agent-browser eval "document.querySelector('[data-testid=clock-layer]').click()"` as an alternative.
+
 ### Step 11: Visual Verification — Hub-to-Clock Return Preserves State
 
-While in State 5 (WaveformPulse), tap to open hub, then tap empty space in hub to return:
+Navigate to State 5 (WaveformPulse) via 4 left-swipe gestures. Open the hub via tap. Dismiss the hub via a right swipe gesture (the existing `useSwipe` hook in `WidgetGrid` calls `setView("clock")` on swipe-right):
+
+```bash
+# Open hub (tap)
+agent-browser mouse move 683 512
+agent-browser mouse down
+agent-browser mouse up
+# Dismiss hub (swipe right)
+agent-browser mouse move 300 512
+agent-browser mouse down
+agent-browser mouse move 1000 512
+agent-browser mouse up
+agent-browser screenshot docs/screenshots/hub-dismissed-state5.png
+```
 
 **PASS**: Returns to State 5 (waveform pulse), not State 0. `clockStateIndex` not reset when hub opens/closes.
-**FAIL**: Returns to State 0 after hub dismissal.
+**FAIL**: Returns to State 0 after hub dismissal, or hub does not dismiss.
 
 ### Step 12: Visual Verification — Transition Smoothness
 
