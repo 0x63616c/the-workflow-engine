@@ -11,5 +11,8 @@ export const countdownEvents = pgTable("countdown_events", {
   title: text().notNull(),
   date: text().notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });

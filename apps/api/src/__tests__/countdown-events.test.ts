@@ -155,6 +155,23 @@ describe("countdown events service", () => {
     expect(updated.date).toBe("2026-07-01");
   });
 
+  it("update modifies updatedAt", async () => {
+    const created = await createCountdownEvent(db, {
+      title: "Original",
+      date: "2026-06-01",
+    });
+
+    // Small delay to ensure timestamps differ
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    const updated = await updateCountdownEvent(db, created.id, {
+      title: "Updated",
+      date: "2026-07-01",
+    });
+
+    expect(updated.updatedAt.getTime()).toBeGreaterThanOrEqual(created.updatedAt.getTime());
+  });
+
   it("update throws for non-existent id", async () => {
     await expect(
       updateCountdownEvent(db, 999, { title: "Nope", date: "2026-01-01" }),
