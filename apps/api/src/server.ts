@@ -2,12 +2,15 @@ import { resolve } from "node:path";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { serve } from "inngest/bun";
 
+import { pool } from "./db/client";
+import { runMigrations } from "./db/migrate";
 import { EFFECTIVE_PORT, env } from "./env";
 import { inngest } from "./inngest/client";
 import { ha } from "./integrations/homeassistant";
 import { createContext } from "./trpc/context";
 import { appRouter } from "./trpc/routers";
 
+await runMigrations();
 await ha.init();
 
 const inngestHandler = serve({
@@ -80,3 +83,10 @@ const server = Bun.serve({
 console.log(
   `🚀 API running on http://localhost:${server.port} (${env.NODE_ENV}) [${env.BUILD_HASH}]`,
 );
+
+const shutdown = async () => {
+  await pool.end();
+  process.exit(0);
+};
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
