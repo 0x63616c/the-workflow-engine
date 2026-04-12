@@ -89,10 +89,10 @@ function ContinentLines() {
         <Line
           key={CONTINENT_NAMES[i]}
           points={pts}
-          color="#6699cc"
-          lineWidth={1.2}
+          color="#aaccee"
+          lineWidth={1.5}
           transparent
-          opacity={0.7}
+          opacity={0.85}
         />
       ))}
     </>
@@ -107,30 +107,31 @@ function CityLabel({ city }: { city: (typeof CITIES)[number] }) {
   return (
     <group>
       <mesh position={pos}>
-        <sphereGeometry args={[0.04, 8, 8]} />
+        <sphereGeometry args={[0.05, 8, 8]} />
         <meshBasicMaterial color="white" />
       </mesh>
       <Billboard position={labelPos}>
         {/* Black background plane behind text */}
         <mesh position={[0, 0, -0.001]}>
-          <planeGeometry args={[0.9, 0.2]} />
-          <meshBasicMaterial color="black" transparent opacity={0.85} />
+          <planeGeometry args={[1.2, 0.3]} />
+          <meshBasicMaterial color="black" transparent opacity={0.9} />
         </mesh>
         <Text
-          fontSize={0.07}
+          fontSize={0.1}
           color="white"
           anchorX="center"
           anchorY="bottom"
           position={[0, 0.01, 0]}
+          fontWeight="bold"
         >
           {city.name}
         </Text>
         <Text
-          fontSize={0.065}
+          fontSize={0.08}
           color="rgba(255,255,255,0.7)"
           anchorX="center"
           anchorY="top"
-          position={[0, -0.01, 0]}
+          position={[0, -0.02, 0]}
         >
           {`${info.time} ${info.period}  UTC${info.offset}`}
         </Text>
