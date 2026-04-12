@@ -34,7 +34,9 @@ const server = Bun.serve({
         url.pathname === "/favicon.ico";
       if (!skip) {
         const level = status >= 500 ? "ERROR" : status >= 400 ? "WARN" : "INFO";
-        console.log(`[${level}] ${req.method} ${url.pathname} ${status} ${duration}ms`);
+        console.log(
+          `${new Date().toISOString()} [${level}] ${req.method} ${url.pathname} ${status} ${duration}ms`,
+        );
       }
       return res;
     };
@@ -50,7 +52,9 @@ const server = Bun.serve({
         router: appRouter,
         createContext,
         onError: ({ path, error }) => {
-          console.error(`[ERROR] tRPC ${path ?? "unknown"}: ${error.message}`);
+          console.error(
+            `${new Date().toISOString()} [ERROR] tRPC ${path ?? "unknown"}: ${error.message}`,
+          );
         },
       });
       return respond(res);
@@ -73,4 +77,6 @@ const server = Bun.serve({
   },
 });
 
-console.log(`🚀 API running on http://localhost:${server.port} (${env.NODE_ENV})`);
+console.log(
+  `🚀 API running on http://localhost:${server.port} (${env.NODE_ENV}) [${env.BUILD_HASH}]`,
+);
