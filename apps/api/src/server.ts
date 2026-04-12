@@ -4,8 +4,11 @@ import { serve } from "inngest/bun";
 
 import { EFFECTIVE_PORT, env } from "./env";
 import { inngest } from "./inngest/client";
+import { ha } from "./integrations/homeassistant";
 import { createContext } from "./trpc/context";
 import { appRouter } from "./trpc/routers";
+
+await ha.init();
 
 const inngestHandler = serve({
   client: inngest,
