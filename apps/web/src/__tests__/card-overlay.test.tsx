@@ -1,6 +1,7 @@
 import { CardOverlay } from "@/components/hub/card-overlay";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("qrcode", () => ({
@@ -57,5 +58,18 @@ describe("CardOverlay", () => {
     render(<CardOverlay />);
     expect(screen.queryByTestId("card-overlay-backdrop")).not.toBeInTheDocument();
     expect(screen.getByTestId("card-overlay-content")).toBeInTheDocument();
+  });
+
+  it("clock overlay has dismiss button", () => {
+    useCardExpansionStore.setState({ expandedCardId: "clock" });
+    render(<CardOverlay />);
+    expect(screen.getByTestId("clock-dismiss")).toBeInTheDocument();
+  });
+
+  it("clock dismiss button calls contractCard", () => {
+    useCardExpansionStore.setState({ expandedCardId: "clock" });
+    render(<CardOverlay />);
+    fireEvent.click(screen.getByTestId("clock-dismiss"));
+    expect(useCardExpansionStore.getState().expandedCardId).toBeNull();
   });
 });
