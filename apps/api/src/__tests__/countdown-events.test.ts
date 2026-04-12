@@ -157,3 +157,119 @@ describe("countdown events service", () => {
     expect(() => removeCountdownEvent(db, 999)).toThrow();
   });
 });
+
+// --- Task 3: Router tests ---
+
+import { appRouter } from "../trpc/routers";
+
+describe("countdown events router", () => {
+  let db: TestDB;
+  let sqlite: InstanceType<typeof BetterSqlite3>;
+  let caller: ReturnType<typeof appRouter.createCaller>;
+
+  beforeEach(() => {
+    const testDb = createTestDb();
+    db = testDb.db;
+    sqlite = testDb.sqlite;
+    // biome-ignore lint/suspicious/noExplicitAny: test context with better-sqlite3 db
+    caller = appRouter.createCaller({ db } as any);
+  });
+
+  afterEach(() => {
+    sqlite.close();
+  });
+
+  it("create returns event with id", async () => {
+    const result = await caller.countdownEvents.create({
+      title: "Test",
+      date: "2026-12-25",
+    });
+
+    expect(result.id).toBe(1);
+    expect(result.title).toBe("Test");
+  });
+
+  it("create rejects invalid date format", async () => {
+    await expect(
+      caller.countdownEvents.create({
+        title: "Bad date",
+        date: "not-a-date",
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("create rejects empty title", async () => {
+    await expect(
+      caller.countdownEvents.create({ title: "", date: "2026-12-25" }),
+    ).rejects.toThrow();
+  });
+
+  it("listUpcoming returns future events", async () => {
+    await caller.countdownEvents.create({
+      title: "Future",
+      date: "2030-01-01",
+    });
+    await caller.countdownEvents.create({
+      title: "Past",
+      date: "2020-01-01",
+    });
+
+    const result = await caller.countdownEvents.listUpcoming();
+
+    expect(result).toHaveLength(1);
+    expect(result[0].title).toBe("Future");
+  });
+
+  it("listPast returns past events", async () => {
+    await caller.countdownEvents.create({
+      title: "Future",
+      date: "2030-01-01",
+    });
+    await caller.countdownEvents.create({
+      title: "Past",
+      date: "2020-01-01",
+    });
+
+    const result = await caller.countdownEvents.listPast();
+
+    expect(result).toHaveLength(1);
+    expect(result[0].title).toBe("Past");
+  });
+
+  it("getById returns single event", async () => {
+    const created = await caller.countdownEvents.create({
+      title: "Find me",
+      date: "2026-06-01",
+    });
+
+    const result = await caller.countdownEvents.getById({ id: created.id });
+
+    expect(result.title).toBe("Find me");
+  });
+
+  it("update modifies event", async () => {
+    const created = await caller.countdownEvents.create({
+      title: "Original",
+      date: "2026-06-01",
+    });
+
+    const updated = await caller.countdownEvents.update({
+      id: created.id,
+      title: "Updated",
+      date: "2026-07-01",
+    });
+
+    expect(updated.title).toBe("Updated");
+  });
+
+  it("remove deletes event", async () => {
+    const created = await caller.countdownEvents.create({
+      title: "Delete me",
+      date: "2026-06-01",
+    });
+
+    await caller.countdownEvents.remove({ id: created.id });
+
+    await expect(caller.countdownEvents.getById({ id: created.id })).rejects.toThrow();
+  });
+});
