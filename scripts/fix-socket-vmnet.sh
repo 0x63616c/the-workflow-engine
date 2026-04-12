@@ -1,6 +1,6 @@
 #!/bin/bash
 # Fix socket_vmnet + restart HAOS with bridged networking
-# Run on homelab: sudo bash fix-socket-vmnet.sh
+# Run on homelab (Mac Mini): sudo bash fix-socket-vmnet.sh
 
 set -euo pipefail
 
