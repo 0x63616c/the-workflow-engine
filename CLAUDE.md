@@ -178,7 +178,6 @@ bun run db:generate       # Drizzle migration generation
 bun run db:migrate        # Apply migrations
 bun run db:push           # Push schema directly (dev only)
 bun run db:studio         # Open Drizzle Studio
-bun run db:seed           # Seed countdown events
 ```
 
 ### Run single test file
