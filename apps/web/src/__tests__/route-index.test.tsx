@@ -3,8 +3,8 @@ import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/stores/navigation-store");
-vi.mock("@/components/art-clock/art-clock", () => ({
-  ArtClock: () => <div data-testid="art-clock" />,
+vi.mock("@/components/art-clock/clock-state-carousel", () => ({
+  ClockStateCarousel: () => <div data-testid="clock-state-carousel" />,
 }));
 vi.mock("@/components/hub/widget-grid", () => ({
   WidgetGrid: () => <div data-testid="widget-grid" />,
@@ -19,8 +19,20 @@ const mockUseNavigationStore = vi.mocked(useNavigationStore);
 
 function setupStore(view: View) {
   mockUseNavigationStore.mockImplementation(
-    (selector: (s: { view: View; setView: () => void }) => unknown) =>
-      selector({ view, setView: vi.fn() }) as never,
+    (
+      selector: (s: {
+        view: View;
+        setView: () => void;
+        clockStateIndex: number;
+        setClockStateIndex: () => void;
+      }) => unknown,
+    ) =>
+      selector({
+        view,
+        setView: vi.fn(),
+        clockStateIndex: 0,
+        setClockStateIndex: vi.fn(),
+      }) as never,
   );
 }
 
