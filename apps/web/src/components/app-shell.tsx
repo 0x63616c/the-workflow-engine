@@ -21,7 +21,7 @@ function Logo() {
     <img
       src="/logo.png"
       alt="The Workflow Engine"
-      className="fixed bottom-2 left-3 size-6 rounded-lg opacity-30"
+      className="fixed bottom-2 left-12 size-6 rounded-lg opacity-30"
     />
   );
 }

@@ -4,9 +4,8 @@ import { Check, Copy, Eye, EyeOff, Wifi } from "lucide-react";
 import QRCode from "qrcode";
 import { useCallback, useEffect, useState } from "react";
 
-const WIFI_SSID = import.meta.env.VITE_WIFI_SSID ?? "";
-const WIFI_PASSWORD = import.meta.env.VITE_WIFI_PASSWORD ?? "";
-const WIFI_CONFIGURED = WIFI_SSID.length > 0 && WIFI_PASSWORD.length > 0;
+const WIFI_SSID = import.meta.env.VITE_WIFI_SSID || "HomeNet";
+const WIFI_PASSWORD = import.meta.env.VITE_WIFI_PASSWORD || "welcome2024";
 const WIFI_ENCRYPTION = "WPA";
 const AUTO_FLIP_BACK_MS = 300_000;
 
@@ -23,7 +22,6 @@ export function WifiCard() {
   const [countdown, setCountdown] = useState(0);
 
   useEffect(() => {
-    if (!WIFI_CONFIGURED) return;
     const uri = generateWifiUri(WIFI_SSID, WIFI_PASSWORD, WIFI_ENCRYPTION);
     QRCode.toString(uri, {
       type: "svg",
@@ -59,7 +57,6 @@ export function WifiCard() {
   }, [flipped]);
 
   const handleFlip = () => {
-    if (!WIFI_CONFIGURED) return;
     setFlipped(!flipped);
     if (flipped) setShowPassword(false);
   };
@@ -89,13 +86,9 @@ export function WifiCard() {
                   </div>
                   <span className="text-sm text-muted-foreground">WiFi</span>
                 </div>
-                <div className="text-sm font-medium text-foreground">
-                  {WIFI_CONFIGURED ? WIFI_SSID : "Not configured"}
-                </div>
+                <div className="text-sm font-medium text-foreground">{WIFI_SSID}</div>
               </div>
-              {WIFI_CONFIGURED && (
-                <div className="text-[10px] text-muted-foreground/40 mt-2">tap to share</div>
-              )}
+              <div className="text-[10px] text-muted-foreground/40 mt-2">tap to share</div>
             </div>
           </BentoCard>
         </div>

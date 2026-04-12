@@ -1,22 +1,14 @@
 import { BentoCard } from "@/components/hub/bento-card";
 import { getCardConfig } from "@/components/hub/card-registry";
-import { useClimate } from "@/hooks/use-climate";
+import { displayValue } from "@/components/hub/display-value";
+import { useFan } from "@/hooks/use-fan";
 import { Fan } from "lucide-react";
 
 export function FanCard() {
   const config = getCardConfig("fan");
-  const { entityId, fanEntityId, fanOn, isLoading, isError, turnFanOn, turnFanOff } = useClimate();
+  const { fanOn, isLoading, isError, toggle } = useFan();
 
-  const disabled = isLoading || isError || entityId == null;
-
-  const handleToggle = () => {
-    if (!entityId) return;
-    if (fanOn) {
-      turnFanOff(entityId, fanEntityId);
-    } else {
-      turnFanOn(entityId, fanEntityId);
-    }
-  };
+  const disabled = isLoading || isError;
 
   return (
     <BentoCard
@@ -27,7 +19,7 @@ export function FanCard() {
         bg: config?.colorScheme.bg,
         border: config?.colorScheme.border,
       }}
-      onClick={disabled ? undefined : handleToggle}
+      onClick={disabled ? undefined : toggle}
     >
       <div className="flex flex-col justify-between h-full">
         <div className="flex items-center justify-between">
@@ -38,7 +30,7 @@ export function FanCard() {
           />
         </div>
         <div className="text-lg font-light text-foreground">
-          {isLoading ? "--" : isError ? "N/A" : fanOn ? "On" : "Off"}
+          {displayValue({ isLoading, isError, value: fanOn ? "On" : "Off" })}
         </div>
       </div>
     </BentoCard>

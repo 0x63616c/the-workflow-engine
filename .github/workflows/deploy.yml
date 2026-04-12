@@ -314,6 +314,8 @@ jobs:
           HA_TOKEN: ${{ secrets.HA_TOKEN }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          VITE_WIFI_SSID: ${{ secrets.WIFI_SSID }}
+          VITE_WIFI_PASSWORD: ${{ secrets.WIFI_PASSWORD }}
         run: kamal deploy
 
       - name: Calculate deploy duration

@@ -32,6 +32,8 @@ builder:
   arch: arm64
   args:
     BUILD_HASH: <%= `git rev-parse --short HEAD`.strip %>
+    VITE_WIFI_SSID: <%= ENV["VITE_WIFI_SSID"] %>
+    VITE_WIFI_PASSWORD: <%= ENV["VITE_WIFI_PASSWORD"] %>
 
 env:
   clear:

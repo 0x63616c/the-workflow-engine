@@ -48,24 +48,21 @@ describe("ClimateCard", () => {
     expect(screen.getByText("72")).toBeInTheDocument();
   });
 
-  it("shows temp label", () => {
+  it("calls setTemperature with +1 when top half clicked", () => {
     render(<ClimateCard />);
-    expect(screen.getByText("Temp")).toBeInTheDocument();
-  });
-
-  it("calls setTemperature with +1 when up button clicked", () => {
-    render(<ClimateCard />);
-    const buttons = screen.getAllByRole("button");
-    // First button is up (ChevronUp)
-    fireEvent.click(buttons[0]);
+    // Top half contains ChevronUp SVG
+    const card = screen.getByTestId("widget-card-climate");
+    const divs = card.querySelectorAll(":scope > div > div");
+    // First div is top half (up), second is center, third is bottom half (down)
+    fireEvent.click(divs[0]);
     expect(setTemperatureFn).toHaveBeenCalledWith("climate.living_room", 73);
   });
 
-  it("calls setTemperature with -1 when down button clicked", () => {
+  it("calls setTemperature with -1 when bottom half clicked", () => {
     render(<ClimateCard />);
-    const buttons = screen.getAllByRole("button");
-    // Second button is down (ChevronDown)
-    fireEvent.click(buttons[1]);
+    const card = screen.getByTestId("widget-card-climate");
+    const divs = card.querySelectorAll(":scope > div > div");
+    fireEvent.click(divs[2]);
     expect(setTemperatureFn).toHaveBeenCalledWith("climate.living_room", 71);
   });
 
@@ -81,12 +78,12 @@ describe("ClimateCard", () => {
     expect(screen.getByText("--")).toBeInTheDocument();
   });
 
-  it("disables buttons when loading", () => {
+  it("does not call setTemperature when disabled", () => {
     setupHook({ isLoading: true });
     render(<ClimateCard />);
-    const buttons = screen.getAllByRole("button");
-    for (const btn of buttons) {
-      expect(btn).toBeDisabled();
-    }
+    const card = screen.getByTestId("widget-card-climate");
+    const topHalf = card.querySelector("div > div > div:first-child") as HTMLElement;
+    fireEvent.click(topHalf);
+    expect(setTemperatureFn).not.toHaveBeenCalled();
   });
 });

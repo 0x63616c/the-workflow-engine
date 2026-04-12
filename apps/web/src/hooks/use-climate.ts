@@ -8,10 +8,11 @@ export function useClimate() {
     retry: false,
   });
   const utils = trpc.useUtils();
-  const fanOnMutation = trpc.devices.fanOn.useMutation();
-  const fanOffMutation = trpc.devices.fanOff.useMutation();
+  const invalidateClimate = () => utils.devices.climate.invalidate();
+  const fanOnMutation = trpc.devices.fanOn.useMutation({ onSuccess: invalidateClimate });
+  const fanOffMutation = trpc.devices.fanOff.useMutation({ onSuccess: invalidateClimate });
   const setTempMutation = trpc.devices.setTemperature.useMutation({
-    onSuccess: () => utils.devices.climate.invalidate(),
+    onSuccess: invalidateClimate,
   });
 
   const data = climate.data;

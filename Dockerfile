@@ -11,6 +11,12 @@ RUN bun install --frozen-lockfile
 # Stage 2: Build web static files
 FROM deps AS web-build
 WORKDIR /app
+
+ARG VITE_WIFI_SSID
+ARG VITE_WIFI_PASSWORD
+ENV VITE_WIFI_SSID=${VITE_WIFI_SSID}
+ENV VITE_WIFI_PASSWORD=${VITE_WIFI_PASSWORD}
+
 COPY libs/shared libs/shared
 COPY apps/api/src apps/api/src
 COPY apps/api/tsconfig.json apps/api/

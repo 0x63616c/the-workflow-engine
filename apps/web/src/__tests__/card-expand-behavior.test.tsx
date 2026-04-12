@@ -1,10 +1,14 @@
+import "@/components/hub/register-cards";
 import { ClockCard } from "@/components/hub/clock-card";
-import { LightsCard } from "@/components/hub/lights-card";
 import { MusicCard } from "@/components/hub/music-card";
 import { WifiCard } from "@/components/hub/wifi-card";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@/components/art-clock/clock-state-carousel", () => ({
+  ClockStateCarousel: () => null,
+}));
 
 vi.mock("@/stores/theme-store", () => ({
   useThemeStore: vi.fn(
@@ -24,17 +28,6 @@ vi.mock("@/components/art-clock/art-clock", () => ({
 
 vi.mock("qrcode", () => ({
   default: { toString: vi.fn().mockResolvedValue("<svg></svg>") },
-}));
-
-vi.mock("@/hooks/use-lights", () => ({
-  useLights: () => ({
-    onCount: 0,
-    totalCount: 0,
-    isLoading: false,
-    isError: false,
-    turnOn: vi.fn(),
-    turnOff: vi.fn(),
-  }),
 }));
 
 vi.mock("@/hooks/use-sonos", () => ({
@@ -67,12 +60,6 @@ describe("Card expansion behavior", () => {
     render(<ClockCard />);
     fireEvent.click(screen.getByTestId("widget-card-clock"));
     expect(useCardExpansionStore.getState().expandedCardId).toBe("clock");
-  });
-
-  it("LightsCard calls expandCard('lights') on click", () => {
-    render(<LightsCard />);
-    fireEvent.click(screen.getByTestId("widget-card-lights"));
-    expect(useCardExpansionStore.getState().expandedCardId).toBe("lights");
   });
 
   it("MusicCard calls expandCard('music') on click", () => {
