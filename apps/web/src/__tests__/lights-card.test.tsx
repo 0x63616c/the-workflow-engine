@@ -36,37 +36,33 @@ beforeEach(() => {
   setupHook();
 });
 
-function getToggleButton() {
-  return screen.getByText(/all (on|off)/i).closest("button") as HTMLButtonElement;
-}
-
 describe("LightsCard", () => {
   it("shows on/total count", () => {
     render(<LightsCard />);
     expect(screen.getByText("3/5")).toBeInTheDocument();
   });
 
-  it("shows All On button when not all lights on", () => {
+  it("shows All On label when not all lights on", () => {
     render(<LightsCard />);
-    expect(getToggleButton().textContent).toBe("All On");
+    expect(screen.getByText("All On")).toBeInTheDocument();
   });
 
-  it("shows All Off button when all lights on", () => {
+  it("shows All Off label when all lights on", () => {
     setupHook({ onCount: 5, totalCount: 5 });
     render(<LightsCard />);
-    expect(getToggleButton().textContent).toBe("All Off");
+    expect(screen.getByText("All Off")).toBeInTheDocument();
   });
 
-  it("calls turnOn when All On clicked", () => {
+  it("calls turnOn when card clicked and not all on", () => {
     render(<LightsCard />);
-    fireEvent.click(getToggleButton());
+    fireEvent.click(screen.getByTestId("widget-card-lights"));
     expect(turnOnFn).toHaveBeenCalledOnce();
   });
 
-  it("calls turnOff when All Off clicked", () => {
+  it("calls turnOff when card clicked and all on", () => {
     setupHook({ onCount: 5, totalCount: 5 });
     render(<LightsCard />);
-    fireEvent.click(getToggleButton());
+    fireEvent.click(screen.getByTestId("widget-card-lights"));
     expect(turnOffFn).toHaveBeenCalledOnce();
   });
 
@@ -82,9 +78,10 @@ describe("LightsCard", () => {
     expect(screen.getByText("--")).toBeInTheDocument();
   });
 
-  it("disables toggle button on error", () => {
+  it("does not call turnOn when disabled", () => {
     setupHook({ isError: true });
     render(<LightsCard />);
-    expect(getToggleButton()).toBeDisabled();
+    fireEvent.click(screen.getByTestId("widget-card-lights"));
+    expect(turnOnFn).not.toHaveBeenCalled();
   });
 });

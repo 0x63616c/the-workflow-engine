@@ -1,10 +1,6 @@
-import { ClimateCard } from "@/components/hub/climate-card";
-import { ClockCard } from "@/components/hub/clock-card";
+import "@/components/hub/register-cards";
+import { getRegisteredCards } from "@/components/hub/card-registry";
 import { CountdownCardMini } from "@/components/hub/countdown-card";
-import { FanCard } from "@/components/hub/fan-card";
-import { LightsCard } from "@/components/hub/lights-card";
-import { MusicCard } from "@/components/hub/music-card";
-import { WifiCard } from "@/components/hub/wifi-card";
 import { useIdleTimeout } from "@/hooks/use-idle-timeout";
 import { trpc } from "@/lib/trpc";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
@@ -21,6 +17,8 @@ export function WidgetGrid() {
     enabled: expandedCardId === null,
   });
 
+  const cards = getRegisteredCards();
+
   return (
     <div data-testid="hub-container" className="relative h-full bg-background">
       <div
@@ -31,13 +29,13 @@ export function WidgetGrid() {
           gridTemplateRows: "repeat(4, 1fr)",
         }}
       >
-        <ClockCard />
-        <CountdownCardMini nextEvent={nextEvent} />
-        <MusicCard />
-        <LightsCard />
-        <FanCard />
-        <ClimateCard />
-        <WifiCard />
+        {cards.map((card) => {
+          if (card.id === "countdown") {
+            return <CountdownCardMini key={card.id} nextEvent={nextEvent} />;
+          }
+          const Component = card.component;
+          return <Component key={card.id} />;
+        })}
       </div>
       <span className="fixed bottom-2 left-3 font-mono text-xs tabular-nums text-muted-foreground/30">
         {remainingSeconds}
