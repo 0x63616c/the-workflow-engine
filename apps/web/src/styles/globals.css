@@ -87,3 +87,12 @@ body {
     transform: scale(1);
   }
 }
+
+@keyframes timer-flash {
+  0% {
+    background-color: rgba(255, 255, 255, 0.8);
+  }
+  100% {
+    background-color: rgba(220, 38, 38, 0.6);
+  }
+}
