@@ -65,8 +65,7 @@ jobs:
                   {
                     type: "context",
                     elements: [
-                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "`") },
-                      { type: "plain_text", text: $commit }
+                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "` " + $commit) }
                     ]
                   },
                   {
@@ -254,8 +253,7 @@ jobs:
                   {
                     type: "context",
                     elements: [
-                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "`") },
-                      { type: "plain_text", text: $commit }
+                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "` " + $commit) }
                     ]
                   },
                   {
@@ -422,8 +420,7 @@ jobs:
                   {
                     type: "context",
                     elements: [
-                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "`") },
-                      { type: "plain_text", text: $commit }
+                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "` " + $commit) }
                     ]
                   },
                   {
@@ -499,8 +496,7 @@ jobs:
                   {
                     type: "context",
                     elements: [
-                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "`") },
-                      { type: "plain_text", text: $commit }
+                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "` " + $commit) }
                     ]
                   },
                   {
@@ -578,8 +574,7 @@ jobs:
                   {
                     type: "context",
                     elements: [
-                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "`") },
-                      { type: "plain_text", text: $commit }
+                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "` " + $commit) }
                     ]
                   },
                   {
@@ -657,8 +652,7 @@ jobs:
                   {
                     type: "context",
                     elements: [
-                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "`") },
-                      { type: "plain_text", text: $commit }
+                      { type: "mrkdwn", text: ("`#" + ($sha | .[:7]) + "` " + $commit) }
                     ]
                   },
                   {
