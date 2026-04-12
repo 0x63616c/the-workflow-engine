@@ -13,9 +13,36 @@ permissions:
   packages: write
 
 jobs:
+  notify-start:
+    name: Notify Pipeline Start
+    runs-on: ubuntu-latest
+    outputs:
+      thread_ts: ${{ steps.slack.outputs.thread_ts }}
+    steps:
+      - name: Post pipeline start to Slack
+        id: slack
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: C0ASR5837ED
+            text: "Pipeline started for `${{ github.repository }}`"
+            blocks:
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: |
+                    *Pipeline started* :rocket:
+                    *Commit:* `${{ github.event.head_commit.message }}`
+                    *Author:* ${{ github.event.head_commit.author.name }}
+                    *Branch:* `${{ github.ref_name }}`
+                    <${{ github.event.head_commit.url }}|View commit> | <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View pipeline>
+
   check:
     name: Lint, Typecheck, Test
     runs-on: ubuntu-latest
+    needs: notify-start
     steps:
       - uses: actions/checkout@v4
 
@@ -35,12 +62,65 @@ jobs:
       - name: Check import boundaries
         run: bun run check:boundaries
 
+  notify-checks:
+    name: Notify Checks Result
+    runs-on: ubuntu-latest
+    needs: [notify-start, check]
+    if: always()
+    steps:
+      - name: Checks passed
+        if: needs.check.result == 'success'
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: C0ASR5837ED
+            thread_ts: "${{ needs.notify-start.outputs.thread_ts }}"
+            text: "Checks passed"
+            blocks:
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: "*Checks passed* :white_check_mark: Lint, typecheck, tests, boundaries all green."
+
+      - name: Checks failed
+        if: needs.check.result == 'failure'
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: C0ASR5837ED
+            thread_ts: "${{ needs.notify-start.outputs.thread_ts }}"
+            text: "Checks failed"
+            blocks:
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: "*Checks failed* :x: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>"
+
   deploy:
     name: Deploy to Homelab
     runs-on: ubuntu-latest
-    needs: check
+    needs: [notify-start, check]
     steps:
       - uses: actions/checkout@v4
+
+      - name: Notify deploying
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: C0ASR5837ED
+            thread_ts: "${{ needs.notify-start.outputs.thread_ts }}"
+            text: "Deploying to homelab..."
+            blocks:
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: "*Deploying to homelab...* :hourglass_flowing_sand:"
 
       - name: Connect to Tailscale
         uses: tailscale/github-action@v4
@@ -77,3 +157,57 @@ jobs:
           INNGEST_SIGNING_KEY: ${{ secrets.INNGEST_SIGNING_KEY }}
           HA_TOKEN: ${{ secrets.HA_TOKEN }}
         run: kamal deploy
+
+  notify-result:
+    name: Notify Deploy Result
+    runs-on: ubuntu-latest
+    needs: [notify-start, deploy]
+    if: always()
+    steps:
+      - name: Deploy succeeded
+        if: needs.deploy.result == 'success'
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: C0ASR5837ED
+            thread_ts: "${{ needs.notify-start.outputs.thread_ts }}"
+            text: "Deployed successfully"
+            blocks:
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: "*Deployed* :white_check_mark: The app is now live."
+
+      - name: Deploy failed
+        if: needs.deploy.result == 'failure'
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: C0ASR5837ED
+            thread_ts: "${{ needs.notify-start.outputs.thread_ts }}"
+            text: "Deploy failed"
+            blocks:
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: "*Deploy failed* :x: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>"
+
+      - name: Deploy skipped (checks failed)
+        if: needs.deploy.result == 'skipped'
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: C0ASR5837ED
+            thread_ts: "${{ needs.notify-start.outputs.thread_ts }}"
+            text: "Deploy skipped"
+            blocks:
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: "*Deploy skipped* :no_entry_sign: Checks failed, deploy did not run."
