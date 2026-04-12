@@ -1,4 +1,4 @@
-import { ArtClock } from "@/components/art-clock/art-clock";
+import { ClockStateCarousel } from "@/components/art-clock/clock-state-carousel";
 import { WidgetGrid } from "@/components/hub/widget-grid";
 import { SonosPanel } from "@/components/sonos/sonos-panel";
 import { useNavigationStore } from "@/stores/navigation-store";
@@ -26,7 +26,7 @@ function HomePage() {
         }}
         onClick={() => setView("hub")}
       >
-        <ArtClock />
+        <ClockStateCarousel />
       </div>
 
       <div
