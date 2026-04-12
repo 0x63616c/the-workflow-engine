@@ -12,7 +12,7 @@ Decisions made autonomously (not specified in alignment doc):
 - **Grid rows: 4 rows** to accommodate 12+ cards in the bento layout (6 cols x 4 rows = 24 cells, cards fill ~18-20 cells with varied sizes).
 - **Card expansion store** (`useCardExpansionStore`) replaces `useNavigationStore`. Tracks which card ID is expanded (or null). Only one card expanded at a time.
 - **Expansion animation**: CSS transform scale + position transition from card's DOM rect to near-fullscreen overlay. No route change, no React portals needed. Use a fixed overlay div that renders the expanded content.
-- **Idle timeout moves to expansion store**: 45s idle while no card is expanded triggers clock card expansion. While clock card is expanded, 45s idle contracts it back (matching current behavior where idle on hub goes to clock, idle on clock stays).
+- **Idle timeout moves to expansion store**: 45s idle while no card is expanded triggers clock card expansion. Clock is the FINAL idle state and stays expanded until user taps to dismiss. This is critical for OLED burn-in protection: the art clock is a near-black screen, so OLED pixels turn off. Contracting back to the grid would leave bright UI elements on screen indefinitely.
 - **Card color identities** are defined as static config objects (background gradient, accent color, border treatment) per card type. Not stored in theme store, just co-located with each card.
 - **Countdown events seed data** is a migration seed script (separate from schema migration), run via `bun run db:seed`.
 - **Countdown event dates stored as ISO 8601 date strings** (YYYY-MM-DD) in SQLite text column, not unix timestamps. These are calendar dates, not moments in time.
@@ -20,7 +20,7 @@ Decisions made autonomously (not specified in alignment doc):
 - **Clock expanded view is 100% viewport** (special case, matches current art clock fullscreen feel). No rounded corners, no backdrop dimming.
 - **Swipe down on expanded overlay dismisses** it (reuse existing `useSwipe` hook).
 - **BentoCard updated in-place** (not a new component). Add size/color/shape variant props.
-- **WiFi card keeps its 3D flip** on the grid. Tap-to-expand is a separate interaction (long-press or expand icon). For simplicity, WiFi card tap continues to flip. An expand button in the corner opens the overlay. This matches alignment doc saying "keep 3D flip on hub card."
+- **WiFi card keeps its 3D flip** on the grid and has no expanded overlay view (`hasExpandedView: false`). Tap flips the card to show QR code/password (existing behavior). This matches alignment doc saying "keep 3D flip on hub card."
 - **Theme toggle card** stays as a simple toggle on the grid with no expanded view. Tap toggles theme directly.
 - **Placeholder cards** show static/hardcoded data. No API calls, no stores. Just presentational components.
 
@@ -78,8 +78,8 @@ Layout (6 cols x 4 rows):
 +----------+----------+-----+-----+(2x1)+(2x1)+
 |          |          |     |     |     |     |
 +-----+----+-----+----+-----+-----+-----+-----+
-|WiFi |Lite|Music|Cal |Email|Photo|
-|(1x1)|(1x1)|(1x1)|(1x1)|(1x1)|(1x1)|
+|WiFi |Lights|Music|Cal |Email|Photo|
+|(1x1)|(1x1) |(1x1)|(1x1)|(1x1)|(1x1)|
 +-----+-----+-----+-----+-----+-----+
 |Quote|Sys  |Theme|     |     |     |
 |(1x1)|(1x1)|(1x1)|     |     |     |
@@ -120,9 +120,8 @@ A fixed-position overlay that:
 The overlay does NOT use React portals. It's a sibling div to the grid, positioned fixed over the viewport.
 
 **Animation approach**: CSS transitions on transform/opacity. When expanding:
-- Card's bounding rect is captured via `ref.getBoundingClientRect()`
-- Overlay starts at that position/size, transitions to final position
-- 300ms ease-out transition
+- Overlay fades in centered at final position (no position tracking from card rect)
+- Scale from 0.95 to 1.0 + opacity 0 to 1, 300ms ease-out transition
 
 **Expanded content**: Each card that has an expanded view exports both a `MiniView` (grid) and `ExpandedView` component. The overlay renders the appropriate `ExpandedView`.
 
@@ -161,6 +160,8 @@ interface CountdownEventInput {
 
 All functions take `db` as first argument (dependency injection, matches clean architecture). No direct imports of db client in service.
 
+Note: `apps/api/src/services/` currently only contains `.gitkeep`. This is the first real service file in the project.
+
 #### tRPC Router
 
 ```typescript
@@ -182,8 +183,8 @@ Zod validation on all inputs. Date validated as `z.string().regex(/^\d{4}-\d{2}-
 ```typescript
 // apps/api/src/db/seed-countdown-events.ts
 // Imports db client, inserts all 44 events from alignment doc
-// Run: bun run apps/api/src/db/seed-countdown-events.ts
-// Add "db:seed" script to apps/api/package.json
+// Invoked via: cd apps/api && bun run db:seed
+// Add "db:seed": "bun src/db/seed-countdown-events.ts" to apps/api/package.json
 ```
 
 #### Frontend
@@ -260,10 +261,11 @@ No more ArtClock layer, no more navigation store, no more opacity toggles. The g
 
 The idle timeout logic moves into `WidgetGrid`:
 - When no card is expanded and idle for 45s: expand clock card
-- When clock card is expanded and idle for 45s: contract it (grid visible, screen goes idle-dark via OLED)
+- Clock is the FINAL idle state. It stays expanded until user taps to dismiss. No further idle contraction.
 - Any touch resets the idle timer
+- OLED burn-in protection: art clock is near-black, so OLED pixels turn off when clock is the idle screen.
 
-This replaces the current `setView("clock")` call with `expandCard("clock")` and `contractCard()`.
+This replaces the current `setView("clock")` call with `expandCard("clock")`. The idle timer is only active when `expandedCardId` is null.
 
 ## Implementation Details
 
@@ -298,7 +300,7 @@ This replaces the current `setView("clock")` call with `expandCard("clock")` and
 | `apps/web/src/components/hub/widget-grid.tsx` | 6-col bento layout, add new cards, replace navigation store with expansion store, update idle timeout. |
 | `apps/web/src/components/hub/clock-card.tsx` | Remove navigation store usage. Add expanded view (ArtClock). Add expand-on-tap via expansion store. |
 | `apps/web/src/components/hub/weather-card.tsx` | Add expand-on-tap, color scheme. Add expanded view (detailed weather placeholder). |
-| `apps/web/src/components/hub/wifi-card.tsx` | Add expand icon for overlay. Keep 3D flip on tap. |
+| `apps/web/src/components/hub/wifi-card.tsx` | Add color scheme. Keep 3D flip on tap (no expanded view). |
 | `apps/web/src/components/hub/lights-card.tsx` | Add expand-on-tap, color scheme. |
 | `apps/web/src/components/hub/calendar-card.tsx` | Add expand-on-tap, color scheme. |
 | `apps/web/src/components/hub/music-card.tsx` | Add expand-on-tap, color scheme. |
@@ -314,6 +316,8 @@ This replaces the current `setView("clock")` call with `expandCard("clock")` and
 |------|--------|
 | `apps/web/src/stores/navigation-store.ts` | Replaced by card-expansion-store.ts |
 | `apps/web/src/__tests__/navigation-store.test.ts` | Replaced by card-expansion-store tests |
+| `apps/web/src/components/hub/widget-card.tsx` | Unused after redesign (all cards use BentoCard) |
+| `apps/web/src/__tests__/widget-card.test.tsx` | Tests for deleted widget-card component |
 
 **Files needing test updates:**
 
@@ -412,6 +416,8 @@ apps/web/src/
     card-expansion-store.ts            # NEW: replaces navigation-store
     navigation-store.ts                # DELETE
   components/hub/
+    widget-card.tsx                    # DELETE (unused after redesign)
+  components/hub/
     bento-card.tsx                     # MODIFY: new variant props
     widget-grid.tsx                    # MODIFY: 6-col bento layout
     card-overlay.tsx                   # NEW: expansion overlay
@@ -438,6 +444,7 @@ apps/web/src/
     home-page.test.tsx                 # MODIFY
     home-page-hub.test.tsx             # MODIFY
     navigation-store.test.ts           # DELETE
+    widget-card.test.tsx               # DELETE
 ```
 
 ## Testing Strategy
@@ -518,6 +525,8 @@ Order of implementation (dependency order):
 
 **1. API: Countdown CRUD**
 
+> Note: curl examples below are approximate. tRPC v11 HTTP adapter may require slightly different request format (e.g., query params for queries, POST body encoding for mutations). Adjust based on actual tRPC v11 fetch adapter behavior.
+
 ```bash
 # Create event
 curl -X POST http://localhost:4201/trpc/countdownEvents.create \
@@ -575,10 +584,10 @@ curl http://localhost:4201/trpc/countdownEvents.listPast
 **5. UI: Clock Card**
 - Tap clock card on grid
 - PASS: Fullscreen art clock appears (hours:minutes, large text)
-- Wait 45 seconds without touching
-- PASS: Art clock contracts back to grid
-- Tap anywhere on grid
-- PASS: Idle timer resets (visible countdown in corner)
+- Wait 45+ seconds without touching
+- PASS: Art clock remains expanded (it is the final idle state, OLED burn-in safe)
+- Tap the art clock to dismiss
+- PASS: Returns to grid, idle timer resets (visible countdown in corner)
 
 **6. UI: Countdown Expanded View**
 - Tap countdown card
@@ -594,7 +603,7 @@ curl http://localhost:4201/trpc/countdownEvents.listPast
 **7. UI: WiFi Card 3D Flip**
 - Tap WiFi card
 - PASS: Card flips (3D rotation) showing QR code (existing behavior preserved)
-- PASS: Expand icon/button visible on card for overlay expansion
+- PASS: No overlay opens, WiFi has no expanded view
 
 **8. UI: Theme Toggle**
 - Tap theme toggle card
@@ -619,6 +628,7 @@ cd apps/web && bun run lint:fix && bunx tsc --noEmit
 - Any card missing from grid
 - Uniform grid layout (still 3x3)
 - Clock still uses view toggle instead of expansion overlay
+- Clock contracts on idle instead of staying as final idle state (OLED burn-in risk)
 - Countdown CRUD returns errors
 - Seed script fails
 - Expanded overlay doesn't dismiss on backdrop tap or swipe
