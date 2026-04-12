@@ -1,5 +1,4 @@
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
-import { useNavigationStore } from "@/stores/navigation-store";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -9,43 +8,17 @@ vi.mock("qrcode", () => ({
   },
 }));
 
-vi.mock("@/hooks/use-lights", () => ({
-  useLights: () => ({
-    onCount: 0,
-    totalCount: 0,
-    isLoading: false,
-    isError: false,
-    turnOn: vi.fn(),
-    turnOff: vi.fn(),
-  }),
-}));
-
-vi.mock("@/hooks/use-sonos", () => ({
-  useSonos: () => ({
-    players: [],
-    activeSpeaker: null,
-    isLoading: false,
-    isError: false,
-    sendCommand: vi.fn(),
-    setVolume: vi.fn(),
-  }),
-}));
-
-vi.mock("@/components/art-clock/clock-state-carousel", () => ({
-  ClockStateCarousel: () => <div data-testid="clock-state-carousel" />,
-}));
-
 describe("HomePage hub integration", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 3, 11, 14, 23, 0));
-    useNavigationStore.setState({ view: "clock", clockStateIndex: 0 });
+    useCardExpansionStore.setState({ expandedCardId: null });
   });
 
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
-    useNavigationStore.setState({ view: "clock", clockStateIndex: 0 });
+    useCardExpansionStore.setState({ expandedCardId: null });
   });
 
   async function renderHomePage() {
@@ -55,70 +28,42 @@ describe("HomePage hub integration", () => {
     return render(<HomePage />);
   }
 
-  it("initially shows clock visible and hub hidden", async () => {
+  it("shows grid on initial render", async () => {
     await renderHomePage();
-
-    const clockLayer = screen.getByTestId("clock-layer");
-    const hubLayer = screen.getByTestId("hub-layer");
-    expect(clockLayer.style.opacity).toBe("1");
-    expect(hubLayer.style.opacity).toBe("0");
+    expect(screen.getByTestId("widget-grid")).toBeInTheDocument();
   });
 
-  it("initially has pointer-events auto on clock, none on hub", async () => {
+  it("no overlay initially", async () => {
     await renderHomePage();
-
-    const clockLayer = screen.getByTestId("clock-layer");
-    const hubLayer = screen.getByTestId("hub-layer");
-    expect(clockLayer.style.pointerEvents).toBe("auto");
-    expect(hubLayer.style.pointerEvents).toBe("none");
+    expect(screen.queryByTestId("card-overlay")).not.toBeInTheDocument();
   });
 
-  it("tap clock opens hub", async () => {
-    await renderHomePage();
-
-    fireEvent.click(screen.getByTestId("clock-layer"));
-
-    const hubLayer = screen.getByTestId("hub-layer");
-    expect(hubLayer.style.opacity).toBe("1");
-    expect(hubLayer.style.pointerEvents).toBe("auto");
-  });
-
-  it("tap hub-container returns to clock", async () => {
-    useNavigationStore.setState({ view: "hub", clockStateIndex: 0 });
-    await renderHomePage();
-
-    fireEvent.click(screen.getByTestId("hub-container"));
-
-    expect(useNavigationStore.getState().view).toBe("clock");
-  });
-
-  it("widget card tap does NOT return to clock", async () => {
-    useNavigationStore.setState({ view: "hub", clockStateIndex: 0 });
+  it("tapping weather card opens overlay", async () => {
     await renderHomePage();
 
     fireEvent.click(screen.getByTestId("widget-card-weather"));
 
-    expect(useNavigationStore.getState().view).toBe("hub");
+    expect(useCardExpansionStore.getState().expandedCardId).toBe("weather");
   });
 
-  it("auto-returns to clock after idle timeout", async () => {
-    useNavigationStore.setState({ view: "hub", clockStateIndex: 0 });
+  it("auto-expands clock after idle timeout", async () => {
     await renderHomePage();
 
     act(() => {
       vi.advanceTimersByTime(45_000);
     });
 
-    expect(useNavigationStore.getState().view).toBe("clock");
+    expect(useCardExpansionStore.getState().expandedCardId).toBe("clock");
   });
 
-  it("clock widget tap expands clock card", async () => {
-    useNavigationStore.setState({ view: "hub", clockStateIndex: 0 });
-    useCardExpansionStore.setState({ expandedCardId: null });
+  it("idle timer only active when no card is expanded", async () => {
+    useCardExpansionStore.setState({ expandedCardId: "weather" });
     await renderHomePage();
 
-    fireEvent.click(screen.getByTestId("widget-card-clock"));
+    act(() => {
+      vi.advanceTimersByTime(45_000);
+    });
 
-    expect(useCardExpansionStore.getState().expandedCardId).toBe("clock");
+    expect(useCardExpansionStore.getState().expandedCardId).toBe("weather");
   });
 });
