@@ -23,9 +23,9 @@ registerCard({
   gridColumn: "4 / 7",
   gridRow: "1 / 2",
   colorScheme: {
-    bg: "bg-gradient-to-br from-purple-600/15 to-violet-500/10",
-    accent: "#8b5cf6",
-    border: "border-purple-500/10",
+    bg: "bg-purple-600/20",
+    accent: "#a855f7",
+    border: "border-purple-500",
   },
   component: CountdownCardMini,
   expandedView: CountdownCardExpanded,
@@ -36,9 +36,9 @@ registerCard({
   gridColumn: "4 / 7",
   gridRow: "2 / 4",
   colorScheme: {
-    bg: "bg-gradient-to-br from-slate-600/15 to-slate-500/10",
+    bg: "bg-cyan-500/20",
     accent: "#06b6d4",
-    border: "border-slate-500/10",
+    border: "border-cyan-500",
   },
   component: MusicCard,
   expandedView: ExpandedMusic,
@@ -49,9 +49,9 @@ registerCard({
   gridColumn: "1 / 2",
   gridRow: "3 / 4",
   colorScheme: {
-    bg: "bg-gradient-to-br from-amber-400/15 to-yellow-300/10",
+    bg: "bg-amber-400/20",
     accent: "#f59e0b",
-    border: "border-amber-400/10",
+    border: "border-amber-400",
   },
   component: LightsCard,
 });
@@ -61,9 +61,9 @@ registerCard({
   gridColumn: "2 / 3",
   gridRow: "3 / 4",
   colorScheme: {
-    bg: "bg-gradient-to-br from-cyan-400/15 to-sky-300/10",
-    accent: "#22d3ee",
-    border: "border-cyan-400/10",
+    bg: "bg-sky-400/20",
+    accent: "#38bdf8",
+    border: "border-sky-400",
   },
   component: FanCard,
 });
@@ -73,9 +73,9 @@ registerCard({
   gridColumn: "3 / 4",
   gridRow: "3 / 4",
   colorScheme: {
-    bg: "bg-gradient-to-br from-green-400/15 to-emerald-300/10",
+    bg: "bg-green-500/20",
     accent: "#22c55e",
-    border: "border-green-400/10",
+    border: "border-green-500",
   },
   component: ClimateCard,
 });
@@ -84,6 +84,6 @@ registerCard({
   id: "wifi",
   gridColumn: "1 / 4",
   gridRow: "4 / 5",
-  colorScheme: { bg: "", accent: "#22c55e", border: "border-green-500/10" },
+  colorScheme: { bg: "", accent: "#22c55e", border: "border-green-500" },
   component: WifiCard,
 });
