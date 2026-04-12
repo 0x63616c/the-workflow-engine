@@ -9,6 +9,10 @@ vi.mock("qrcode", () => ({
   },
 }));
 
+vi.mock("@/hooks/use-build-hash", () => ({
+  useBuildHash: () => ({ data: { hash: "abc1234", deployedAt: null } }),
+}));
+
 describe("CardOverlay", () => {
   beforeEach(() => {
     vi.useFakeTimers();

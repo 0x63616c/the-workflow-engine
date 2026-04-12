@@ -22,9 +22,9 @@ export function SystemStatusCard() {
               <Activity size={14} className="text-muted-foreground" />
               <div className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-green-500" />
             </div>
-            <span className="text-sm text-muted-foreground">System</span>
+            <span className="text-base text-muted-foreground">System</span>
           </div>
-          <div className="text-xs text-muted-foreground/70">All systems OK</div>
+          <div className="text-sm text-muted-foreground/70">All systems OK</div>
         </div>
       </div>
     </BentoCard>

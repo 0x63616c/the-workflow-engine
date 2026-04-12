@@ -56,14 +56,14 @@ export function ClimateCard() {
           className={`flex-1 flex flex-col justify-center items-center p-3 ${disabled ? "opacity-40" : "cursor-pointer active:bg-white/5"}`}
           onClick={disabled ? undefined : handleTempUp}
         >
-          <ChevronUp size={14} className="text-muted-foreground/40" />
+          <ChevronUp size={16} className="text-muted-foreground/40" />
         </div>
 
         {/* Center display */}
         <div className="flex items-center justify-center gap-1 px-3">
-          <Thermometer size={12} className="text-muted-foreground/40" />
-          <span className="text-2xl font-light text-foreground tabular-nums">{displayTemp}</span>
-          <span className="text-xs text-muted-foreground/50">{`\u00b0${tempUnit}`}</span>
+          <Thermometer size={14} className="text-muted-foreground/40" />
+          <span className="text-3xl font-light text-foreground tabular-nums">{displayTemp}</span>
+          <span className="text-sm text-muted-foreground/50">{`\u00b0${tempUnit}`}</span>
         </div>
 
         {/* Bottom half - tap to decrease */}
@@ -72,7 +72,7 @@ export function ClimateCard() {
           className={`flex-1 flex flex-col justify-center items-center p-3 ${disabled ? "opacity-40" : "cursor-pointer active:bg-white/5"}`}
           onClick={disabled ? undefined : handleTempDown}
         >
-          <ChevronDown size={14} className="text-muted-foreground/40" />
+          <ChevronDown size={16} className="text-muted-foreground/40" />
         </div>
       </div>
     </div>

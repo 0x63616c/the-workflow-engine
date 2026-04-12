@@ -98,10 +98,10 @@ export function WireframeGlobe() {
         className="absolute bottom-16 left-0 right-0 flex items-baseline justify-center gap-1 text-white"
         style={{ fontWeight: 100 }}
       >
-        <span className="text-8xl">{hours}</span>
-        <span className="text-8xl">:</span>
-        <span className="text-8xl">{minutes}</span>
-        <span className="ml-2 text-4xl" style={{ fontWeight: 200 }}>
+        <span className="text-9xl">{hours}</span>
+        <span className="text-9xl">:</span>
+        <span className="text-9xl">{minutes}</span>
+        <span className="ml-2 text-5xl" style={{ fontWeight: 200 }}>
           {period}
         </span>
       </div>
