@@ -17,14 +17,13 @@ export function BentoCard({ children, className = "", onClick, testId, gridArea 
       data-testid={testId}
       className={`
         rounded-2xl p-5 transition-all duration-150 ease-out
-        backdrop-blur-sm border
+        border bg-card
         ${onClick ? "cursor-pointer active:scale-[0.97]" : ""}
         ${className}
       `}
       style={{
         ...(gridArea ? { gridArea } : {}),
-        backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.8)",
-        borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)",
+        borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
         boxShadow: isDark ? "none" : "0 1px 3px rgba(0,0,0,0.08)",
       }}
       onClick={(e) => {
