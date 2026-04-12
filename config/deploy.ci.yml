@@ -1,4 +1,0 @@
-# CI destination: inherits from deploy.yml
-# Only exists so Kamal reads .kamal/secrets.ci instead of .kamal/secrets
-servers:
-  - homelab

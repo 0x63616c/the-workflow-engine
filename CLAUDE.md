@@ -74,6 +74,12 @@ Wall-mounted iPad Pro smart home panel. Living art, controls home.
 - **Prod**: Docker Compose on Mac Mini (Kamal deploy, GHCR images)
 - **CI**: GitHub Actions on PRs to main (lint, typecheck, test, boundary check)
 
+### Deployment
+
+- **CI deploys automatically** on push to `main` via GitHub Actions (`kamal deploy`)
+- **Local deploy** (emergency/hotfix): `bin/deploy` — fetches secrets from 1Password then runs `kamal deploy`
+- Never run `kamal deploy` directly from local (secrets won't be set)
+
 ## Ports
 
 | Service        | Port         |

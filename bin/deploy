@@ -1,0 +1,20 @@
+#!/bin/bash
+# Local deploy script — fetches secrets from 1Password then runs kamal deploy.
+#
+# Use this when deploying from your local machine.
+# CI deploys directly via `kamal deploy` with secrets injected as env vars by GitHub Actions.
+#
+# Usage: bin/deploy [kamal options]
+#   e.g. bin/deploy
+#        bin/deploy --skip-push
+
+set -e
+
+echo "Fetching secrets from 1Password..."
+export KAMAL_REGISTRY_PASSWORD=$(op read "op://Homelab/GitHub Personal Access Token/token")
+export HA_TOKEN=$(op read "op://Homelab/Home Assistant Token/credential")
+export INNGEST_EVENT_KEY=$(op read "op://Homelab/Workflow Engine Inngest/event-key")
+export INNGEST_SIGNING_KEY=$(op read "op://Homelab/Workflow Engine Inngest/signing-key")
+
+echo "Deploying..."
+kamal deploy "$@"
