@@ -2,6 +2,16 @@ import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/trpc", () => ({
+  trpc: {
+    countdownEvents: {
+      listUpcoming: {
+        useQuery: () => ({ data: [], isLoading: false }),
+      },
+    },
+  },
+}));
+
 vi.mock("qrcode", () => ({
   default: {
     toString: vi.fn().mockResolvedValue("<svg>mock-qr</svg>"),
