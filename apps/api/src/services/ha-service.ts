@@ -37,6 +37,7 @@ export interface ClimateState {
   hvacAction: string | null;
   fanOn: boolean;
   fanEntityId: string | null;
+  targetTemp: number | null;
 }
 
 export async function getClimateState(): Promise<ClimateState | null> {
@@ -63,6 +64,7 @@ export async function getClimateState(): Promise<ClimateState | null> {
     hvacAction,
     fanOn,
     fanEntityId: matchingFan?.entity_id ?? null,
+    targetTemp: (attrs.temperature as number) ?? null,
   };
 }
 
@@ -88,11 +90,19 @@ export async function turnFanOff(entityId: string, fanEntityId?: string | null):
   }
 }
 
+export async function setTemperature(entityId: string, temperature: number): Promise<void> {
+  await ha.callService("climate", "set_temperature", {
+    entity_id: entityId,
+    temperature,
+  });
+}
+
 export async function getLightsState(): Promise<LightsState> {
   const entities = await ha.getEntities("light");
+  const available = entities.filter((e) => e.state !== "unavailable");
   return {
-    onCount: entities.filter((e) => e.state === "on").length,
-    totalCount: entities.length,
+    onCount: available.filter((e) => e.state === "on").length,
+    totalCount: available.length,
   };
 }
 

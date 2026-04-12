@@ -45,6 +45,19 @@ describe("getLightsState()", () => {
     const result = await getLightsState();
     expect(result).toEqual({ onCount: 0, totalCount: 0 });
   });
+
+  it("excludes unavailable entities from both onCount and totalCount", async () => {
+    mockGetEntities.mockResolvedValueOnce([
+      { entity_id: "light.a", state: "on", attributes: {}, last_updated: "" },
+      { entity_id: "light.b", state: "on", attributes: {}, last_updated: "" },
+      { entity_id: "light.c", state: "off", attributes: {}, last_updated: "" },
+      { entity_id: "light.d", state: "unavailable", attributes: {}, last_updated: "" },
+      { entity_id: "light.e", state: "unavailable", attributes: {}, last_updated: "" },
+    ]);
+
+    const result = await getLightsState();
+    expect(result).toEqual({ onCount: 2, totalCount: 3 });
+  });
 });
 
 describe("turnAllLightsOn()", () => {
