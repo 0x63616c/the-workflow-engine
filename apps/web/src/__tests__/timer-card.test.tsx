@@ -1,17 +1,8 @@
 import { TimerCard } from "@/components/hub/timer-card";
-import { useNavigationStore } from "@/stores/navigation-store";
+import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { useTimerStore } from "@/stores/timer-store";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
-const setViewFn = vi.fn();
-
-vi.mock("@/stores/navigation-store", () => ({
-  useNavigationStore: vi.fn(
-    (selector: (s: { view: string; setView: typeof setViewFn }) => unknown) =>
-      selector({ view: "hub", setView: setViewFn }),
-  ),
-}));
 
 vi.mock("@/stores/theme-store", () => ({
   useThemeStore: vi.fn((selector: (s: { activePaletteId: string }) => unknown) =>
@@ -22,6 +13,7 @@ vi.mock("@/stores/theme-store", () => ({
 beforeEach(() => {
   vi.clearAllMocks();
   useTimerStore.setState({ status: "idle", duration_MS: 0, remaining_MS: 0 });
+  useCardExpansionStore.setState({ expandedCardId: null });
 });
 
 afterEach(() => {
@@ -47,10 +39,10 @@ describe("TimerCard", () => {
     expect(screen.getByText("Done!")).toBeInTheDocument();
   });
 
-  it('clicking card calls setView("timer")', () => {
+  it("clicking card expands timer", () => {
     render(<TimerCard />);
     fireEvent.click(screen.getByTestId("widget-card-timer"));
-    expect(setViewFn).toHaveBeenCalledWith("timer");
+    expect(useCardExpansionStore.getState().expandedCardId).toBe("timer");
   });
 
   it('has data-testid="widget-card-timer"', () => {
@@ -62,17 +54,17 @@ describe("TimerCard", () => {
 describe("formatCountdown", () => {
   it("formats 5000ms as '0:05'", async () => {
     const { formatCountdown } = await import("@/components/hub/timer-card");
-    expect(formatCountdown(5_000)).toBe("0:05");
+    expect(formatCountdown(5000)).toBe("0:05");
   });
 
   it("formats 65000ms as '1:05'", async () => {
     const { formatCountdown } = await import("@/components/hub/timer-card");
-    expect(formatCountdown(65_000)).toBe("1:05");
+    expect(formatCountdown(65000)).toBe("1:05");
   });
 
   it("formats 600000ms as '10:00'", async () => {
     const { formatCountdown } = await import("@/components/hub/timer-card");
-    expect(formatCountdown(600_000)).toBe("10:00");
+    expect(formatCountdown(600000)).toBe("10:00");
   });
 
   it("formats 1ms as '0:01' (ceil avoids showing 0:00 while running)", async () => {
