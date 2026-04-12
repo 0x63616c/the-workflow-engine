@@ -51,9 +51,6 @@ accessories:
     cmd: inngest start
     host: homelab
     port: "8388:8288"
-    options:
-      network: kamal
-      restart: always
     env:
       secret:
         - INNGEST_EVENT_KEY
@@ -65,9 +62,6 @@ accessories:
     port: "3100:3100"
     directories:
       - loki-data:/loki
-    options:
-      network: kamal
-      restart: always
 
   alloy:
     image: ghcr.io/0x63616c/workflow-engine-alloy:latest
@@ -75,8 +69,6 @@ accessories:
     port: "12345:12345"
     cmd: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
     options:
-      network: kamal
-      restart: always
       volume:
         - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
@@ -91,9 +83,6 @@ accessories:
         GF_AUTH_ANONYMOUS_ENABLED: "true"
         GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
         GF_SERVER_ROOT_URL: "http://homelab:3000"
-    options:
-      network: kamal
-      restart: always
 
 volumes:
   - data:/app/data
