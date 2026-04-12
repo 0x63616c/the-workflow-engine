@@ -15,5 +15,8 @@
     "lefthook": "^1.11.0",
     "typescript": "^5.8.0"
   },
-  "trustedDependencies": ["@biomejs/biome", "esbuild", "lefthook", "protobufjs"]
+  "trustedDependencies": ["@biomejs/biome", "esbuild", "lefthook", "protobufjs"],
+  "dependencies": {
+    "pino": "^10.3.1"
+  }
 }

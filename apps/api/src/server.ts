@@ -7,6 +7,7 @@ import { runMigrations } from "./db/migrate";
 import { EFFECTIVE_PORT, env } from "./env";
 import { inngest } from "./inngest/client";
 import { ha } from "./integrations/homeassistant";
+import { log } from "./lib/logger";
 import { createContext } from "./trpc/context";
 import { appRouter } from "./trpc/routers";
 
@@ -36,10 +37,14 @@ const server = Bun.serve({
         url.pathname === "/up" ||
         url.pathname === "/favicon.ico";
       if (!skip) {
-        const level = status >= 500 ? "ERROR" : status >= 400 ? "WARN" : "INFO";
-        console.log(
-          `${new Date().toISOString()} [${level}] ${req.method} ${url.pathname} ${status} ${duration}ms`,
-        );
+        const entry = { method: req.method, path: url.pathname, status, duration_ms: duration };
+        if (status >= 500) {
+          log.error(entry, "request");
+        } else if (status >= 400) {
+          log.warn(entry, "request");
+        } else {
+          log.info(entry, "request");
+        }
       }
       return res;
     };
@@ -55,8 +60,9 @@ const server = Bun.serve({
         router: appRouter,
         createContext,
         onError: ({ path, error }) => {
-          console.error(
-            `${new Date().toISOString()} [ERROR] tRPC ${path ?? "unknown"}: ${error.message}`,
+          log.error(
+            { path: path ?? "unknown", code: error.code, error: error.message },
+            "tRPC error",
           );
         },
       });
@@ -80,9 +86,7 @@ const server = Bun.serve({
   },
 });
 
-console.log(
-  `🚀 API running on http://localhost:${server.port} (${env.NODE_ENV}) [${env.BUILD_HASH}]`,
-);
+log.info({ port: server.port, env: env.NODE_ENV, build: env.BUILD_HASH }, "API started");
 
 const shutdown = async () => {
   await pool.end();
