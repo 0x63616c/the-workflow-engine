@@ -11,7 +11,7 @@ Decisions made autonomously (not specified in alignment doc):
 - **Grid is 6-column base** (not 5). 6 divides evenly and gives more layout flexibility for 1x1, 2x1, 1x2, 2x2 cards on iPad 4:3.
 - **Grid rows: 4 rows** to accommodate 12+ cards in the bento layout (6 cols x 4 rows = 24 cells, cards fill ~18-20 cells with varied sizes).
 - **Card expansion store** (`useCardExpansionStore`) replaces `useNavigationStore`. Tracks which card ID is expanded (or null). Only one card expanded at a time.
-- **Expansion animation**: CSS transform scale + position transition from card's DOM rect to near-fullscreen overlay. No route change, no React portals needed. Use a fixed overlay div that renders the expanded content.
+- **Expansion animation**: CSS transition scale + opacity from centered position. No card rect tracking. No route change, no React portals needed. Use a fixed overlay div that renders the expanded content.
 - **Idle timeout moves to expansion store**: 45s idle while no card is expanded triggers clock card expansion. Clock is the FINAL idle state and stays expanded until user taps to dismiss. This is critical for OLED burn-in protection: the art clock is a near-black screen, so OLED pixels turn off. Contracting back to the grid would leave bright UI elements on screen indefinitely.
 - **Card color identities** are defined as static config objects (background gradient, accent color, border treatment) per card type. Not stored in theme store, just co-located with each card.
 - **Countdown events seed data** is a migration seed script (separate from schema migration), run via `bun run db:seed`.
