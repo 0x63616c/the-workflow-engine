@@ -76,4 +76,4 @@ jobs:
           INNGEST_EVENT_KEY: ${{ secrets.INNGEST_EVENT_KEY }}
           INNGEST_SIGNING_KEY: ${{ secrets.INNGEST_SIGNING_KEY }}
           HA_TOKEN: ${{ secrets.HA_TOKEN }}
-        run: kamal deploy -d ci
+        run: kamal deploy
