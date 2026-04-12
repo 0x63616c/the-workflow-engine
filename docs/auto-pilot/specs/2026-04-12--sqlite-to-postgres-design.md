@@ -92,9 +92,29 @@ server.ts
 - Keep `globalSetup` and `setupFiles`
 
 **`__tests__/global-setup.ts`**:
-- Set `DATABASE_URL` to test connection string if not already set
-- Set `NODE_ENV=test` if not set
-- Keep existing `HA_TOKEN` and `HA_URL` defaults (currently in `setup.ts`, not global-setup)
+- Currently exports a `setup()` function that sets `HA_TOKEN` and `HA_URL` if not present (same values as `setup.ts` — both files set these env vars)
+- Add `DATABASE_URL` and `NODE_ENV` defaults here
+
+`globalSetup` runs in the main Vitest process before worker threads spawn, and env vars set there are inherited by all workers. Setting `DATABASE_URL` in `globalSetup` is sufficient — `setupFiles` (which runs per-worker) does not need to repeat it.
+
+```ts
+// Before
+export function setup() {
+  process.env.HA_TOKEN = process.env.HA_TOKEN ?? "test-token";
+  process.env.HA_URL = process.env.HA_URL ?? "http://homeassistant.local:8123";
+}
+
+// After
+export function setup() {
+  process.env.HA_TOKEN = process.env.HA_TOKEN ?? "test-token";
+  process.env.HA_URL = process.env.HA_URL ?? "http://homeassistant.local:8123";
+  process.env.DATABASE_URL =
+    process.env.DATABASE_URL ?? "postgresql://workflow:workflow@localhost:5432/workflow_engine_test";
+  process.env.NODE_ENV = process.env.NODE_ENV ?? "test";
+}
+```
+
+Note: `setup.ts` (per-worker setupFiles) continues to set `HA_TOKEN` and `HA_URL` as it already does — no change needed there.
 
 **`__mocks__/bun-sqlite.ts`**:
 - Delete this file (no longer needed)
@@ -176,11 +196,17 @@ await ha.init();
 
 ### env.ts changes
 
-Change `DATABASE_URL` default from a file path to a Postgres URL:
+Two changes — the validator is tightened and the default is replaced:
 
 ```ts
+// Before
+DATABASE_URL: z.string().default("./data.db"),
+
+// After
 DATABASE_URL: z.string().url().default("postgresql://workflow:workflow@localhost:5432/workflow_engine"),
 ```
+
+The schema change from `z.string()` to `z.string().url()` is intentional and breaking: any `DATABASE_URL` value that is not a valid URL (including the old SQLite file path `./data.db`) will cause Zod to throw at startup. This is correct behavior — the server must never start with a SQLite path now that the driver is node-postgres. Any environment that had `DATABASE_URL=./data.db` set explicitly will fail loudly and clearly rather than silently connecting to a wrong database.
 
 ### Service layer: async signatures
 
@@ -199,11 +225,71 @@ export async function createCountdownEvent(db: DB, input: CountdownEventInput) {
 
 Key difference: Drizzle PG `.returning()` returns an array; SQLite `.returning().get()` returned a single row. All callers (routers) pass `await` to the service, but since routers already `return` service calls inside tRPC procedure handlers and tRPC handles Promises, no router changes are needed beyond the service becoming async.
 
-The `updateCountdownEvent` function replaces the SQLite `sql\`(datetime('now'))\`` with `sql\`now()\``:
+**`updateCountdownEvent`** — must `await` the internal `getCountdownEventById` call and replace the SQLite datetime default:
 
 ```ts
-updatedAt: sql`now()`,
+// Before
+export function updateCountdownEvent(db: DB, id: number, input: CountdownEventInput) {
+  getCountdownEventById(db, id); // sync existence check
+
+  return db
+    .update(countdownEvents)
+    .set({ title: input.title, date: input.date, updatedAt: sql`(datetime('now'))` })
+    .where(sql`${countdownEvents.id} = ${id}`)
+    .returning()
+    .get();
+}
+
+// After
+export async function updateCountdownEvent(db: DB, id: number, input: CountdownEventInput) {
+  await getCountdownEventById(db, id); // async existence check — throws if not found
+
+  const rows = await db
+    .update(countdownEvents)
+    .set({ title: input.title, date: input.date, updatedAt: sql`now()` })
+    .where(eq(countdownEvents.id, id))
+    .returning();
+  return rows[0];
+}
 ```
+
+**`removeCountdownEvent`** — must `await` the internal `getCountdownEventById` call:
+
+```ts
+// Before
+export function removeCountdownEvent(db: DB, id: number) {
+  getCountdownEventById(db, id); // sync existence check
+
+  db.delete(countdownEvents).where(sql`${countdownEvents.id} = ${id}`).run();
+}
+
+// After
+export async function removeCountdownEvent(db: DB, id: number) {
+  await getCountdownEventById(db, id); // async existence check — throws if not found
+
+  await db.delete(countdownEvents).where(eq(countdownEvents.id, id));
+}
+```
+
+**`getCountdownEventById`** — select returns an array in PG:
+
+```ts
+// Before
+export function getCountdownEventById(db: DB, id: number) {
+  const event = db.select().from(countdownEvents).where(sql`${countdownEvents.id} = ${id}`).get();
+  if (!event) throw new Error(`Countdown event with id ${id} not found`);
+  return event;
+}
+
+// After
+export async function getCountdownEventById(db: DB, id: number) {
+  const rows = await db.select().from(countdownEvents).where(eq(countdownEvents.id, id));
+  if (rows.length === 0) throw new Error(`Countdown event with id ${id} not found`);
+  return rows[0];
+}
+```
+
+All three functions that internally call `getCountdownEventById` (`getCountdownEventById` itself, `updateCountdownEvent`, `removeCountdownEvent`) must be `async`. Since `update` and `remove` both `await getCountdownEventById(...)` before their own DB call, the not-found throw still propagates correctly.
 
 ### docker-compose.yml additions
 
@@ -330,8 +416,8 @@ Remove from root `package.json` `trustedDependencies`:
 | `apps/api/src/db/schema.ts` | Modify | sqlite-core -> pg-core, `int` -> `serial`, `text` timestamps -> `timestamp().defaultNow()` |
 | `apps/api/src/db/client.ts` | Rewrite | `bun:sqlite`+`drizzle/bun-sqlite` -> `pg.Pool`+`drizzle/node-postgres`. Remove inline DDL. Export `pool` and `db`. |
 | `apps/api/src/db/migrate.ts` | Create | `runMigrations()` using `drizzle-orm/node-postgres/migrator` |
-| `apps/api/src/db/migrations/0001_add_countdown_events.sql` | Delete | SQLite DDL, replaced by new PG migration |
-| `apps/api/src/db/migrations/0000_init.sql` | Created by drizzle-kit generate | PG DDL for both tables |
+| `apps/api/src/db/migrations/0001_add_countdown_events.sql` | Delete | Existing SQLite DDL — only file in migrations/ currently; verified filename |
+| `apps/api/src/db/migrations/<generated>.sql` | Created by `bun run db:generate` | PG DDL for both tables; drizzle-kit chooses the filename (e.g. `0000_init.sql`) |
 | `apps/api/src/env.ts` | Modify | `DATABASE_URL` default changes to postgres URL |
 | `apps/api/src/server.ts` | Modify | Add `await runMigrations()` at startup |
 | `apps/api/src/services/countdown-events.ts` | Modify | `DB` type -> `NodePgDatabase`, all functions async, `.get()`/`.all()`/`.run()` -> await patterns, `datetime('now')` -> `now()` |
@@ -360,7 +446,7 @@ Remove from root `package.json` `trustedDependencies`:
 This test file hits a real Postgres instance. The test DB (`workflow_engine_test`) is created by the CI service container and must exist before tests run.
 
 Test lifecycle:
-1. `globalSetup` sets `DATABASE_URL=postgresql://workflow:workflow@localhost:5432/workflow_engine_test`
+1. `globalSetup` sets `DATABASE_URL=postgresql://workflow:workflow@localhost:5432/workflow_engine_test` — this propagates to all Vitest workers automatically
 2. Each `describe` block gets a shared `Pool` + `NodePgDatabase`
 3. `beforeAll` per describe: run `migrate()` against the test DB (idempotent)
 4. `beforeEach`: `TRUNCATE countdown_events, system_info RESTART IDENTITY CASCADE`
@@ -378,6 +464,8 @@ it("inserts and retrieves a countdown event", async () => {
 The countdown-events service and router tests follow the same pattern.
 
 **Other test files** (`health.test.ts`, `devices.test.ts`, `ha-service.test.ts`, etc.) do not use the DB and require no changes.
+
+Note: `bun run test` at the monorepo root runs all workspace tests including `@repo/web`. The `DATABASE_URL` env var will be present in the web test environment too — this is harmless since web tests never read it.
 
 ### What to test
 
