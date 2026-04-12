@@ -4,8 +4,8 @@ import "@/components/hub/register-cards";
 import { getCardConfig, getRegisteredCards } from "@/components/hub/card-registry";
 
 describe("card-registry", () => {
-  it("has 7 card configs", () => {
-    expect(getRegisteredCards()).toHaveLength(7);
+  it("has 8 card configs", () => {
+    expect(getRegisteredCards()).toHaveLength(8);
   });
 
   it("each card has required fields", () => {
@@ -42,5 +42,12 @@ describe("card-registry", () => {
   it("music card has expanded view", () => {
     const music = getCardConfig("music");
     expect(music?.expandedView).toBeDefined();
+  });
+
+  it("settings card has expanded view and correct grid position", () => {
+    const settings = getCardConfig("settings");
+    expect(settings?.expandedView).toBeDefined();
+    expect(settings?.gridColumn).toBe("4 / 7");
+    expect(settings?.gridRow).toBe("4 / 5");
   });
 });

@@ -7,6 +7,7 @@ import { ExpandedMusic } from "@/components/hub/expanded-music";
 import { FanCard } from "@/components/hub/fan-card";
 import { LightsCard } from "@/components/hub/lights-card";
 import { MusicCard } from "@/components/hub/music-card";
+import { SettingsCard, SettingsCardExpanded } from "@/components/hub/settings-card";
 import { WifiCard } from "@/components/hub/wifi-card";
 
 registerCard({
@@ -86,4 +87,17 @@ registerCard({
   gridRow: "4 / 5",
   colorScheme: { bg: "", accent: "#22c55e", border: "border-green-500/10" },
   component: WifiCard,
+});
+
+registerCard({
+  id: "settings",
+  gridColumn: "4 / 7",
+  gridRow: "4 / 5",
+  colorScheme: {
+    bg: "bg-gradient-to-br from-neutral-600/15 to-neutral-500/10",
+    accent: "#a3a3a3",
+    border: "border-neutral-500/10",
+  },
+  component: SettingsCard,
+  expandedView: SettingsCardExpanded,
 });

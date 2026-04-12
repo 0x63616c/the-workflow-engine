@@ -1,5 +1,5 @@
 import { ThemeProvider } from "@/components/theme-provider";
-import { MIDNIGHT_PALETTE, useThemeStore } from "@/stores/theme-store";
+import { DAYLIGHT_PALETTE, MIDNIGHT_PALETTE, useThemeStore } from "@/stores/theme-store";
 import type { ThemePalette } from "@/stores/theme-store";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
@@ -9,7 +9,7 @@ describe("ThemeProvider", () => {
     cleanup();
     // Reset store state
     useThemeStore.setState({
-      palettes: { midnight: MIDNIGHT_PALETTE },
+      palettes: { midnight: MIDNIGHT_PALETTE, daylight: DAYLIGHT_PALETTE },
       activePaletteId: "midnight",
       transitionDuration_MS: 0,
     });
@@ -41,7 +41,7 @@ describe("ThemeProvider", () => {
         <div>child</div>
       </ThemeProvider>,
     );
-    expect(document.documentElement.style.getPropertyValue("--color-foreground")).toBe("#fafafa");
+    expect(document.documentElement.style.getPropertyValue("--color-foreground")).toBe("#ffffff");
   });
 
   it("applies --color-muted-foreground with kebab-case", () => {
