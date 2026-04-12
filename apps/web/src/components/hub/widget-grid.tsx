@@ -7,7 +7,7 @@ import { MusicCard } from "@/components/hub/music-card";
 import { PhotoCard } from "@/components/hub/photo-card";
 import { QuoteCard } from "@/components/hub/quote-card";
 import { SystemStatusCard } from "@/components/hub/system-status-card";
-import { ThemeToggleCard } from "@/components/hub/theme-toggle-card";
+import { TimerCard } from "@/components/hub/timer-card";
 import { WeatherCard } from "@/components/hub/weather-card";
 import { WifiCard } from "@/components/hub/wifi-card";
 import { useIdleTimeout } from "@/hooks/use-idle-timeout";
@@ -47,7 +47,7 @@ export function WidgetGrid() {
         <EmailCard />
         <SystemStatusCard />
         <QuoteCard />
-        <ThemeToggleCard />
+        <TimerCard />
       </div>
       <span className="fixed bottom-2 left-3 font-mono text-xs tabular-nums text-muted-foreground/30">
         {remainingSeconds}
