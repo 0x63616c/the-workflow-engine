@@ -32,11 +32,13 @@ export function WidgetGrid() {
   const { hours, minutes, period } = formatTime(now);
   const clockValue = `${hours}:${minutes} ${period}`;
 
-  useIdleTimeout(() => setView("clock"), IDLE_TIMEOUT_MS, { enabled: view === "hub" });
+  const { remainingSeconds } = useIdleTimeout(() => setView("clock"), IDLE_TIMEOUT_MS, {
+    enabled: view === "hub",
+  });
 
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: tap-to-dismiss hub on iPad touch panel
-    <div data-testid="hub-container" className="h-full" onClick={() => setView("clock")}>
+    <div data-testid="hub-container" className="relative h-full" onClick={() => setView("clock")}>
       <div data-testid="widget-grid" className="grid grid-cols-2 gap-4 p-6">
         {PLACEHOLDER_WIDGETS.map((widget) => (
           <WidgetCard
@@ -49,6 +51,9 @@ export function WidgetGrid() {
           />
         ))}
       </div>
+      <span className="absolute bottom-2 left-3 font-mono text-xs tabular-nums text-muted-foreground/30">
+        {remainingSeconds}
+      </span>
     </div>
   );
 }
