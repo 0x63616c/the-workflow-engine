@@ -9,6 +9,7 @@ export const envSchema = z.object({
     .url()
     .default("postgresql://workflow:workflow@localhost:5432/workflow_engine"),
   BUILD_HASH: z.string().default("dev"),
+  LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error", "fatal"]).default("info"),
   INNGEST_EVENT_KEY: z.string().default("local-dev-event-key-00000000"),
   INNGEST_SIGNING_KEY: z.string().default("signing-key-0000000000000000"),
   INNGEST_DEV: z.coerce.number().int().default(1),
