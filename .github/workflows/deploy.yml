@@ -385,6 +385,14 @@ jobs:
       - name: Login to GHCR
         run: echo "${{ secrets.GHRC_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+      - name: Ensure accessories are running
+        env:
+          KAMAL_REGISTRY_PASSWORD: ${{ secrets.GHRC_TOKEN }}
+          INNGEST_EVENT_KEY: ${{ secrets.INNGEST_EVENT_KEY }}
+          INNGEST_SIGNING_KEY: ${{ secrets.INNGEST_SIGNING_KEY }}
+          HA_TOKEN: ${{ secrets.HA_TOKEN }}
+        run: bin/ensure-accessories
+
       - name: Record deploy start time
         id: deploy-timer
         run: echo "start_time=$(date +%s)" >> "$GITHUB_OUTPUT"
