@@ -4,22 +4,12 @@ import { SonosAlbumArt } from "@/components/sonos/sonos-album-art";
 import { SonosControls } from "@/components/sonos/sonos-controls";
 import { SonosProgressBar } from "@/components/sonos/sonos-progress-bar";
 import { SonosSpeakerList } from "@/components/sonos/sonos-speaker-list";
-import { TimerPanel } from "@/components/timer/timer-panel";
 import { useLights } from "@/hooks/use-lights";
 import { useSonos } from "@/hooks/use-sonos";
 import { useSwipe } from "@/hooks/use-swipe";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { X } from "lucide-react";
 import { useCallback, useMemo, useRef } from "react";
-
-function ExpandedWeather() {
-  return (
-    <div className="p-6">
-      <h2 className="text-xl font-light text-foreground mb-4">Weather</h2>
-      <p className="text-muted-foreground">Detailed weather view</p>
-    </div>
-  );
-}
 
 function ExpandedLights() {
   const { onCount, totalCount, isLoading, isError, turnOn, turnOff } = useLights();
@@ -107,22 +97,10 @@ function ExpandedMusic() {
   );
 }
 
-function ExpandedCalendar() {
-  return (
-    <div className="p-6">
-      <h2 className="text-xl font-light text-foreground mb-4">Calendar</h2>
-      <p className="text-muted-foreground">Calendar events</p>
-    </div>
-  );
-}
-
 const EXPANDED_VIEWS: Record<string, () => React.JSX.Element> = {
-  weather: ExpandedWeather,
   countdown: CountdownCardExpanded,
   lights: ExpandedLights,
   music: ExpandedMusic,
-  calendar: ExpandedCalendar,
-  timer: TimerPanel,
 };
 
 export function CardOverlay() {

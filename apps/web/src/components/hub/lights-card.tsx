@@ -2,17 +2,26 @@ import { BentoCard } from "@/components/hub/bento-card";
 import { getCardConfig } from "@/components/hub/card-registry";
 import { useLights } from "@/hooks/use-lights";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
+import { Lightbulb } from "lucide-react";
 
 export function LightsCard() {
   const expandCard = useCardExpansionStore((s) => s.expandCard);
   const config = getCardConfig("lights");
   const { onCount, totalCount, isLoading, isError, turnOn, turnOff } = useLights();
 
-  const countLabel = isLoading
-    ? "— of —"
-    : isError
-      ? "Unavailable"
-      : `${onCount} of ${totalCount} on`;
+  const allOn = onCount === totalCount && totalCount > 0;
+  const allOff = onCount === 0;
+
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (allOn) {
+      turnOff();
+    } else {
+      turnOn();
+    }
+  };
+
+  const countLabel = isLoading ? "--" : isError ? "N/A" : `${onCount}/${totalCount}`;
   const disabled = isLoading || isError;
 
   return (
@@ -26,33 +35,27 @@ export function LightsCard() {
       }}
       onClick={() => expandCard("lights")}
     >
-      <div className="flex items-center justify-between h-full">
-        <div>
-          <div className="text-sm text-muted-foreground mb-3">Lights</div>
-          <div className="text-lg font-light text-foreground">{countLabel}</div>
+      <div className="flex flex-col justify-between h-full">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">Lights</span>
+          <Lightbulb
+            size={16}
+            className={`transition-colors ${allOff ? "text-muted-foreground/40" : "text-amber-400"}`}
+          />
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="flex items-center justify-between">
+          <span className="text-lg font-light text-foreground">{countLabel}</span>
           <button
             type="button"
             disabled={disabled}
-            onClick={(e) => {
-              e.stopPropagation();
-              turnOn();
-            }}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium border border-white/10 text-white/60 active:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+            onClick={handleToggle}
+            className={`rounded-lg px-3 py-1 text-xs font-medium border transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+              allOn
+                ? "border-amber-400/30 text-amber-400 hover:bg-amber-400/10"
+                : "border-white/10 text-white/60 hover:bg-white/10"
+            }`}
           >
-            All On
-          </button>
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={(e) => {
-              e.stopPropagation();
-              turnOff();
-            }}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium border border-white/10 text-white/60 active:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            All Off
+            {allOn ? "All Off" : "All On"}
           </button>
         </div>
       </div>

@@ -1,15 +1,9 @@
-import { CalendarCard } from "@/components/hub/calendar-card";
 import { ClimateCard } from "@/components/hub/climate-card";
 import { ClockCard } from "@/components/hub/clock-card";
 import { CountdownCardMini } from "@/components/hub/countdown-card";
-import { EmailCard } from "@/components/hub/email-card";
+import { FanCard } from "@/components/hub/fan-card";
 import { LightsCard } from "@/components/hub/lights-card";
 import { MusicCard } from "@/components/hub/music-card";
-import { PhotoCard } from "@/components/hub/photo-card";
-import { QuoteCard } from "@/components/hub/quote-card";
-import { SystemStatusCard } from "@/components/hub/system-status-card";
-import { TimerCard } from "@/components/hub/timer-card";
-import { WeatherCard } from "@/components/hub/weather-card";
 import { WifiCard } from "@/components/hub/wifi-card";
 import { useIdleTimeout } from "@/hooks/use-idle-timeout";
 import { trpc } from "@/lib/trpc";
@@ -37,19 +31,13 @@ export function WidgetGrid() {
           gridTemplateRows: "repeat(4, 1fr)",
         }}
       >
-        <WeatherCard temp={72} condition="Partly Cloudy" high={78} low={64} />
         <ClockCard />
         <CountdownCardMini nextEvent={nextEvent} />
-        <PhotoCard />
-        <WifiCard />
-        <LightsCard />
         <MusicCard />
-        <CalendarCard />
-        <EmailCard />
-        <SystemStatusCard />
-        <QuoteCard />
-        <TimerCard />
+        <LightsCard />
+        <FanCard />
         <ClimateCard />
+        <WifiCard />
       </div>
       <span className="fixed bottom-2 left-3 font-mono text-xs tabular-nums text-muted-foreground/30">
         {remainingSeconds}
