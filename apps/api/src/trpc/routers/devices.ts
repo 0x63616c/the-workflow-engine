@@ -1,12 +1,15 @@
 import { z } from "zod";
 import { HaError } from "../../integrations/homeassistant/types";
 import {
+  getClimateState,
   getLightsState,
   getMediaPlayers,
   mediaPlayerCommand,
   setVolume,
   turnAllLightsOff,
   turnAllLightsOn,
+  turnFanOff,
+  turnFanOn,
 } from "../../services/ha-service";
 import { publicProcedure, router } from "../init";
 
@@ -73,6 +76,37 @@ export const devicesRouter = router({
     .mutation(async ({ input }) => {
       try {
         await setVolume(input.entityId, input.volumeLevel);
+      } catch (err) {
+        if (err instanceof HaError) return { error: "HA unavailable" };
+        throw err;
+      }
+    }),
+
+  climate: publicProcedure.query(async () => {
+    try {
+      return await getClimateState();
+    } catch (err) {
+      if (err instanceof HaError) return { error: "HA unavailable" };
+      throw err;
+    }
+  }),
+
+  fanOn: publicProcedure
+    .input(z.object({ entityId: z.string(), fanEntityId: z.string().nullable().optional() }))
+    .mutation(async ({ input }) => {
+      try {
+        await turnFanOn(input.entityId, input.fanEntityId);
+      } catch (err) {
+        if (err instanceof HaError) return { error: "HA unavailable" };
+        throw err;
+      }
+    }),
+
+  fanOff: publicProcedure
+    .input(z.object({ entityId: z.string(), fanEntityId: z.string().nullable().optional() }))
+    .mutation(async ({ input }) => {
+      try {
+        await turnFanOff(input.entityId, input.fanEntityId);
       } catch (err) {
         if (err instanceof HaError) return { error: "HA unavailable" };
         throw err;
