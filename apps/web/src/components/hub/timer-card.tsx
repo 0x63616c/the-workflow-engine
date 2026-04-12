@@ -1,5 +1,5 @@
 import { BentoCard } from "@/components/hub/bento-card";
-import { useNavigationStore } from "@/stores/navigation-store";
+import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { useTimerStore } from "@/stores/timer-store";
 
 export function formatCountdown(ms: number): string {
@@ -12,7 +12,7 @@ export function formatCountdown(ms: number): string {
 export function TimerCard() {
   const status = useTimerStore((s) => s.status);
   const remaining_MS = useTimerStore((s) => s.remaining_MS);
-  const setView = useNavigationStore((s) => s.setView);
+  const expandCard = useCardExpansionStore((s) => s.expandCard);
 
   const value = (() => {
     if (status === "idle") return "No timer";
@@ -21,7 +21,7 @@ export function TimerCard() {
   })();
 
   return (
-    <BentoCard testId="widget-card-timer" gridArea="timer" onClick={() => setView("timer")}>
+    <BentoCard testId="widget-card-timer" gridArea="timer" onClick={() => expandCard("timer")}>
       <div className="flex flex-col justify-between h-full">
         <div className="text-sm text-muted-foreground">Timer</div>
         <div className="text-2xl font-[200] text-foreground tabular-nums">{value}</div>

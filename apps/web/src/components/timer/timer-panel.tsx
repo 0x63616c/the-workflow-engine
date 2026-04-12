@@ -1,11 +1,10 @@
 import { TimerControls } from "@/components/timer/timer-controls";
 import { TimerFlash } from "@/components/timer/timer-flash";
 import { TimerRing } from "@/components/timer/timer-ring";
-import { useSwipe } from "@/hooks/use-swipe";
 import { useTimer } from "@/hooks/use-timer";
-import { useNavigationStore } from "@/stores/navigation-store";
+import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { ChevronLeft } from "lucide-react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 const PRESETS = [
   { label: "1m", minutes: 1 },
@@ -15,14 +14,11 @@ const PRESETS = [
 ];
 
 export function TimerPanel() {
-  const setView = useNavigationStore((s) => s.setView);
+  const contractCard = useCardExpansionStore((s) => s.contractCard);
   const { status, remaining_MS, duration_MS, start, pause, resume, reset } = useTimer();
-  const panelRef = useRef<HTMLDivElement>(null);
 
   const [localMinutes, setLocalMinutes] = useState(0);
   const [localSeconds, setLocalSeconds] = useState(0);
-
-  useSwipe(panelRef, { onSwipeLeft: () => setView("hub") });
 
   const showCustomInput = status === "idle" || status === "done";
   const startDisabled = localMinutes === 0 && localSeconds === 0;
@@ -36,7 +32,7 @@ export function TimerPanel() {
   }
 
   return (
-    <div ref={panelRef} className="relative h-full bg-background flex flex-col px-8 pt-6 pb-8">
+    <div className="relative h-full bg-background flex flex-col px-8 pt-6 pb-8">
       <TimerFlash active={status === "done"} />
 
       {/* Header */}
@@ -44,7 +40,7 @@ export function TimerPanel() {
         <button
           type="button"
           aria-label="Back"
-          onClick={() => setView("hub")}
+          onClick={() => contractCard()}
           className="text-white/60 active:text-white"
         >
           <ChevronLeft size={24} />
