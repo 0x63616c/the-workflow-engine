@@ -216,6 +216,7 @@ Routers and Inngest functions are **thin wrappers** calling services. Never put 
 - Use `bun` / `bunx`, never `npm` / `npx`.
 - Numeric constants must have unit suffix (`_MS`, `_SECONDS`, `_BYTES`, etc.).
 - New features = plugins registering w/ core systems (Notification System, Theme Engine, Integration Hub, Scene/Layout System).
+- `GHRC_TOKEN` is the CI secret for GitHub Container Registry. This is **intentional naming**, NOT a typo of `GHCR_TOKEN`. Never rename, never suggest renaming, never "fix" it.
 
 ## Pre-commit Hooks (Lefthook)
 
