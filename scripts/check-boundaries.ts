@@ -37,6 +37,7 @@ const rules: Rule[] = [
     allowed: [
       /^\./, // relative imports
       /^@repo\/shared/,
+      /^drizzle-orm/, // query operators (asc, desc, gte, lt, sql, eq)
       /\.\.\/db\//,
       /\.\.\/integrations\/types/,
     ],
