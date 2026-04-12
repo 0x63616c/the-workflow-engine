@@ -10,7 +10,7 @@ import { WaveformPulse } from "@/components/art-clock/states/waveform-pulse";
 import { WireframeGlobe } from "@/components/art-clock/states/wireframe-globe";
 import { CLOCK_STATE_COUNT, useNavigationStore } from "@/stores/navigation-store";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useCallback } from "react";
+import { Component, type ErrorInfo, type ReactNode, useCallback } from "react";
 
 type StateComponent = React.ComponentType;
 
@@ -25,6 +25,44 @@ const CLOCK_STATES: StateComponent[] = [
   BlackHole,
   Radar,
 ];
+
+interface ClockStateBoundaryProps {
+  children: ReactNode;
+  stateIndex: number;
+}
+
+interface ClockStateBoundaryState {
+  hasError: boolean;
+}
+
+class ClockStateBoundary extends Component<ClockStateBoundaryProps, ClockStateBoundaryState> {
+  state: ClockStateBoundaryState = { hasError: false };
+
+  static getDerivedStateFromError(): Partial<ClockStateBoundaryState> {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error(`[ClockState ${this.props.stateIndex}] crashed:`, error, info.componentStack);
+  }
+
+  componentDidUpdate(prevProps: ClockStateBoundaryProps) {
+    if (prevProps.stateIndex !== this.props.stateIndex) {
+      this.setState({ hasError: false });
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="absolute inset-0 flex items-center justify-center bg-black">
+          <p className="text-white/40 text-sm">This clock state failed to load</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export function ClockStateCarousel() {
   const clockStateIndex = useNavigationStore((s) => s.clockStateIndex);
@@ -53,7 +91,9 @@ export function ClockStateCarousel() {
 
   return (
     <div className="absolute inset-0 overflow-hidden">
-      <ActiveState />
+      <ClockStateBoundary stateIndex={clockStateIndex}>
+        <ActiveState />
+      </ClockStateBoundary>
 
       {canGoPrev && (
         <button

@@ -66,13 +66,7 @@ function Globe() {
               <meshBasicMaterial color="white" />
             </mesh>
             <Billboard position={labelPos}>
-              <Text
-                fontSize={0.09}
-                color="white"
-                anchorX="center"
-                anchorY="middle"
-                font="/fonts/GeistVF.woff"
-              >
+              <Text fontSize={0.09} color="white" anchorX="center" anchorY="middle">
                 {`${city.name}  ${cityTime(city.tz)}`}
               </Text>
             </Billboard>
