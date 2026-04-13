@@ -1,6 +1,7 @@
 import { ArtClock } from "@/components/art-clock/art-clock";
 import { StateIndicatorDots } from "@/components/art-clock/state-indicator-dots";
 import { ConstellationMap } from "@/components/art-clock/states/constellation-map";
+import { EarthMoon } from "@/components/art-clock/states/earth-moon";
 import { FlowField } from "@/components/art-clock/states/flow-field";
 import { GameOfLife } from "@/components/art-clock/states/game-of-life";
 import { Lissajous } from "@/components/art-clock/states/lissajous";
@@ -21,6 +22,7 @@ const CLOCK_STATES: StateComponent[] = [
   WaveformPulse,
   ParticleDrift,
   SolarSystem,
+  EarthMoon,
   PixelArt,
   GameOfLife,
   FlowField,
