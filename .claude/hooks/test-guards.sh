@@ -21,23 +21,39 @@ check() {
   fi
 }
 
-# Create a temp git repo to control branch name
+# Create a temp git repo to control branch name.
+# Clear ALL GIT_* env vars so lefthook context doesn't leak into
+# the temp repo and cause commits/operations in the real repo.
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
-git -C "$TMPDIR" init -q
-git -C "$TMPDIR" commit --allow-empty -m "init" -q
+
+# Run git with a clean environment (no inherited GIT_* vars)
+clean_git() {
+  env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE \
+    -u GIT_OBJECT_DIRECTORY -u GIT_ALTERNATE_OBJECT_DIRECTORIES \
+    git -C "$TMPDIR" "$@"
+}
+
+clean_git init -q
+clean_git config user.email "test@test"
+clean_git config user.name "test"
+clean_git commit --allow-empty -m "init" -q
 
 run_bash_hook() {
   local branch="$1" cmd="$2"
-  git -C "$TMPDIR" checkout -q -B "$branch" 2>/dev/null
+  clean_git checkout -q -B "$branch" 2>/dev/null
   echo "{\"tool_input\":{\"command\":\"$cmd\"}}" |
-    GIT_DIR="$TMPDIR/.git" bash "$SCRIPT_DIR/guard-bash.sh" 2>/dev/null
+    env -u GIT_WORK_TREE -u GIT_INDEX_FILE \
+      -u GIT_OBJECT_DIRECTORY -u GIT_ALTERNATE_OBJECT_DIRECTORIES \
+      GIT_DIR="$TMPDIR/.git" bash "$SCRIPT_DIR/guard-bash.sh" 2>/dev/null
 }
 
 run_edit_hook() {
   local branch="$1"
-  git -C "$TMPDIR" checkout -q -B "$branch" 2>/dev/null
-  GIT_DIR="$TMPDIR/.git" bash "$SCRIPT_DIR/guard-edit.sh" 2>/dev/null
+  clean_git checkout -q -B "$branch" 2>/dev/null
+  env -u GIT_WORK_TREE -u GIT_INDEX_FILE \
+    -u GIT_OBJECT_DIRECTORY -u GIT_ALTERNATE_OBJECT_DIRECTORIES \
+    GIT_DIR="$TMPDIR/.git" bash "$SCRIPT_DIR/guard-edit.sh" 2>/dev/null
 }
 
 echo "=== guard-bash.sh: branch creation ==="
