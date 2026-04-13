@@ -2,6 +2,11 @@
 
 ## System Diagram
 
+![System Architecture](screenshots/architecture-system.png)
+
+<details>
+<summary>Mermaid source</summary>
+
 ```mermaid
 graph TB
     subgraph iPad["iPad Pro 12.9&quot; (Wall-Mounted)"]
@@ -99,7 +104,14 @@ graph TB
     OP -. "secrets" .-> GHA
 ```
 
+</details>
+
 ## Real-Time HA State Flow
+
+![HA State Flow](screenshots/architecture-ha-flow.png)
+
+<details>
+<summary>Mermaid source</summary>
 
 ```mermaid
 sequenceDiagram
@@ -117,7 +129,14 @@ sequenceDiagram
     Client->>UI: Re-render with new state
 ```
 
+</details>
+
 ## CI/CD Pipeline
+
+![CI/CD Pipeline](screenshots/architecture-cicd.png)
+
+<details>
+<summary>Mermaid source</summary>
 
 ```mermaid
 flowchart LR
@@ -143,6 +162,8 @@ flowchart LR
 
     Deploy --> Notify["Slack notification"]
 ```
+
+</details>
 
 ## Monorepo Structure
 
