@@ -32,6 +32,7 @@ export function SonosProgressBar({
     }
   }, [mediaPosition, mediaPositionUpdatedAt]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: mediaPosition and mediaPositionUpdatedAt are intentional deps to restart the interval from the newly synced position after a seek
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (!isPlaying) return;
@@ -41,7 +42,7 @@ export function SonosProgressBar({
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isPlaying]);
+  }, [isPlaying, mediaPosition, mediaPositionUpdatedAt]);
 
   const duration = mediaDuration ?? 0;
   const progress = duration > 0 ? Math.min(position / duration, 1) : 0;
