@@ -1,4 +1,4 @@
-import { formatTime } from "@/components/art-clock/art-clock";
+import { formatDate, formatTime } from "@/components/art-clock/art-clock";
 import { BentoCard } from "@/components/hub/bento-card";
 import { getCardConfig } from "@/components/hub/card-registry";
 import { useCurrentTime } from "@/hooks/use-current-time";
@@ -11,9 +11,7 @@ export function ClockCard() {
   const config = getCardConfig("clock");
   const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
   const { hours, minutes, period } = formatTime(now);
-
-  const dayName = now.toLocaleDateString("en-US", { weekday: "long" });
-  const monthDay = now.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+  const dateStr = formatDate(now);
 
   return (
     <BentoCard
@@ -24,19 +22,14 @@ export function ClockCard() {
       onClick={() => expandCard("clock")}
       className="flex flex-col items-center justify-center"
     >
-      <div className="text-center">
-        <div className="text-7xl font-extralight tracking-tight text-foreground tabular-nums">
-          {hours}
-          <span className="text-foreground/30 mx-1">:</span>
-          {minutes}
-        </div>
-        <div className="text-base font-light text-muted-foreground/60 mt-2 tracking-wide">
-          {period}
-        </div>
+      <div className="flex items-baseline text-7xl font-extralight tracking-tight text-foreground tabular-nums">
+        <span>{hours}</span>
+        <span className="text-foreground/30 mx-1">:</span>
+        <span>{minutes}</span>
+        <span className="ml-2 text-3xl font-light text-foreground/60">{period}</span>
       </div>
-      <div className="mt-4 text-center">
-        <div className="text-3xl font-light text-foreground/70">{dayName}</div>
-        <div className="text-2xl text-muted-foreground/50 mt-0.5">{monthDay}</div>
+      <div className="mt-2 text-sm font-light tracking-[0.15em] text-muted-foreground/60">
+        {dateStr}
       </div>
     </BentoCard>
   );
