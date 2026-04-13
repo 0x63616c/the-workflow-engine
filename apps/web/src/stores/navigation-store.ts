@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export const CLOCK_STATE_COUNT = 9;
+export const CLOCK_STATE_COUNT = 14;
 
 type View = "clock" | "hub" | "sonos" | "timer";
 

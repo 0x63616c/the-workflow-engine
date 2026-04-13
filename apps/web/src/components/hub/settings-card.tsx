@@ -3,6 +3,7 @@ import { getCardConfig } from "@/components/hub/card-registry";
 import { useAppConfig } from "@/hooks/use-app-config";
 import { trpc } from "@/lib/trpc";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
+import { useThemeStore } from "@/stores/theme-store";
 import { Settings } from "lucide-react";
 
 const DEFAULT_IDLE_TIMEOUT_MS = 45_000;
@@ -36,6 +37,8 @@ export function SettingsCard() {
 
 export function SettingsCardExpanded() {
   const { get } = useAppConfig();
+  const activePaletteId = useThemeStore((s) => s.activePaletteId);
+  const setActivePalette = useThemeStore((s) => s.setActivePalette);
 
   const pingQuery = trpc.health.ping.useQuery(undefined, { refetchInterval: 5_000 });
   const buildHashQuery = trpc.health.buildHash.useQuery();
@@ -63,9 +66,29 @@ export function SettingsCardExpanded() {
         <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-4">
           Appearance
         </h3>
-        <div className="text-sm text-muted-foreground/60 italic">
-          {/* TODO: theme toggle — wired in by lightdark agent (#148) */}
-          Theme toggle coming soon
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => setActivePalette("midnight")}
+            className={`flex-1 py-3 text-sm font-medium border transition-colors ${
+              activePaletteId === "midnight"
+                ? "bg-foreground text-background border-foreground"
+                : "bg-transparent text-foreground border-foreground/30"
+            }`}
+          >
+            Dark
+          </button>
+          <button
+            type="button"
+            onClick={() => setActivePalette("daylight")}
+            className={`flex-1 py-3 text-sm font-medium border transition-colors ${
+              activePaletteId === "daylight"
+                ? "bg-foreground text-background border-foreground"
+                : "bg-transparent text-foreground border-foreground/30"
+            }`}
+          >
+            Light
+          </button>
         </div>
       </section>
 

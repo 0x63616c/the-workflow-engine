@@ -1,7 +1,7 @@
 import { SettingsCard, SettingsCardExpanded } from "@/components/hub/settings-card";
 import { useAppConfig } from "@/hooks/use-app-config";
 import { trpc } from "@/lib/trpc";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/hooks/use-app-config");
@@ -21,8 +21,11 @@ vi.mock("@/stores/card-expansion-store", () => ({
     selector({ expandCard: vi.fn(), expandedCardId: null }),
   ),
 }));
+const mockSetActivePalette = vi.fn();
 vi.mock("@/stores/theme-store", () => ({
-  useThemeStore: vi.fn((selector) => selector({ activePaletteId: "midnight" })),
+  useThemeStore: vi.fn((selector) =>
+    selector({ activePaletteId: "midnight", setActivePalette: mockSetActivePalette }),
+  ),
 }));
 
 const mockUseAppConfig = vi.mocked(useAppConfig);
@@ -53,7 +56,7 @@ describe("SettingsCard", () => {
 });
 
 describe("SettingsCardExpanded", () => {
-  it("renders Appearance section with theme placeholder", () => {
+  it("renders Appearance section with Dark and Light buttons", () => {
     setupAppConfig();
     vi.mocked(trpc.health.ping.useQuery).mockReturnValue({
       data: { status: "ok", timestamp: Date.now() },
@@ -72,7 +75,30 @@ describe("SettingsCardExpanded", () => {
 
     render(<SettingsCardExpanded />);
     expect(screen.getByText("Appearance")).toBeDefined();
-    expect(screen.getByText(/theme/i)).toBeDefined();
+    expect(screen.getByRole("button", { name: /dark/i })).toBeDefined();
+    expect(screen.getByRole("button", { name: /light/i })).toBeDefined();
+  });
+
+  it("calls setActivePalette when theme button is clicked", () => {
+    setupAppConfig();
+    vi.mocked(trpc.health.ping.useQuery).mockReturnValue({
+      data: { status: "ok", timestamp: Date.now() },
+      isLoading: false,
+      isError: false,
+    } as never);
+    vi.mocked(trpc.health.buildHash.useQuery).mockReturnValue({
+      data: { hash: "abc123", deployedAt: "2026-04-12" },
+      isLoading: false,
+    } as never);
+    vi.mocked(trpc.devices.lights.useQuery).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+    } as never);
+
+    render(<SettingsCardExpanded />);
+    fireEvent.click(screen.getByRole("button", { name: /light/i }));
+    expect(mockSetActivePalette).toHaveBeenCalledWith("daylight");
   });
 
   it("renders Display section with idle timeout", () => {
