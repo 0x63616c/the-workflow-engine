@@ -37,33 +37,48 @@ beforeEach(() => {
 });
 
 describe("LightsCard", () => {
-  it("shows on/total count", () => {
+  it("shows On when majority of lights on", () => {
+    setupHook({ onCount: 3, totalCount: 5 });
     render(<LightsCard />);
-    expect(screen.getByText("3/5")).toBeInTheDocument();
+    expect(screen.getByText("On")).toBeInTheDocument();
   });
 
-  it("shows All On label when not all lights on", () => {
+  it("shows Off when minority of lights on", () => {
+    setupHook({ onCount: 2, totalCount: 5 });
     render(<LightsCard />);
-    expect(screen.getByText("All On")).toBeInTheDocument();
+    expect(screen.getByText("Off")).toBeInTheDocument();
   });
 
-  it("shows All Off label when all lights on", () => {
-    setupHook({ onCount: 5, totalCount: 5 });
+  it("shows Off when exactly half on", () => {
+    setupHook({ onCount: 2, totalCount: 4 });
     render(<LightsCard />);
-    expect(screen.getByText("All Off")).toBeInTheDocument();
+    expect(screen.getByText("Off")).toBeInTheDocument();
   });
 
-  it("calls turnOn when card clicked and not all on", () => {
+  it("shows Turn Off label when majority on", () => {
+    setupHook({ onCount: 3, totalCount: 5 });
     render(<LightsCard />);
-    fireEvent.click(screen.getByTestId("widget-card-lights"));
-    expect(turnOnFn).toHaveBeenCalledOnce();
+    expect(screen.getByText("Turn Off")).toBeInTheDocument();
   });
 
-  it("calls turnOff when card clicked and all on", () => {
-    setupHook({ onCount: 5, totalCount: 5 });
+  it("shows Turn On label when majority off", () => {
+    setupHook({ onCount: 1, totalCount: 5 });
+    render(<LightsCard />);
+    expect(screen.getByText("Turn On")).toBeInTheDocument();
+  });
+
+  it("calls turnOff when card clicked and majority on", () => {
+    setupHook({ onCount: 4, totalCount: 5 });
     render(<LightsCard />);
     fireEvent.click(screen.getByTestId("widget-card-lights"));
     expect(turnOffFn).toHaveBeenCalledOnce();
+  });
+
+  it("calls turnOn when card clicked and majority off", () => {
+    setupHook({ onCount: 1, totalCount: 5 });
+    render(<LightsCard />);
+    fireEvent.click(screen.getByTestId("widget-card-lights"));
+    expect(turnOnFn).toHaveBeenCalledOnce();
   });
 
   it("shows N/A on error", () => {
