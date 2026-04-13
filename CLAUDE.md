@@ -304,3 +304,9 @@ Pre-push: blocks direct push to `main`.
 2. **Theme Engine** - Zustand store with palette registration, midnight/daylight built-in, localStorage persistence
 3. **Integration Hub** - Plugin interface for device integrations (init, getState, execute, subscribe)
 4. **Scene/Layout System** - Bento grid of cards with overlay expansion, idle-to-clock carousel
+
+## Personal
+
+- **Dog**: Zero
+- **Home**: Kurve Wilshire, 2801 Sunset Pl Apt 2124, Los Angeles, CA 90005
+- **Coordinates**: 34.0617, -118.2836 (used by weather service)
