@@ -61,8 +61,8 @@ export function ClimateCard() {
         {/* Center display */}
         <div className="flex items-center justify-center gap-1 px-3">
           <Thermometer size={24} className="text-muted-foreground/40" />
-          <span className="text-3xl font-light text-foreground tabular-nums">{displayTemp}</span>
-          <span className="text-sm text-muted-foreground/50">{`\u00b0${tempUnit}`}</span>
+          <span className="text-5xl font-light text-foreground tabular-nums">{displayTemp}</span>
+          <span className="text-xl text-muted-foreground/50">{`\u00b0${tempUnit}`}</span>
         </div>
 
         {/* Bottom half - tap to decrease */}
@@ -72,7 +72,7 @@ export function ClimateCard() {
           onClick={disabled ? undefined : handleTempDown}
         >
           <ChevronDown size={20} className="text-muted-foreground/40" />
-          <span className="absolute bottom-3 right-4 text-base text-muted-foreground/50">
+          <span className="absolute bottom-3 right-4 text-xl text-muted-foreground/50">
             {displayValue({ isLoading, isError, value: hvacMode === "off" ? "OFF" : "ON" })}
           </span>
         </div>
