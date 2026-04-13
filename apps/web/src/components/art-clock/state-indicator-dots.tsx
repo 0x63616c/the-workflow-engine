@@ -38,7 +38,7 @@ export function StateIndicatorDots({
           }}
         >
           <span
-            className="block h-px w-3 bg-white"
+            className="block h-px w-3 bg-foreground"
             style={{ opacity: dotIndex === activeIndex ? 1 : 0.2 }}
           />
         </button>

@@ -1,4 +1,5 @@
 import { formatDate, formatTime } from "@/components/art-clock/art-clock";
+import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
 import { useEffect, useRef } from "react";
 
@@ -23,6 +24,9 @@ export function BlackHole() {
   const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
   const { hours, minutes, period } = formatTime(now);
   const dateStr = formatDate(now);
+  const { foreground, background, foregroundAlpha } = useClockColors();
+  const colorsRef = useRef({ foreground, background, foregroundAlpha });
+  colorsRef.current = { foreground, background, foregroundAlpha };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -60,11 +64,12 @@ export function BlackHole() {
       const cx = w / 2;
       const cy = h / 2;
       const lensStrength = eventRadius * eventRadius * 3;
+      const { foreground: fg, background: bg, foregroundAlpha: fgAlpha } = colorsRef.current;
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
 
-      ctx.strokeStyle = "rgba(255,255,255,0.1)";
+      ctx.strokeStyle = fgAlpha(0.1);
       ctx.lineWidth = 0.5;
 
       const gridCountH = Math.ceil(h / GRID_SPACING) + 1;
@@ -130,7 +135,7 @@ export function BlackHole() {
         const ry = rx * 0.28;
         ctx.beginPath();
         ctx.ellipse(0, 0, rx, ry, -0.43, 0, 2 * Math.PI);
-        ctx.strokeStyle = `rgba(255,255,255,${0.15 - ring * 0.02})`;
+        ctx.strokeStyle = fgAlpha(0.15 - ring * 0.02);
         ctx.lineWidth = 0.5;
         ctx.stroke();
       }
@@ -151,15 +156,16 @@ export function BlackHole() {
           const opacity = ((t + 1) / streak.trail.length) * 0.6;
           ctx.beginPath();
           ctx.arc(pt.x, pt.y, 1.5, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255,255,255,${opacity})`;
+          ctx.fillStyle = fgAlpha(opacity);
           ctx.fill();
         }
       }
       ctx.restore();
 
+      // Event horizon uses background color
       ctx.beginPath();
       ctx.arc(cx, cy, eventRadius, 0, 2 * Math.PI);
-      ctx.fillStyle = "black";
+      ctx.fillStyle = bg;
       ctx.fill();
 
       rafRef.current = requestAnimationFrame(draw);
@@ -174,11 +180,11 @@ export function BlackHole() {
   }, []);
 
   return (
-    <div className="absolute inset-0 bg-black">
+    <div className="absolute inset-0 bg-background">
       <canvas ref={canvasRef} data-testid="blackhole-canvas" className="absolute inset-0" />
       <div
         data-testid="blackhole-time-overlay"
-        className="absolute top-1/3 left-0 right-0 flex flex-col items-center text-white"
+        className="absolute top-1/3 left-0 right-0 flex flex-col items-center text-foreground"
         style={{ pointerEvents: "none" }}
       >
         <div className="flex items-baseline gap-1" style={{ fontWeight: 100 }}>

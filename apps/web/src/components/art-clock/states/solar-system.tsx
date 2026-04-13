@@ -1,4 +1,5 @@
 import { formatDate, formatTime } from "@/components/art-clock/art-clock";
+import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
 import { useEffect, useRef } from "react";
 
@@ -45,6 +46,9 @@ export function SolarSystem() {
   const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
   const { hours, minutes, period } = formatTime(now);
   const dateStr = formatDate(now);
+  const { foreground, foregroundAlpha } = useClockColors();
+  const colorsRef = useRef({ foreground, foregroundAlpha });
+  colorsRef.current = { foreground, foregroundAlpha };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -67,6 +71,7 @@ export function SolarSystem() {
       const dpr = window.devicePixelRatio;
       const elapsed = Date.now() - startTimeRef.current;
       const simulatedNow = J2000_MS + (now.getTime() - J2000_MS) + elapsed * SPEED_MULTIPLIER;
+      const { foreground: fg, foregroundAlpha: fgAlpha } = colorsRef.current;
 
       const cx = w / 2;
       const cy = h / 2;
@@ -76,7 +81,7 @@ export function SolarSystem() {
       ctx.clearRect(0, 0, w, h);
 
       // Orbital rings
-      ctx.strokeStyle = "rgba(255,255,255,0.12)";
+      ctx.strokeStyle = fgAlpha(0.12);
       ctx.lineWidth = 0.5;
       for (let i = 0; i < PLANETS.length; i++) {
         const r = orbitalRadius(i, maxR);
@@ -85,10 +90,10 @@ export function SolarSystem() {
         ctx.stroke();
       }
 
-      // Sun — small glow
+      // Sun glow
       const sunGradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, 10);
-      sunGradient.addColorStop(0, "rgba(255,255,255,0.9)");
-      sunGradient.addColorStop(1, "rgba(255,255,255,0)");
+      sunGradient.addColorStop(0, fgAlpha(0.9));
+      sunGradient.addColorStop(1, fgAlpha(0));
       ctx.beginPath();
       ctx.arc(cx, cy, 10, 0, 2 * Math.PI);
       ctx.fillStyle = sunGradient;
@@ -96,7 +101,7 @@ export function SolarSystem() {
 
       ctx.beginPath();
       ctx.arc(cx, cy, 3.5, 0, 2 * Math.PI);
-      ctx.fillStyle = "rgba(255,255,255,0.95)";
+      ctx.fillStyle = fgAlpha(0.95);
       ctx.fill();
 
       // Planet dots
@@ -109,7 +114,7 @@ export function SolarSystem() {
 
         ctx.beginPath();
         ctx.arc(px, py, planet.dotRadius, 0, 2 * Math.PI);
-        ctx.fillStyle = "rgba(255,255,255,0.9)";
+        ctx.fillStyle = fgAlpha(0.9);
         ctx.fill();
       }
 
@@ -125,11 +130,11 @@ export function SolarSystem() {
   }, [now]);
 
   return (
-    <div className="absolute inset-0 bg-black">
+    <div className="absolute inset-0 bg-background">
       <canvas ref={canvasRef} data-testid="solar-system-canvas" className="absolute inset-0" />
       <div
         data-testid="solar-system-time-overlay"
-        className="absolute inset-0 flex flex-col items-center justify-center text-white"
+        className="absolute inset-0 flex flex-col items-center justify-center text-foreground"
         style={{ pointerEvents: "none" }}
       >
         <div

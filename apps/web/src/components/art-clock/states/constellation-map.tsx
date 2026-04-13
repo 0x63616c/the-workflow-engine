@@ -1,4 +1,5 @@
 import { formatDate, formatTime } from "@/components/art-clock/art-clock";
+import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
 import { useEffect, useRef } from "react";
 
@@ -174,6 +175,9 @@ export function ConstellationMap() {
   const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
   const { hours, minutes, period } = formatTime(now);
   const dateStr = formatDate(now);
+  const { foreground, foregroundAlpha } = useClockColors();
+  const colorsRef = useRef({ foreground, foregroundAlpha });
+  colorsRef.current = { foreground, foregroundAlpha };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -197,6 +201,7 @@ export function ConstellationMap() {
       const h = window.innerHeight;
       const elapsed = Date.now() - startTimeRef.current;
       const angle = elapsed * ROTATION_SPEED_RAD_PER_MS;
+      const { foreground: fg, foregroundAlpha: fgAlpha } = colorsRef.current;
 
       ctx.clearRect(0, 0, w, h);
       ctx.save();
@@ -205,7 +210,7 @@ export function ConstellationMap() {
       ctx.translate(-w / 2, -h / 2);
 
       for (const c of CONSTELLATIONS) {
-        ctx.strokeStyle = "rgba(255,255,255,0.4)";
+        ctx.strokeStyle = fgAlpha(0.4);
         ctx.lineWidth = 0.5;
         for (const [a, b] of c.lines) {
           const sa = c.stars[a];
@@ -219,13 +224,13 @@ export function ConstellationMap() {
         for (const star of c.stars) {
           ctx.beginPath();
           ctx.arc(star.x * w, star.y * h, 1.5, 0, Math.PI * 2);
-          ctx.fillStyle = "white";
+          ctx.fillStyle = fg;
           ctx.fill();
         }
 
         const cx = c.stars.reduce((s, st) => s + st.x, 0) / c.stars.length;
         const cy = c.stars.reduce((s, st) => s + st.y, 0) / c.stars.length;
-        ctx.fillStyle = "rgba(255,255,255,0.35)";
+        ctx.fillStyle = fgAlpha(0.35);
         ctx.font = "100 11px 'Geist', sans-serif";
         ctx.textAlign = "center";
         ctx.fillText(c.name, cx * w, cy * h - 12);
@@ -244,11 +249,11 @@ export function ConstellationMap() {
   }, []);
 
   return (
-    <div className="absolute inset-0 bg-black">
+    <div className="absolute inset-0 bg-background">
       <canvas ref={canvasRef} data-testid="constellation-canvas" className="absolute inset-0" />
       <div
         data-testid="constellation-time-overlay"
-        className="absolute bottom-16 left-0 right-0 flex flex-col items-center text-white"
+        className="absolute bottom-16 left-0 right-0 flex flex-col items-center text-foreground"
         style={{ pointerEvents: "none" }}
       >
         <div className="flex items-baseline gap-1" style={{ fontWeight: 100 }}>

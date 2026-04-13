@@ -1,4 +1,5 @@
 import { formatDate, formatTime } from "@/components/art-clock/art-clock";
+import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
 import { useEffect, useRef } from "react";
 
@@ -32,6 +33,9 @@ export function ParticleDrift() {
   const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
   const { hours, minutes, period } = formatTime(now);
   const dateStr = formatDate(now);
+  const { foreground, foregroundAlpha } = useClockColors();
+  const colorsRef = useRef({ foreground, foregroundAlpha });
+  colorsRef.current = { foreground, foregroundAlpha };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -55,6 +59,7 @@ export function ParticleDrift() {
       const dpr = window.devicePixelRatio;
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
       const speedMul = 0.3 + 0.9 * 0.5 * (1 + Math.sin((elapsed / SPEED_CYCLE_S) * 2 * Math.PI));
+      const { foreground: fg, foregroundAlpha: fgAlpha } = colorsRef.current;
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
@@ -91,7 +96,7 @@ export function ParticleDrift() {
               if (dist < CONNECT_DISTANCE_PX) {
                 const opacity = (1 - dist / CONNECT_DISTANCE_PX) * 0.3;
                 ctx.beginPath();
-                ctx.strokeStyle = `rgba(255,255,255,${opacity})`;
+                ctx.strokeStyle = fgAlpha(opacity);
                 ctx.lineWidth = 0.5;
                 ctx.moveTo(p.x, p.y);
                 ctx.lineTo(q.x, q.y);
@@ -103,7 +108,7 @@ export function ParticleDrift() {
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, 1, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.fillStyle = fgAlpha(0.8);
         ctx.fill();
       }
 
@@ -119,11 +124,11 @@ export function ParticleDrift() {
   }, []);
 
   return (
-    <div className="absolute inset-0 bg-black">
+    <div className="absolute inset-0 bg-background">
       <canvas ref={canvasRef} data-testid="particle-canvas" className="absolute inset-0" />
       <div
         data-testid="particle-time-overlay"
-        className="absolute inset-0 flex flex-col items-center justify-center text-white"
+        className="absolute inset-0 flex flex-col items-center justify-center text-foreground"
         style={{ pointerEvents: "none" }}
       >
         <div className="flex items-baseline gap-1" style={{ fontWeight: 100 }}>

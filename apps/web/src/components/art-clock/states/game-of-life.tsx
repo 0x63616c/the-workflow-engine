@@ -1,4 +1,5 @@
 import { formatDate, formatTime } from "@/components/art-clock/art-clock";
+import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
 import { useEffect, useRef } from "react";
 
@@ -61,6 +62,9 @@ export function GameOfLife() {
   const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
   const { hours, minutes, period } = formatTime(now);
   const dateStr = formatDate(now);
+  const { foreground, background } = useClockColors();
+  const colorsRef = useRef({ foreground, background });
+  colorsRef.current = { foreground, background };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -96,6 +100,7 @@ export function GameOfLife() {
       const dpr = window.devicePixelRatio;
       const cols = colsRef.current;
       const rows = rowsRef.current;
+      const { foreground: fg, background: bg } = colorsRef.current;
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
@@ -126,10 +131,10 @@ export function GameOfLife() {
         }
       }
 
-      ctx.fillStyle = "black";
+      ctx.fillStyle = bg;
       ctx.fillRect(0, 0, w, h);
 
-      ctx.fillStyle = "white";
+      ctx.fillStyle = fg;
       const grid = gridRef.current;
       for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
@@ -156,11 +161,11 @@ export function GameOfLife() {
   }, []);
 
   return (
-    <div className="absolute inset-0 bg-black">
+    <div className="absolute inset-0 bg-background">
       <canvas ref={canvasRef} data-testid="game-of-life-canvas" className="absolute inset-0" />
       <div
         data-testid="game-of-life-time-overlay"
-        className="absolute inset-0 flex flex-col items-center justify-center text-white"
+        className="absolute inset-0 flex flex-col items-center justify-center text-foreground"
         style={{ pointerEvents: "none" }}
       >
         <div
