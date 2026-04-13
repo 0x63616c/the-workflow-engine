@@ -19,6 +19,9 @@ vi.mock("@/components/art-clock/states/particle-drift", () => ({
 vi.mock("@/components/art-clock/states/solar-system", () => ({
   SolarSystem: () => <div data-testid="state-solar-system" />,
 }));
+vi.mock("@/components/art-clock/states/earth-moon", () => ({
+  EarthMoon: () => <div data-testid="state-earth-moon" />,
+}));
 vi.mock("@/components/art-clock/states/pixel-art", () => ({
   PixelArt: () => <div data-testid="state-pixel-art" />,
 }));
@@ -85,9 +88,9 @@ describe("ClockStateCarousel", () => {
     expect(indicator).toHaveStyle({ opacity: "1" });
   });
 
-  it("renders 9 indicator dots", () => {
+  it("renders 10 indicator dots", () => {
     render(<ClockStateCarousel />);
     const dots = screen.getAllByTestId(/^state-dot-/);
-    expect(dots).toHaveLength(9);
+    expect(dots).toHaveLength(10);
   });
 });
