@@ -102,7 +102,7 @@ Wall-mounted iPad Pro smart home panel. Living art, controls home.
 ### Deployment
 
 - **CI deploys automatically** on push to `main` via GitHub Actions (`kamal deploy`)
-- **Local deploy** (emergency/hotfix): `bin/deploy` — fetches secrets from 1Password then runs `kamal deploy`
+- **Local deploy** (emergency/hotfix): `scripts/deploy` — fetches secrets from 1Password then runs `kamal deploy`
 - Never run `kamal deploy` directly from local (secrets won't be set)
 
 ### Slack Bot (Evee)
