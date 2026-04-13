@@ -92,7 +92,7 @@ export function SolarSystem() {
       ctx.fillStyle = fgAlpha(0.95);
       ctx.fill();
 
-      // Planet dots
+      // Planet dots and labels
       for (let i = 0; i < PLANETS.length; i++) {
         const planet = PLANETS[i];
         const r = orbitalRadius(i, maxR);
@@ -104,6 +104,13 @@ export function SolarSystem() {
         ctx.arc(px, py, planet.dotRadius, 0, 2 * Math.PI);
         ctx.fillStyle = fgAlpha(0.9);
         ctx.fill();
+
+        // Planet name label
+        const labelOffset = planet.dotRadius + 6;
+        ctx.font = `${10 * dpr}px 'Sora Variable', 'Sora', sans-serif`;
+        ctx.fillStyle = fgAlpha(0.45);
+        ctx.textAlign = "center";
+        ctx.fillText(planet.name, px, py - labelOffset);
       }
     },
   });
@@ -113,22 +120,22 @@ export function SolarSystem() {
       <canvas ref={canvasRef} data-testid="solar-system-canvas" className="absolute inset-0" />
       <div
         data-testid="solar-system-time-overlay"
-        className="absolute inset-0 flex flex-col items-center justify-center text-foreground"
+        className="absolute top-8 left-8 flex flex-col text-foreground"
         style={{ pointerEvents: "none" }}
       >
         <div
           className="flex items-baseline gap-1"
           style={{ fontFamily: "'GeistMono', monospace", fontWeight: 100 }}
         >
-          <span className="text-8xl">{hours}</span>
-          <span className="text-8xl">:</span>
-          <span className="text-8xl">{minutes}</span>
-          <span className="ml-2 text-4xl" style={{ fontWeight: 200 }}>
+          <span className="text-5xl">{hours}</span>
+          <span className="text-5xl">:</span>
+          <span className="text-5xl">{minutes}</span>
+          <span className="ml-2 text-2xl" style={{ fontWeight: 200 }}>
             {period}
           </span>
         </div>
         <div
-          className="mt-2 text-sm tracking-widest"
+          className="mt-1 text-xs tracking-widest opacity-60"
           style={{ fontFamily: "'GeistMono', monospace", fontWeight: 300 }}
         >
           {dateStr}
