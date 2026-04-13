@@ -43,17 +43,17 @@ function formatEventDate(dateStr: string): string {
   });
 }
 
+const MAX_MINI_EVENTS = 4;
+
 interface CountdownCardMiniProps {
-  nextEvent: CountdownEvent | null;
+  events: CountdownEvent[];
 }
 
-export function CountdownCardMini({ nextEvent }: CountdownCardMiniProps) {
+export function CountdownCardMini({ events }: CountdownCardMiniProps) {
   const expandCard = useCardExpansionStore((s) => s.expandCard);
   const config = getCardConfig("countdown");
 
-  const days = nextEvent ? daysUntil(nextEvent.date) : null;
-  const daysNumber = days !== null ? Math.abs(days) : null;
-  const daysLabel = days !== null && days < 0 ? "days ago" : "days";
+  const visibleEvents = events.slice(0, MAX_MINI_EVENTS);
 
   return (
     <BentoCard
@@ -66,28 +66,30 @@ export function CountdownCardMini({ nextEvent }: CountdownCardMiniProps) {
       }}
       onClick={() => expandCard("countdown")}
     >
-      <div className="flex items-center justify-between h-full gap-4">
-        <div className="flex flex-col justify-center min-w-0">
-          <div className="flex items-center gap-1.5 mb-1">
-            <Calendar size={13} className="text-muted-foreground shrink-0" />
-            <span className="text-xs text-muted-foreground">Countdown</span>
-          </div>
-          {nextEvent ? (
-            <div className="text-xl font-medium text-foreground leading-tight truncate">
-              {nextEvent.title}
-            </div>
-          ) : (
-            <div className="text-base text-muted-foreground/50">No events</div>
-          )}
+      <div className="flex flex-col h-full">
+        <div className="flex items-center gap-1.5 mb-2">
+          <Calendar size={13} className="text-muted-foreground shrink-0" />
+          <span className="text-xs text-muted-foreground">Countdown</span>
         </div>
-        {nextEvent && days !== null && (
-          <div className="flex flex-col items-end justify-center shrink-0">
-            <div className="text-6xl font-bold text-foreground leading-none tabular-nums">
-              {days === 0 ? "0" : daysNumber}
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">
-              {days === 0 ? "today" : daysLabel}
-            </div>
+        {visibleEvents.length === 0 ? (
+          <div className="text-base text-muted-foreground/50">No events</div>
+        ) : (
+          <div className="flex flex-col gap-1 flex-1 justify-center">
+            {visibleEvents.map((event) => {
+              const days = daysUntil(event.date);
+              return (
+                <div key={event.id} className="flex items-center justify-between gap-2">
+                  <span className="text-sm text-foreground truncate">{event.title}</span>
+                  <span className="text-sm text-muted-foreground tabular-nums shrink-0">
+                    {days === 0
+                      ? "today"
+                      : days < 0
+                        ? formatDaysPast(days)
+                        : formatDaysRemaining(days)}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

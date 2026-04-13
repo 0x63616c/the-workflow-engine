@@ -2,7 +2,6 @@ import { BentoCard } from "@/components/hub/bento-card";
 import { getCardConfig } from "@/components/hub/card-registry";
 import { useSonos } from "@/hooks/use-sonos";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
-import { Pause, Play } from "lucide-react";
 
 function EqualizerBars({ active }: { active: boolean }) {
   const barHeights = [60, 100, 40, 80];
@@ -29,11 +28,10 @@ function EqualizerBars({ active }: { active: boolean }) {
 export function MusicCard() {
   const expandCard = useCardExpansionStore((s) => s.expandCard);
   const config = getCardConfig("music");
-  const { activeSpeaker, players, isError, sendCommand } = useSonos();
+  const { activeSpeaker, players, isError } = useSonos();
 
   const isPlaying = activeSpeaker?.state === "playing";
   const track = activeSpeaker?.attributes.mediaTitle;
-  const artist = activeSpeaker?.attributes.mediaArtist;
 
   return (
     <BentoCard
@@ -47,43 +45,19 @@ export function MusicCard() {
       onClick={() => expandCard("music")}
     >
       <div className="flex flex-col justify-between h-full">
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-base text-muted-foreground">Music</div>
-            <EqualizerBars active={isPlaying} />
-          </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">Music</span>
+          <EqualizerBars active={isPlaying} />
+        </div>
+        <div className="flex-1 flex flex-col justify-center min-w-0">
           {isError ? (
-            <div className="text-xl text-muted-foreground/50">Unavailable</div>
+            <div className="text-sm text-muted-foreground/50">Unavailable</div>
           ) : players.length === 0 ? (
-            <div className="text-xl text-muted-foreground/50">No speakers</div>
+            <div className="text-sm text-muted-foreground/50">No speakers</div>
           ) : (
-            <>
-              <div className="text-xl text-foreground truncate">{track ?? "Not playing"}</div>
-              {artist && (
-                <div className="text-lg text-muted-foreground/70 mt-0.5 truncate">{artist}</div>
-              )}
-            </>
+            <div className="text-sm text-foreground truncate">{track ?? "Not playing"}</div>
           )}
         </div>
-        {activeSpeaker && !isError && (
-          <div className="flex justify-end mt-2">
-            <button
-              type="button"
-              aria-label={isPlaying ? "Pause" : "Play"}
-              className="p-2 rounded-full hover:bg-white/5 active:bg-white/10 transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                sendCommand(activeSpeaker.entityId, isPlaying ? "pause" : "play");
-              }}
-            >
-              {isPlaying ? (
-                <Pause size={14} className="text-muted-foreground" />
-              ) : (
-                <Play size={14} className="text-muted-foreground" />
-              )}
-            </button>
-          </div>
-        )}
       </div>
     </BentoCard>
   );

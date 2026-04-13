@@ -34,8 +34,8 @@ registerCard({
 
 registerCard({
   id: "music",
-  gridColumn: "4 / 7",
-  gridRow: "2 / 4",
+  gridColumn: "4 / 5",
+  gridRow: "2 / 3",
   colorScheme: {
     bg: "bg-slate-600/20",
     accent: "#06b6d4",
@@ -91,7 +91,7 @@ registerCard({
 
 registerCard({
   id: "settings",
-  gridColumn: "4 / 7",
+  gridColumn: "4 / 5",
   gridRow: "4 / 5",
   colorScheme: {
     bg: "bg-neutral-600/20",

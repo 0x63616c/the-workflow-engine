@@ -25,7 +25,7 @@ export function WidgetGrid() {
   const expandCard = useCardExpansionStore((s) => s.expandCard);
   const expandedCardId = useCardExpansionStore((s) => s.expandedCardId);
   const upcoming = trpc.countdownEvents.listUpcoming.useQuery();
-  const nextEvent = upcoming.data?.[0] ?? null;
+  const upcomingEvents = upcoming.data ?? [];
   const { get: getConfig } = useAppConfig();
   const idleTimeout_MS =
     (getConfig("display.idleTimeout_MS") as number | null) ?? DEFAULT_IDLE_TIMEOUT_MS;
@@ -91,7 +91,7 @@ export function WidgetGrid() {
         })}
         {cards.map((card) => {
           if (card.id === "countdown") {
-            return <CountdownCardMini key={card.id} nextEvent={nextEvent} />;
+            return <CountdownCardMini key={card.id} events={upcomingEvents} />;
           }
           const Component = card.component;
           return <Component key={card.id} />;
