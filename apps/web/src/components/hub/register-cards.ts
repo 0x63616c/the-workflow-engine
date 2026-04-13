@@ -21,7 +21,7 @@ registerCard({
 
 registerCard({
   id: "countdown",
-  gridColumn: "4 / 7",
+  gridColumn: "5 / 7",
   gridRow: "1 / 2",
   colorScheme: { color: "purple" },
   component: CountdownCardMini,
