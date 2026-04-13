@@ -4,6 +4,7 @@ import { BlackHole } from "@/components/art-clock/states/black-hole";
 import { ConstellationMap } from "@/components/art-clock/states/constellation-map";
 import { ParticleDrift } from "@/components/art-clock/states/particle-drift";
 import { Pendulum } from "@/components/art-clock/states/pendulum";
+import { PixelArt } from "@/components/art-clock/states/pixel-art";
 import { Radar } from "@/components/art-clock/states/radar";
 import { SolarSystem } from "@/components/art-clock/states/solar-system";
 import { TopographicContours } from "@/components/art-clock/states/topographic-contours";
@@ -26,6 +27,7 @@ const CLOCK_STATES: StateComponent[] = [
   BlackHole,
   Radar,
   SolarSystem,
+  PixelArt,
 ];
 
 interface ClockStateBoundaryProps {
