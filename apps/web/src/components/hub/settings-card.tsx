@@ -4,9 +4,10 @@ import { PinPadOverlay } from "@/components/hub/pin-pad";
 import { useAppConfig } from "@/hooks/use-app-config";
 import { trpc } from "@/lib/trpc";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
+import { FONT_OPTIONS, useFontStore } from "@/stores/font-store";
 import { usePinStore } from "@/stores/pin-store";
 import { useThemeStore } from "@/stores/theme-store";
-import { Settings } from "lucide-react";
+import { Check, Settings } from "lucide-react";
 import { useCallback, useState } from "react";
 
 const DEFAULT_IDLE_TIMEOUT_MS = 45_000;
@@ -57,6 +58,33 @@ export function SettingsCard() {
         <PinPadOverlay mode="unlock" onSuccess={handlePinSuccess} onDismiss={handlePinDismiss} />
       )}
     </>
+  );
+}
+
+function FontPicker() {
+  const activeFontId = useFontStore((s) => s.activeFontId);
+  const setActiveFont = useFontStore((s) => s.setActiveFont);
+
+  return (
+    <div className="space-y-1 mt-4">
+      {FONT_OPTIONS.map((font) => (
+        <button
+          key={font.id}
+          type="button"
+          onClick={() => setActiveFont(font.id)}
+          className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-colors ${
+            activeFontId === font.id
+              ? "bg-foreground/10 text-foreground"
+              : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+          }`}
+        >
+          <span className="text-sm" style={{ fontFamily: font.family }}>
+            {font.name}
+          </span>
+          {activeFontId === font.id && <Check size={14} className="text-accent shrink-0" />}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -191,6 +219,7 @@ export function SettingsCardExpanded() {
             Light
           </button>
         </div>
+        <FontPicker />
       </section>
 
       <section className="mb-8">
