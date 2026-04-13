@@ -68,11 +68,16 @@ export async function initSlack(): Promise<void> {
         await say({ text, thread_ts: threadTs });
       },
       setStatus: async (status) => {
-        await client.assistant.threads.setStatus({
-          channel_id: event.channel,
-          thread_ts: threadTs,
-          status,
-        });
+        try {
+          await client.assistant.threads.setStatus({
+            channel_id: event.channel,
+            thread_ts: threadTs,
+            status,
+          });
+        } catch {
+          // assistant.threads.setStatus only works in the AI assistant panel,
+          // not in regular channel threads. Safe to ignore.
+        }
       },
       context: {
         threadTs,

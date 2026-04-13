@@ -1,21 +1,19 @@
 import { tool } from "ai";
 import { z } from "zod";
 
-const TIMEZONE = "Australia/Sydney";
-
 export const getCurrentDateTime = tool({
-  description: "Get the current date and time",
+  description: "Get the current date and time in UTC. Convert to the user's timezone if known.",
   inputSchema: z.object({}),
   execute: async () => {
     const now = new Date();
     return {
       iso: now.toISOString(),
-      formatted: now.toLocaleString("en-AU", { timeZone: TIMEZONE }),
-      dayOfWeek: now.toLocaleDateString("en-AU", {
+      utc: now.toUTCString(),
+      dayOfWeek: now.toLocaleDateString("en-US", {
         weekday: "long",
-        timeZone: TIMEZONE,
+        timeZone: "UTC",
       }),
-      timezone: TIMEZONE,
+      timezone: "UTC",
     };
   },
 });

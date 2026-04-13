@@ -9,7 +9,7 @@ import { eveeTools } from "./tools";
 const openrouter = createOpenRouter({ apiKey: env.OPENROUTER_API_KEY });
 const MODEL = "google/gemma-4-31b-it";
 const MAX_STEP_COUNT = 50;
-const LLM_TIMEOUT_MS = 30_000;
+const LLM_TIMEOUT_MS = 120_000;
 
 export type ChatMessage = ModelMessage;
 
