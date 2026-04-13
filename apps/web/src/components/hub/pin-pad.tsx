@@ -20,6 +20,12 @@ const DIGIT_BUTTONS = [
 
 const DOT_IDS = ["d0", "d1", "d2", "d3"] as const;
 
+const MODE_TITLES: Record<PinPadMode, string> = {
+  unlock: "Enter PIN",
+  "setup-enter": "Create PIN",
+  "setup-confirm": "Confirm PIN",
+};
+
 function PinDots({ count }: { count: number }) {
   return (
     <div className="flex gap-4 justify-center mb-10">
@@ -42,7 +48,7 @@ function PinDots({ count }: { count: number }) {
 export function PinPadOverlay({ mode, onSuccess, onDismiss }: PinPadOverlayProps) {
   const [digits, setDigits] = useState<string[]>([]);
   const controls = useAnimationControls();
-  const { verifyPin, setPin, unlock } = usePinStore();
+  const { verifyPin, unlock } = usePinStore();
   const submittingRef = useRef(false);
 
   const handleWrongPin = useCallback(async () => {
@@ -65,15 +71,12 @@ export function PinPadOverlay({ mode, onSuccess, onDismiss }: PinPadOverlayProps
         } else {
           await handleWrongPin();
         }
-      } else if (mode === "setup-enter") {
-        await setPin(pin);
-        onSuccess(pin);
-      } else if (mode === "setup-confirm") {
+      } else if (mode === "setup-enter" || mode === "setup-confirm") {
         onSuccess(pin);
       }
       submittingRef.current = false;
     },
-    [mode, verifyPin, setPin, unlock, onSuccess, handleWrongPin],
+    [mode, verifyPin, unlock, onSuccess, handleWrongPin],
   );
 
   // Auto-submit when 4 digits accumulated — effect decouples state update from submission
@@ -112,6 +115,8 @@ export function PinPadOverlay({ mode, onSuccess, onDismiss }: PinPadOverlayProps
       >
         <X className="w-6 h-6 text-foreground/60" />
       </button>
+
+      <h2 className="text-lg font-light text-foreground/70 mb-8">{MODE_TITLES[mode]}</h2>
 
       <AnimatePresence mode="wait">
         <motion.div key="pin-dots" animate={controls} className="flex flex-col items-center">
