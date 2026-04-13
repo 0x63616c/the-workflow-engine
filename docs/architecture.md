@@ -34,13 +34,16 @@ graph TB
 
                 subgraph Evee["Evee (Slack Bot)"]
                     Bolt["Slack Bolt<br/>Socket Mode"]
-                    LLM["OpenRouter<br/>Gemma 4 31B"]
+                    AISDK["Vercel AI SDK<br/>generateText()"]
+                    Tools["Tools<br/>dateTime, rollDice"]
+                    Thread["Thread Context<br/>conversations.replies"]
+                    Bolt --> Thread --> AISDK
+                    AISDK --> Tools
                 end
 
                 Server --> TRPC & InngestH & SPA
                 TRPC --> R_Dev & R_Count & R_Conf & R_HP
                 R_Dev --> HASvc & WSRelay
-                Bolt --> LLM
             end
 
             PG["PostgreSQL<br/>Drizzle ORM"]
@@ -87,7 +90,7 @@ graph TB
 
     %% Evee
     Bolt -- "Socket Mode" --> Slack
-    LLM -- "Chat completions" --> OR
+    AISDK -- "OpenRouter provider<br/>Gemma 4 31B" --> OR
 
     %% CI/CD
     GHA -- "docker push" --> GHCR
