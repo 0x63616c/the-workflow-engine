@@ -1,4 +1,3 @@
-import { CardOverlay } from "@/components/hub/card-overlay";
 import { WidgetGrid } from "@/components/hub/widget-grid";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -10,7 +9,6 @@ function HomePage() {
   return (
     <div className="relative min-h-full">
       <WidgetGrid />
-      <CardOverlay />
     </div>
   );
 }

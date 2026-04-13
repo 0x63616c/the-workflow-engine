@@ -3,6 +3,7 @@ import { ConnectionStatus } from "@/components/connection-status";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import { CardOverlay } from "@/components/hub/card-overlay";
 import { useAutoReload } from "@/hooks/use-auto-reload";
 import { Outlet, createRootRoute } from "@tanstack/react-router";
 
@@ -16,6 +17,7 @@ function RootLayout() {
       </AppShell>
       <Header />
       <Footer />
+      <CardOverlay />
       <ConnectionStatus />
     </ErrorBoundary>
   );
