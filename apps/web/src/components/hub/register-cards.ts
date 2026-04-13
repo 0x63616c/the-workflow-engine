@@ -71,8 +71,8 @@ registerCard({
 
 registerCard({
   id: "settings",
-  gridColumn: "4 / 5",
-  gridRow: "4 / 5",
+  gridColumn: "6 / 7",
+  gridRow: "1 / 2",
   colorScheme: { color: "slate" },
   component: SettingsCard,
   expandedView: SettingsCardExpanded,
