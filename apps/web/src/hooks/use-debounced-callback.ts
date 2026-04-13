@@ -5,12 +5,14 @@ export function useDebouncedCallback<T extends unknown[]>(
   delay_MS: number,
 ): (...args: T) => void {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fnRef = useRef(fn);
+  fnRef.current = fn;
 
   return useCallback(
     (...args: T) => {
       if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => fn(...args), delay_MS);
+      timerRef.current = setTimeout(() => fnRef.current(...args), delay_MS);
     },
-    [fn, delay_MS],
+    [delay_MS],
   );
 }
