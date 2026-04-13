@@ -19,11 +19,11 @@ export function ExpandedMusic() {
             <SonosAlbumArt albumArtUrl={activeSpeaker.attributes.albumArtUrl} />
           </div>
           <div className="text-center mb-6">
-            <div className="text-xl font-medium text-white truncate">
+            <div className="text-xl font-medium text-foreground truncate">
               {activeSpeaker.attributes.mediaTitle ?? "Unknown"}
             </div>
             {activeSpeaker.attributes.mediaArtist && (
-              <div className="text-sm text-white/50 mt-1 truncate">
+              <div className="text-sm text-muted-foreground mt-1 truncate">
                 {activeSpeaker.attributes.mediaArtist}
               </div>
             )}
@@ -45,7 +45,7 @@ export function ExpandedMusic() {
               sendCommand={sendCommand}
             />
           </div>
-          <div className="border-t border-white/5 pt-6">
+          <div className="border-t border-border pt-6">
             <SonosSpeakerList players={players} setVolume={setVolume} />
           </div>
         </>

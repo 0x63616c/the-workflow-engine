@@ -45,7 +45,7 @@ function ExpandedLights() {
           type="button"
           disabled={disabled}
           onClick={() => turnOff()}
-          className="px-4 py-2 rounded-lg bg-white/10 text-white/60 text-sm disabled:opacity-40"
+          className="px-4 py-2 rounded-lg bg-foreground/10 text-muted-foreground text-sm disabled:opacity-40"
         >
           All Off
         </button>
@@ -69,11 +69,11 @@ function ExpandedMusic() {
             <SonosAlbumArt albumArtUrl={activeSpeaker.attributes.albumArtUrl} />
           </div>
           <div className="text-center mb-6">
-            <div className="text-xl font-medium text-white truncate">
+            <div className="text-xl font-medium text-foreground truncate">
               {activeSpeaker.attributes.mediaTitle ?? "Unknown"}
             </div>
             {activeSpeaker.attributes.mediaArtist && (
-              <div className="text-sm text-white/50 mt-1 truncate">
+              <div className="text-sm text-muted-foreground mt-1 truncate">
                 {activeSpeaker.attributes.mediaArtist}
               </div>
             )}
@@ -95,7 +95,7 @@ function ExpandedMusic() {
               sendCommand={sendCommand}
             />
           </div>
-          <div className="border-t border-white/5 pt-6">
+          <div className="border-t border-border pt-6">
             <SonosSpeakerList players={players} setVolume={setVolume} />
           </div>
         </>
@@ -137,7 +137,7 @@ export function CardOverlay() {
           <motion.div
             key="clock-overlay"
             data-testid="card-overlay"
-            className="fixed inset-0 z-50 bg-background"
+            className="fixed inset-0 z-50 bg-black"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -189,7 +189,9 @@ export function CardOverlay() {
                 ref={contentRef}
                 data-testid="card-overlay-content"
                 className="w-[90%] h-[90%] bg-card rounded-2xl border pointer-events-auto overflow-auto"
-                style={{ borderColor: "rgba(255,255,255,0.08)" }}
+                style={{
+                  borderColor: "color-mix(in srgb, var(--color-foreground) 8%, transparent)",
+                }}
                 initial={{ scale: 0.92, opacity: 0, y: 16 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.92, opacity: 0, y: 16 }}

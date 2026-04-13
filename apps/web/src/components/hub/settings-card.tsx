@@ -197,15 +197,15 @@ export function SettingsCardExpanded() {
         <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-4">
           Display
         </h3>
-        <div className="flex items-center justify-between py-2 border-b border-white/5">
+        <div className="flex items-center justify-between py-2 border-b border-border">
           <span className="text-sm text-foreground">Idle timeout</span>
           <span className="text-sm text-muted-foreground">{idleTimeout_S}s</span>
         </div>
-        <div className="flex items-center justify-between py-2 border-b border-white/5">
+        <div className="flex items-center justify-between py-2 border-b border-border">
           <span className="text-sm text-foreground">Dim timeout</span>
           <span className="text-sm text-muted-foreground">{dimTimeout_S}s</span>
         </div>
-        <div className="flex items-center justify-between py-2 border-b border-white/5">
+        <div className="flex items-center justify-between py-2 border-b border-border">
           <span className="text-sm text-foreground">Dim brightness</span>
           <span className="text-sm text-muted-foreground">{dimBrightnessPercent}%</span>
         </div>
@@ -215,7 +215,7 @@ export function SettingsCardExpanded() {
         <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-4">
           Security
         </h3>
-        <div className="flex items-center justify-between py-2 border-b border-white/5">
+        <div className="flex items-center justify-between py-2 border-b border-border">
           <span className="text-sm text-foreground">PIN lock</span>
           <button
             type="button"
@@ -236,7 +236,7 @@ export function SettingsCardExpanded() {
           </button>
         </div>
         {pinHash && (
-          <div className="flex items-center justify-between py-2 border-b border-white/5">
+          <div className="flex items-center justify-between py-2 border-b border-border">
             <span className="text-sm text-foreground">Change PIN</span>
             <button
               type="button"
@@ -254,7 +254,7 @@ export function SettingsCardExpanded() {
         <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-4">
           System
         </h3>
-        <div className="flex items-center justify-between py-2 border-b border-white/5">
+        <div className="flex items-center justify-between py-2 border-b border-border">
           <span className="text-sm text-foreground">API</span>
           <span
             className={`text-sm ${
@@ -268,7 +268,7 @@ export function SettingsCardExpanded() {
             {apiStatus}
           </span>
         </div>
-        <div className="flex items-center justify-between py-2 border-b border-white/5">
+        <div className="flex items-center justify-between py-2 border-b border-border">
           <span className="text-sm text-foreground">Build</span>
           <span className="text-sm text-muted-foreground font-mono">{buildHash}</span>
         </div>

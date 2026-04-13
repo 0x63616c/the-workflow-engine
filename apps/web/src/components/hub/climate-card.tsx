@@ -44,7 +44,7 @@ export function ClimateCard() {
         {/* Top half - tap to increase */}
         {/* biome-ignore lint/a11y/useKeyWithClickEvents: touch target for temp control */}
         <div
-          className={`flex-1 flex flex-col justify-center items-center p-3 ${disabled ? "opacity-40" : "cursor-pointer active:bg-white/5"}`}
+          className={`flex-1 flex flex-col justify-center items-center p-3 ${disabled ? "opacity-40" : "cursor-pointer active:bg-foreground/5"}`}
           onClick={disabled ? undefined : handleTempUp}
         >
           <ChevronUp size={20} className="text-muted-foreground/40" />
@@ -60,7 +60,7 @@ export function ClimateCard() {
         {/* Bottom half - tap to decrease */}
         {/* biome-ignore lint/a11y/useKeyWithClickEvents: touch target for temp control */}
         <div
-          className={`flex-1 flex flex-col justify-center items-center p-3 ${disabled ? "opacity-40" : "cursor-pointer active:bg-white/5"}`}
+          className={`flex-1 flex flex-col justify-center items-center p-3 ${disabled ? "opacity-40" : "cursor-pointer active:bg-foreground/5"}`}
           onClick={disabled ? undefined : handleTempDown}
         >
           <ChevronDown size={20} className="text-muted-foreground/40" />

@@ -41,7 +41,7 @@ export function TimerPanel() {
           type="button"
           aria-label="Back"
           onClick={() => contractCard()}
-          className="text-white/60 active:text-white"
+          className="text-foreground/60 active:text-foreground"
         >
           <ChevronLeft size={24} />
         </button>
@@ -66,7 +66,7 @@ export function TimerPanel() {
               type="button"
               aria-label={label}
               onClick={() => handlePreset(minutes)}
-              className="px-5 py-2 rounded-full bg-white/10 text-white text-sm active:scale-95 transition-transform"
+              className="px-5 py-2 rounded-full bg-foreground/10 text-foreground text-sm active:scale-95 transition-transform"
             >
               {label}
             </button>
@@ -83,9 +83,9 @@ export function TimerPanel() {
               max={99}
               value={localMinutes}
               onChange={(e) => setLocalMinutes(Math.min(99, Math.max(0, Number(e.target.value))))}
-              className="w-16 bg-transparent text-white text-3xl font-[200] text-center tabular-nums border-b border-white/20 focus:outline-none focus:border-white/60"
+              className="w-16 bg-transparent text-foreground text-3xl font-[200] text-center tabular-nums border-b border-foreground/20 focus:outline-none focus:border-foreground/60"
             />
-            <span className="text-white/60 text-3xl font-[200]">:</span>
+            <span className="text-foreground/60 text-3xl font-[200]">:</span>
             <input
               type="number"
               inputMode="numeric"
@@ -93,7 +93,7 @@ export function TimerPanel() {
               max={59}
               value={localSeconds}
               onChange={(e) => setLocalSeconds(Math.min(59, Math.max(0, Number(e.target.value))))}
-              className="w-16 bg-transparent text-white text-3xl font-[200] text-center tabular-nums border-b border-white/20 focus:outline-none focus:border-white/60"
+              className="w-16 bg-transparent text-foreground text-3xl font-[200] text-center tabular-nums border-b border-foreground/20 focus:outline-none focus:border-foreground/60"
             />
           </div>
         )}
