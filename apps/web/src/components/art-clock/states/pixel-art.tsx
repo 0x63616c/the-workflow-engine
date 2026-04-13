@@ -565,7 +565,7 @@ export function PixelArt() {
       const timeW = measureText(timeStr, timeCellSize);
       const periodW = measureText(per, timeCellSize);
       const totalW = timeW + timeCellSize * 2 + periodW;
-      const timeX = Math.round((w - totalW) / (GRID * 3)) * (GRID * 3);
+      const timeX = Math.round((w - totalW) / 2 / GRID) * GRID;
       const timeY = Math.round((h * 0.18) / (GRID * 3)) * (GRID * 3);
 
       ctx.fillStyle = fg;
@@ -577,7 +577,7 @@ export function PixelArt() {
       // Date display — smaller pixel font below time
       const dateCellSize = CELL;
       const dateW = measureText(ds, dateCellSize);
-      const dateX = Math.round((w - dateW) / (GRID * 2)) * (GRID * 2);
+      const dateX = Math.round((w - dateW) / 2 / GRID) * GRID;
       const dateY = timeY + 7 * timeCellSize + dateCellSize * 2;
       drawText(ctx, ds, dateX, dateY, dateCellSize);
     },

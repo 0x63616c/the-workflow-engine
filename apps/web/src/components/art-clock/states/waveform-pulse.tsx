@@ -60,7 +60,7 @@ export function WaveformPulse() {
         className="absolute inset-0 flex flex-col items-center justify-center text-foreground"
         style={{ pointerEvents: "none" }}
       >
-        <div className="flex items-baseline gap-1 mb-20" style={{ fontWeight: 100 }}>
+        <div className="flex items-baseline gap-1" style={{ fontWeight: 100 }}>
           <span className="text-9xl">{hours}</span>
           <span className="text-9xl">:</span>
           <span className="text-9xl">{minutes}</span>
@@ -68,7 +68,7 @@ export function WaveformPulse() {
             {period}
           </span>
         </div>
-        <div className="text-base tracking-widest" style={{ fontWeight: 300 }}>
+        <div className="mt-4 text-base tracking-widest" style={{ fontWeight: 300 }}>
           {dateStr}
         </div>
       </div>
