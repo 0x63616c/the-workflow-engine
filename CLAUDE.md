@@ -63,7 +63,7 @@ Wall-mounted iPad Pro smart home panel. Living art, controls home.
 
 - **Runtime**: Bun
 - **Framework**: tRPC v11 (HTTP batch + SSE subscriptions via `splitLink`)
-- **Database**: SQLite via Drizzle ORM (Bun SQLite driver)
+- **Database**: PostgreSQL via Drizzle ORM (node-postgres driver)
 - **Auth**: PIN code, hashed, long-lived token
 - **Validation**: Zod
 - **Env config**: Validated via Zod in `src/env.ts`. Never read `.env` directly.
@@ -181,6 +181,16 @@ bun run db:studio         # Open Drizzle Studio
 ```bash
 cd apps/web && bunx vitest run src/__tests__/timer-card.test.tsx
 cd apps/api && bunx vitest run src/__tests__/services/ha-service.test.ts
+```
+
+### Prod database
+
+```bash
+# pgcli (interactive terminal with autocomplete)
+pgcli "postgresql://workflow:$(op read 'op://Homelab/Workflow Engine Postgres/password')@homelab:5432/workflow_engine"
+
+# Drizzle Studio (web UI) — runs from anywhere
+scripts/drizzle-prod
 ```
 
 ## Architecture
