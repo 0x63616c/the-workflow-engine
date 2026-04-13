@@ -10,10 +10,7 @@ export function EmailCard() {
       testId="widget-card-email"
       gridColumn={config?.gridColumn}
       gridRow={config?.gridRow}
-      colorScheme={{
-        bg: config?.colorScheme.bg,
-        border: config?.colorScheme.border,
-      }}
+      paletteColor={config?.colorScheme.color}
     >
       <div className="flex flex-col justify-between h-full">
         <div>

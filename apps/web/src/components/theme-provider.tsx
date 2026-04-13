@@ -1,3 +1,4 @@
+import { type CardPaletteColor, getCardColorVar } from "@/lib/palette";
 import { MIDNIGHT_PALETTE, useThemeStore } from "@/stores/theme-store";
 import type { ReactNode } from "react";
 import { useEffect } from "react";
@@ -25,6 +26,17 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       const cssVarName = `--color-${camelToKebab(key)}`;
       root.style.setProperty(cssVarName, value);
       keys.push(cssVarName);
+    }
+
+    for (const [colorName, tokens] of Object.entries(palette.cardColors)) {
+      for (const [token, value] of Object.entries(tokens)) {
+        const cssVarName = getCardColorVar(
+          colorName as CardPaletteColor,
+          token as keyof typeof tokens,
+        );
+        root.style.setProperty(cssVarName, value);
+        keys.push(cssVarName);
+      }
     }
 
     return () => {

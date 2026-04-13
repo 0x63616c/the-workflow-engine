@@ -1,3 +1,11 @@
+import {
+  type CardColorTokens,
+  type CardPaletteColor,
+  DARK_CARD_PALETTE,
+  LIGHT_CARD_PALETTE,
+  SLATE_DARK,
+  SLATE_LIGHT,
+} from "@/lib/palette";
 import { create } from "zustand";
 
 export interface ThemePalette {
@@ -24,6 +32,7 @@ export interface ThemePalette {
     popover: string;
     popoverForeground: string;
   };
+  cardColors: Record<CardPaletteColor, CardColorTokens>;
 }
 
 export interface ThemeState {
@@ -42,52 +51,54 @@ export const MIDNIGHT_PALETTE: ThemePalette = {
   id: "midnight",
   name: "Midnight",
   colors: {
-    background: "#000000",
-    foreground: "#ffffff",
-    muted: "#262626",
-    mutedForeground: "#a3a3a3",
-    border: "#262626",
-    input: "#262626",
-    ring: "#d4d4d4",
-    primary: "#ffffff",
-    primaryForeground: "#000000",
-    secondary: "#262626",
-    secondaryForeground: "#ffffff",
+    background: SLATE_DARK[1],
+    foreground: SLATE_DARK[12],
+    muted: SLATE_DARK[3],
+    mutedForeground: SLATE_DARK[11],
+    border: SLATE_DARK[6],
+    input: SLATE_DARK[6],
+    ring: SLATE_DARK[8],
+    primary: SLATE_DARK[12],
+    primaryForeground: SLATE_DARK[1],
+    secondary: SLATE_DARK[3],
+    secondaryForeground: SLATE_DARK[12],
     accent: "#d4a574",
     accentForeground: "#1a1a1a",
-    destructive: "#ef4444",
+    destructive: DARK_CARD_PALETTE.red.accent,
     destructiveForeground: "#ffffff",
-    card: "#000000",
-    cardForeground: "#ffffff",
-    popover: "#000000",
-    popoverForeground: "#ffffff",
+    card: SLATE_DARK[2],
+    cardForeground: SLATE_DARK[12],
+    popover: SLATE_DARK[2],
+    popoverForeground: SLATE_DARK[12],
   },
+  cardColors: DARK_CARD_PALETTE,
 };
 
 export const DAYLIGHT_PALETTE: ThemePalette = {
   id: "daylight",
   name: "Daylight",
   colors: {
-    background: "#ffffff",
-    foreground: "#000000",
-    muted: "#f0f0f0",
-    mutedForeground: "#6b6b6b",
-    border: "#e5e5e5",
-    input: "#e5e5e5",
-    ring: "#8a8a8a",
-    primary: "#000000",
-    primaryForeground: "#ffffff",
-    secondary: "#f0f0f0",
-    secondaryForeground: "#000000",
+    background: SLATE_LIGHT[1],
+    foreground: SLATE_LIGHT[12],
+    muted: SLATE_LIGHT[3],
+    mutedForeground: SLATE_LIGHT[11],
+    border: SLATE_LIGHT[6],
+    input: SLATE_LIGHT[6],
+    ring: SLATE_LIGHT[8],
+    primary: SLATE_LIGHT[12],
+    primaryForeground: SLATE_LIGHT[1],
+    secondary: SLATE_LIGHT[3],
+    secondaryForeground: SLATE_LIGHT[12],
     accent: "#d4a574",
     accentForeground: "#1a1a1a",
-    destructive: "#ef4444",
+    destructive: LIGHT_CARD_PALETTE.red.accent,
     destructiveForeground: "#ffffff",
-    card: "#ffffff",
-    cardForeground: "#000000",
-    popover: "#ffffff",
-    popoverForeground: "#000000",
+    card: SLATE_LIGHT[1],
+    cardForeground: SLATE_LIGHT[12],
+    popover: SLATE_LIGHT[1],
+    popoverForeground: SLATE_LIGHT[12],
   },
+  cardColors: LIGHT_CARD_PALETTE,
 };
 
 function getInitialPaletteId(): string {

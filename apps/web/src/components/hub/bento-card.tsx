@@ -1,4 +1,4 @@
-import { useThemeStore } from "@/stores/theme-store";
+import { type CardPaletteColor, cardColorVar } from "@/lib/palette";
 import type { ReactNode } from "react";
 
 interface BentoCardProps {
@@ -8,10 +8,7 @@ interface BentoCardProps {
   testId?: string;
   gridColumn?: string;
   gridRow?: string;
-  colorScheme?: {
-    bg?: string;
-    border?: string;
-  };
+  paletteColor?: CardPaletteColor;
   borderRadius?: string;
 }
 
@@ -22,10 +19,9 @@ export function BentoCard({
   testId,
   gridColumn,
   gridRow,
-  colorScheme,
+  paletteColor,
   borderRadius,
 }: BentoCardProps) {
-  const isDark = useThemeStore((s) => s.activePaletteId === "midnight");
   const radiusClass = borderRadius ?? "rounded-2xl";
 
   return (
@@ -35,19 +31,13 @@ export function BentoCard({
         ${radiusClass} p-5 transition-all duration-150 ease-out
         border bg-card
         ${onClick ? "cursor-pointer active:scale-[0.97]" : ""}
-        ${colorScheme?.bg ?? ""}
-        ${colorScheme?.border ?? ""}
         ${className}
       `}
       style={{
         ...(gridColumn ? { gridColumn } : {}),
         ...(gridRow ? { gridRow } : {}),
-        borderColor: colorScheme?.border
-          ? undefined
-          : isDark
-            ? "rgba(255,255,255,0.08)"
-            : "rgba(0,0,0,0.06)",
-        boxShadow: isDark ? "none" : "0 1px 3px rgba(0,0,0,0.08)",
+        borderColor: paletteColor ? cardColorVar(paletteColor, "border") : "var(--color-border)",
+        backgroundColor: paletteColor ? cardColorVar(paletteColor, "tint") : undefined,
       }}
       onClick={(e) => {
         e.stopPropagation();

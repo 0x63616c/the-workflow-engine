@@ -3,29 +3,95 @@
 @import "@fontsource-variable/geist-mono";
 
 @theme {
-  --color-background: #000000;
-  --color-foreground: #fafafa;
-  --color-muted: #262626;
-  --color-muted-foreground: #a3a3a3;
-  --color-border: #262626;
-  --color-input: #262626;
-  --color-ring: #d4d4d4;
-  --color-primary: #fafafa;
-  --color-primary-foreground: #0a0a0a;
-  --color-secondary: #262626;
-  --color-secondary-foreground: #fafafa;
+  /* Semantic colors (defaults = dark/midnight, overridden by ThemeProvider) */
+  --color-background: #111113;
+  --color-foreground: #edeef0;
+  --color-muted: #212225;
+  --color-muted-foreground: #b0b4ba;
+  --color-border: #363a3f;
+  --color-input: #363a3f;
+  --color-ring: #5a6169;
+  --color-primary: #edeef0;
+  --color-primary-foreground: #111113;
+  --color-secondary: #212225;
+  --color-secondary-foreground: #edeef0;
   --color-accent: #d4a574;
   --color-accent-foreground: #1a1a1a;
-  --color-destructive: #ef4444;
-  --color-destructive-foreground: #fafafa;
-  --color-card: #0a0a0a;
-  --color-card-foreground: #fafafa;
-  --color-popover: #0a0a0a;
-  --color-popover-foreground: #fafafa;
+  --color-destructive: #e5484d;
+  --color-destructive-foreground: #ffffff;
+  --color-card: #18191b;
+  --color-card-foreground: #edeef0;
+  --color-popover: #18191b;
+  --color-popover-foreground: #edeef0;
+
+  /* Card palette colors (Radix Colors, dark defaults, overridden by ThemeProvider) */
+  --color-card-purple-tint: #301c3b;
+  --color-card-purple-accent: #8e4ec6;
+  --color-card-purple-border: #8457aa;
+  --color-card-purple-text: #d19dff;
+
+  --color-card-blue-tint: #0d2847;
+  --color-card-blue-accent: #0090ff;
+  --color-card-blue-border: #2870bd;
+  --color-card-blue-text: #70b8ff;
+
+  --color-card-cyan-tint: #082c36;
+  --color-card-cyan-accent: #00a2c7;
+  --color-card-cyan-border: #11809c;
+  --color-card-cyan-text: #4ccce6;
+
+  --color-card-teal-tint: #0d2d2a;
+  --color-card-teal-accent: #12a594;
+  --color-card-teal-border: #207e73;
+  --color-card-teal-text: #0bd8b6;
+
+  --color-card-green-tint: #132d21;
+  --color-card-green-accent: #30a46c;
+  --color-card-green-border: #2f7c57;
+  --color-card-green-text: #3dd68c;
+
+  --color-card-amber-tint: #302008;
+  --color-card-amber-accent: #ffc53d;
+  --color-card-amber-border: #8f6424;
+  --color-card-amber-text: #ffca16;
+
+  --color-card-orange-tint: #331e0b;
+  --color-card-orange-accent: #f76b15;
+  --color-card-orange-border: #a35829;
+  --color-card-orange-text: #ffa057;
+
+  --color-card-red-tint: #3b1219;
+  --color-card-red-accent: #e5484d;
+  --color-card-red-border: #b54548;
+  --color-card-red-text: #ff9592;
+
+  --color-card-pink-tint: #37172f;
+  --color-card-pink-accent: #d6409f;
+  --color-card-pink-border: #a84885;
+  --color-card-pink-text: #ff8dcc;
+
+  --color-card-iris-tint: #202248;
+  --color-card-iris-accent: #5b5bd6;
+  --color-card-iris-border: #5958b1;
+  --color-card-iris-text: #b1a9ff;
+
+  --color-card-crimson-tint: #381525;
+  --color-card-crimson-accent: #e93d82;
+  --color-card-crimson-border: #b0436e;
+  --color-card-crimson-text: #ff92ad;
+
+  --color-card-slate-tint: #212225;
+  --color-card-slate-accent: #696e77;
+  --color-card-slate-border: #5a6169;
+  --color-card-slate-text: #b0b4ba;
+
+  /* Radii */
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
   --radius-xl: 0.75rem;
+
+  /* Fonts */
   --font-sans: "Geist Variable", "Geist", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", "Geist Mono", ui-monospace, monospace;
 }

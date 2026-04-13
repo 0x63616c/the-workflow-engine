@@ -20,10 +20,7 @@ export function ClockCard() {
       testId="widget-card-clock"
       gridColumn={config?.gridColumn}
       gridRow={config?.gridRow}
-      colorScheme={{
-        bg: config?.colorScheme.bg,
-        border: config?.colorScheme.border,
-      }}
+      paletteColor={config?.colorScheme.color}
       onClick={() => expandCard("clock")}
       className="flex flex-col items-center justify-center"
     >

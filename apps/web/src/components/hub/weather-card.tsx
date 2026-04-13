@@ -35,10 +35,7 @@ export function WeatherCard({ temp, condition, high, low }: WeatherCardProps) {
       testId="widget-card-weather"
       gridColumn={config?.gridColumn}
       gridRow={config?.gridRow}
-      colorScheme={{
-        bg: config?.colorScheme.bg,
-        border: config?.colorScheme.border,
-      }}
+      paletteColor={config?.colorScheme.color}
       onClick={() => expandCard("weather")}
       className={`bg-gradient-to-br ${gradient} relative overflow-hidden`}
     >
