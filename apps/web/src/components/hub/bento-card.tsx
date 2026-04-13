@@ -1,3 +1,4 @@
+import { CardErrorBoundary } from "@/components/hub/card-error-boundary";
 import { type CardPaletteColor, cardColorVar } from "@/lib/palette";
 import type { ReactNode } from "react";
 
@@ -52,7 +53,7 @@ export function BentoCard({
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
     >
-      {children}
+      <CardErrorBoundary>{children}</CardErrorBoundary>
     </div>
   );
 }
