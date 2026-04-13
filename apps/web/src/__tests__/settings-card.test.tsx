@@ -22,6 +22,7 @@ vi.mock("@/stores/card-expansion-store", () => ({
   ),
 }));
 vi.mock("@/stores/pin-store", () => ({
+  PIN_LENGTH: 6,
   usePinStore: vi.fn(() => ({
     enabled: false,
     isUnlocked: true,

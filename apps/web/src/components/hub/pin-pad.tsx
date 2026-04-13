@@ -1,4 +1,4 @@
-import { usePinStore } from "@/stores/pin-store";
+import { PIN_LENGTH, usePinStore } from "@/stores/pin-store";
 import { Haptics, ImpactStyle, NotificationType } from "@capacitor/haptics";
 import { AnimatePresence, motion, useAnimationControls } from "framer-motion";
 import { Delete, X } from "lucide-react";
@@ -18,7 +18,7 @@ const DIGIT_BUTTONS = [
   ["7", "8", "9"],
 ] as const;
 
-const DOT_IDS = ["d0", "d1", "d2", "d3"] as const;
+const DOT_IDS = Array.from({ length: PIN_LENGTH }, (_, i) => `d${i}`) as string[];
 
 const MODE_TITLES: Record<PinPadMode, string> = {
   unlock: "Enter PIN",
@@ -64,8 +64,7 @@ export function PinPadOverlay({ mode, onSuccess, onDismiss }: PinPadOverlayProps
   const handleSubmit = useCallback(
     async (pin: string) => {
       if (mode === "unlock") {
-        const ok = await verifyPin(pin);
-        if (ok) {
+        if (verifyPin(pin)) {
           unlock();
           onSuccess();
         } else {
@@ -79,10 +78,10 @@ export function PinPadOverlay({ mode, onSuccess, onDismiss }: PinPadOverlayProps
     [mode, verifyPin, unlock, onSuccess, handleWrongPin],
   );
 
-  // Auto-submit when 4 digits accumulated — effect decouples state update from submission
-  // so fireEvent.click batching in tests works correctly
+  // Auto-submit when PIN_LENGTH digits accumulated — effect decouples state update
+  // from submission so fireEvent.click batching in tests works correctly
   useEffect(() => {
-    if (digits.length === 4 && !submittingRef.current) {
+    if (digits.length === PIN_LENGTH && !submittingRef.current) {
       submittingRef.current = true;
       handleSubmit(digits.join(""));
     }
@@ -90,7 +89,7 @@ export function PinPadOverlay({ mode, onSuccess, onDismiss }: PinPadOverlayProps
 
   const handleDigit = useCallback((digit: string) => {
     setDigits((prev) => {
-      if (prev.length >= 4) return prev;
+      if (prev.length >= PIN_LENGTH) return prev;
       Haptics.impact({ style: ImpactStyle.Medium }).catch(() => {});
       return [...prev, digit];
     });

@@ -288,21 +288,17 @@ export function SettingsCardExpanded() {
   }, []);
 
   const handleSetupConfirmSuccess = useCallback(
-    async (pin?: string) => {
+    (pin?: string) => {
       if (!pin || pin !== pendingPin) {
         setPendingPin(null);
         setPinSetupMode("setup-enter");
         return;
       }
-      try {
-        await setPin(pin);
-        enable();
-      } finally {
-        setPendingPin(null);
-        setPinSetupMode("idle");
-      }
+      setPin(pin);
+      setPendingPin(null);
+      setPinSetupMode("idle");
     },
-    [pendingPin, setPin, enable],
+    [pendingPin, setPin],
   );
 
   const handleChangePinVerifySuccess = useCallback(() => {
