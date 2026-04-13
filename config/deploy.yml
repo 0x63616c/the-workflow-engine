@@ -47,6 +47,9 @@ env:
     - INNGEST_SIGNING_KEY
     - HA_TOKEN
     - DATABASE_URL
+    - SLACK_BOT_TOKEN
+    - SLACK_APP_TOKEN
+    - OPENROUTER_API_KEY
 
 accessories:
   postgres:

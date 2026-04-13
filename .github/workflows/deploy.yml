@@ -316,6 +316,9 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           VITE_WIFI_SSID: ${{ secrets.WIFI_SSID }}
           VITE_WIFI_PASSWORD: ${{ secrets.WIFI_PASSWORD }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_APP_TOKEN: ${{ secrets.SLACK_APP_TOKEN }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: kamal deploy
 
       - name: Verify deployment health
