@@ -216,7 +216,7 @@ export function ConstellationMap() {
         const cx = c.stars.reduce((s, st) => s + st.x, 0) / c.stars.length;
         const cy = c.stars.reduce((s, st) => s + st.y, 0) / c.stars.length;
         ctx.fillStyle = fgAlpha(0.35);
-        ctx.font = "100 11px 'Geist', sans-serif";
+        ctx.font = "100 11px 'Sora Variable', 'Sora', sans-serif";
         ctx.textAlign = "center";
         ctx.fillText(c.name, cx * w, cy * h - 12);
       }

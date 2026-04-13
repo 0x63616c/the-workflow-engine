@@ -22,14 +22,14 @@ export function FanCard() {
         className={`flex flex-col justify-between h-full transition-opacity duration-300 ${!fanOn && !isLoading && !isError ? "opacity-40" : "opacity-100"}`}
       >
         <div className="flex items-center justify-between">
-          <span className="text-base text-muted-foreground">Fan</span>
+          <span className="text-2xl text-muted-foreground">Fan</span>
           <Fan
             size={32}
             className={`transition-colors ${fanOn ? "text-cyan-400" : "text-muted-foreground/40"}`}
           />
         </div>
         <div className="flex items-end justify-end">
-          <span className="text-base text-muted-foreground/50">
+          <span className="text-2xl text-muted-foreground/50">
             {displayValue({ isLoading, isError, value: fanOn ? "ON" : "OFF" })}
           </span>
         </div>

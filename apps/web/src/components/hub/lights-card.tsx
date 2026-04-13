@@ -31,14 +31,14 @@ export function LightsCard() {
     >
       <div className="flex flex-col justify-between h-full">
         <div className="flex items-center justify-between">
-          <span className="text-base text-muted-foreground">Lights</span>
+          <span className="text-2xl text-muted-foreground">Lights</span>
           <Lightbulb
             size={32}
             className={`transition-colors ${majorityOn ? "text-amber-400" : "text-muted-foreground/40"}`}
           />
         </div>
         <div className="flex items-end justify-end">
-          <span className="text-base text-muted-foreground/50">{stateLabel}</span>
+          <span className="text-2xl text-muted-foreground/50">{stateLabel}</span>
         </div>
       </div>
     </BentoCard>

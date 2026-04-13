@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "@fontsource-variable/geist";
+
 @import "@fontsource-variable/geist-mono";
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/space-grotesk";
@@ -99,7 +99,7 @@
   --radius-xl: 0.75rem;
 
   /* Fonts */
-  --font-sans: "Geist Variable", "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Sora Variable", "Sora", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", "Geist Mono", ui-monospace, monospace;
   --font-active: "Satoshi", sans-serif;
 }
