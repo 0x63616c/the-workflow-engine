@@ -45,3 +45,21 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: ${{ matrix.command }}
+
+  shell:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ShellCheck
+            command: shellcheck .claude/hooks/*.sh
+          - name: shfmt
+            command: shfmt -d -i 2 -ci .claude/hooks/*.sh
+          - name: Shell Guards
+            command: bash .claude/hooks/test-guards.sh
+    steps:
+      - uses: actions/checkout@v6
+      - uses: mfinelli/setup-shfmt@v2
+      - run: ${{ matrix.command }}

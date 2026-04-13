@@ -38,6 +38,15 @@ pre-commit:
     actionlint:
       glob: ".github/workflows/*.{yml,yaml}"
       run: actionlint {staged_files}
+    shellcheck:
+      glob: "*.sh"
+      run: shellcheck {staged_files}
+    shfmt:
+      glob: "*.sh"
+      run: shfmt -d -i 2 -ci {staged_files}
+    shell-guards:
+      glob: ".claude/hooks/*.sh"
+      run: bash .claude/hooks/test-guards.sh
     no-env:
       glob: ".env*"
       exclude_tags:
