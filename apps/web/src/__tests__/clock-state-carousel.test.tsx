@@ -80,8 +80,8 @@ describe("ClockStateCarousel", () => {
     expect(screen.getByTestId("state-constellation-map")).toBeInTheDocument();
   });
 
-  it("renders state-radar when clockStateIndex is 7", () => {
-    useNavigationStore.setState({ clockStateIndex: 7 });
+  it("renders state-radar when clockStateIndex is 6", () => {
+    useNavigationStore.setState({ clockStateIndex: 6 });
     render(<ClockStateCarousel />);
     expect(screen.getByTestId("state-radar")).toBeInTheDocument();
   });
