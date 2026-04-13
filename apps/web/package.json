@@ -27,8 +27,6 @@
     "@fontsource-variable/plus-jakarta-sans": "^5.2.8",
     "@fontsource-variable/sora": "^5.2.8",
     "@fontsource-variable/space-grotesk": "^5.2.10",
-    "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.5.0",
     "@repo/api": "workspace:*",
     "@repo/shared": "workspace:*",
     "@tanstack/react-query": "^5.75.0",
@@ -45,7 +43,6 @@
     "react-dom": "^19.0.0",
     "simplex-noise": "^4.0.3",
     "tailwind-merge": "^3.0.0",
-    "three": "^0.183.2",
     "zustand": "^5.0.0"
   },
   "devDependencies": {
@@ -58,7 +55,6 @@
     "@testing-library/react": "^16.2.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@types/three": "^0.183.1",
     "@vitejs/plugin-react": "^4.4.0",
     "jsdom": "^26.0.0",
     "tailwindcss": "^4.1.0",
