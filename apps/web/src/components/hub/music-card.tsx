@@ -12,7 +12,7 @@ function EqualizerBars({ active }: { active: boolean }) {
         <div
           key={height}
           className={`
-            w-[3px] rounded-full bg-accent transition-all
+            w-[3px] rounded-full bg-card-blue-accent transition-all
             ${active ? "animate-[equalizer_1s_ease-in-out_infinite]" : ""}
           `}
           style={{
@@ -38,10 +38,7 @@ export function MusicCard() {
       testId="widget-card-music"
       gridColumn={config?.gridColumn}
       gridRow={config?.gridRow}
-      colorScheme={{
-        bg: config?.colorScheme.bg,
-        border: config?.colorScheme.border,
-      }}
+      paletteColor={config?.colorScheme.color}
       onClick={() => expandCard("music")}
     >
       <div className="flex flex-col justify-between h-full">

@@ -1,9 +1,8 @@
+import type { CardPaletteColor } from "@/lib/palette";
 import type { ComponentType } from "react";
 
 export interface CardColorScheme {
-  bg: string;
-  accent: string;
-  border: string;
+  color: CardPaletteColor;
 }
 
 export interface CardConfig {

@@ -1,4 +1,5 @@
 import { ThemeProvider } from "@/components/theme-provider";
+import { DARK_CARD_PALETTE } from "@/lib/palette";
 import { DAYLIGHT_PALETTE, MIDNIGHT_PALETTE, useThemeStore } from "@/stores/theme-store";
 import type { ThemePalette } from "@/stores/theme-store";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
@@ -23,7 +24,7 @@ describe("ThemeProvider", () => {
         <div>child</div>
       </ThemeProvider>,
     );
-    expect(document.documentElement.style.getPropertyValue("--color-background")).toBe("#000000");
+    expect(document.documentElement.style.getPropertyValue("--color-background")).toBe("#111113");
   });
 
   it("applies --color-accent CSS variable", () => {
@@ -41,7 +42,7 @@ describe("ThemeProvider", () => {
         <div>child</div>
       </ThemeProvider>,
     );
-    expect(document.documentElement.style.getPropertyValue("--color-foreground")).toBe("#ffffff");
+    expect(document.documentElement.style.getPropertyValue("--color-foreground")).toBe("#edeef0");
   });
 
   it("applies --color-muted-foreground with kebab-case", () => {
@@ -51,7 +52,21 @@ describe("ThemeProvider", () => {
       </ThemeProvider>,
     );
     expect(document.documentElement.style.getPropertyValue("--color-muted-foreground")).toBe(
-      "#a3a3a3",
+      "#b0b4ba",
+    );
+  });
+
+  it("applies card palette CSS variables", () => {
+    render(
+      <ThemeProvider>
+        <div>child</div>
+      </ThemeProvider>,
+    );
+    expect(document.documentElement.style.getPropertyValue("--color-card-purple-accent")).toBe(
+      "#8e4ec6",
+    );
+    expect(document.documentElement.style.getPropertyValue("--color-card-blue-border")).toBe(
+      "#2870bd",
     );
   });
 
@@ -89,6 +104,7 @@ describe("ThemeProvider", () => {
         popover: "#1a1a2e",
         popoverForeground: "#eaeaea",
       },
+      cardColors: DARK_CARD_PALETTE,
     };
 
     render(

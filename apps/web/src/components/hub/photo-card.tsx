@@ -10,10 +10,7 @@ export function PhotoCard() {
       testId="widget-card-photo"
       gridColumn={config?.gridColumn}
       gridRow={config?.gridRow}
-      colorScheme={{
-        bg: config?.colorScheme.bg,
-        border: config?.colorScheme.border,
-      }}
+      paletteColor={config?.colorScheme.color}
       borderRadius={config?.borderRadius}
     >
       <div className="flex flex-col items-center justify-center h-full">

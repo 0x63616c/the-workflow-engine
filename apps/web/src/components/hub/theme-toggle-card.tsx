@@ -20,10 +20,7 @@ export function ThemeToggleCard() {
       testId="widget-card-theme"
       gridColumn={config?.gridColumn}
       gridRow={config?.gridRow}
-      colorScheme={{
-        bg: config?.colorScheme.bg,
-        border: config?.colorScheme.border,
-      }}
+      paletteColor={config?.colorScheme.color}
       borderRadius={config?.borderRadius}
       onClick={toggle}
       className="flex flex-col items-center justify-center"

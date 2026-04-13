@@ -15,10 +15,7 @@ export function FanCard() {
       testId="widget-card-fan"
       gridColumn={config?.gridColumn}
       gridRow={config?.gridRow}
-      colorScheme={{
-        bg: config?.colorScheme.bg,
-        border: config?.colorScheme.border,
-      }}
+      paletteColor={config?.colorScheme.color}
       onClick={disabled ? undefined : toggle}
     >
       <div

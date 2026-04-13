@@ -60,10 +60,7 @@ export function CountdownCardMini({ events }: CountdownCardMiniProps) {
       testId="widget-card-countdown"
       gridColumn={config?.gridColumn}
       gridRow={config?.gridRow}
-      colorScheme={{
-        bg: config?.colorScheme.bg,
-        border: config?.colorScheme.border,
-      }}
+      paletteColor={config?.colorScheme.color}
       onClick={() => expandCard("countdown")}
     >
       <div className="flex flex-col h-full">

@@ -26,10 +26,7 @@ export function LightsCard() {
       testId="widget-card-lights"
       gridColumn={config?.gridColumn}
       gridRow={config?.gridRow}
-      colorScheme={{
-        bg: config?.colorScheme.bg,
-        border: config?.colorScheme.border,
-      }}
+      paletteColor={config?.colorScheme.color}
       onClick={disabled ? undefined : handleToggle}
     >
       <div className="flex flex-col justify-between h-full">

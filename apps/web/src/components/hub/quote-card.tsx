@@ -10,10 +10,7 @@ export function QuoteCard() {
       testId="widget-card-quote"
       gridColumn={config?.gridColumn}
       gridRow={config?.gridRow}
-      colorScheme={{
-        bg: config?.colorScheme.bg,
-        border: config?.colorScheme.border,
-      }}
+      paletteColor={config?.colorScheme.color}
       borderRadius={config?.borderRadius}
     >
       <div className="flex items-start gap-3">

@@ -1,3 +1,4 @@
+import { DARK_CARD_PALETTE, LIGHT_CARD_PALETTE } from "@/lib/palette";
 import { DAYLIGHT_PALETTE, MIDNIGHT_PALETTE, useThemeStore } from "@/stores/theme-store";
 import type { ThemePalette } from "@/stores/theme-store";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -47,18 +48,24 @@ describe("theme-store", () => {
     expect(palette.colors.accentForeground).toBe("#1a1a1a");
   });
 
-  it("midnight palette has pure black background and pure white foreground", () => {
+  it("midnight palette has Radix Slate dark background and foreground", () => {
     const palette = useThemeStore.getState().getActivePalette();
-    expect(palette.colors.background).toBe("#000000");
-    expect(palette.colors.foreground).toBe("#ffffff");
+    expect(palette.colors.background).toBe("#111113");
+    expect(palette.colors.foreground).toBe("#edeef0");
   });
 
-  it("midnight palette has pure black card and popover surfaces", () => {
+  it("midnight palette has Radix Slate dark card and popover surfaces", () => {
     const palette = useThemeStore.getState().getActivePalette();
-    expect(palette.colors.card).toBe("#000000");
-    expect(palette.colors.popover).toBe("#000000");
-    expect(palette.colors.cardForeground).toBe("#ffffff");
-    expect(palette.colors.popoverForeground).toBe("#ffffff");
+    expect(palette.colors.card).toBe("#18191b");
+    expect(palette.colors.popover).toBe("#18191b");
+    expect(palette.colors.cardForeground).toBe("#edeef0");
+    expect(palette.colors.popoverForeground).toBe("#edeef0");
+  });
+
+  it("midnight palette has dark card palette colors", () => {
+    const palette = useThemeStore.getState().getActivePalette();
+    expect(palette.cardColors).toBe(DARK_CARD_PALETTE);
+    expect(palette.cardColors.purple.accent).toBe("#8e4ec6");
   });
 
   it("registerPalette adds a new palette", () => {
@@ -86,6 +93,7 @@ describe("theme-store", () => {
         popover: "#1a1a2e",
         popoverForeground: "#eaeaea",
       },
+      cardColors: DARK_CARD_PALETTE,
     };
     useThemeStore.getState().registerPalette(testPalette);
     expect(useThemeStore.getState().palettes.dawn).toEqual(testPalette);
@@ -105,6 +113,7 @@ describe("theme-store", () => {
       id: "dawn",
       name: "Dawn",
       colors: { ...MIDNIGHT_PALETTE.colors },
+      cardColors: DARK_CARD_PALETTE,
     };
     useThemeStore.getState().registerPalette(testPalette);
     useThemeStore.getState().setActivePalette("dawn");
@@ -126,21 +135,26 @@ describe("theme-store", () => {
   });
 
   describe("daylight palette", () => {
-    it("has pure white background and pure black foreground", () => {
-      expect(DAYLIGHT_PALETTE.colors.background).toBe("#ffffff");
-      expect(DAYLIGHT_PALETTE.colors.foreground).toBe("#000000");
+    it("has Radix Slate light background and foreground", () => {
+      expect(DAYLIGHT_PALETTE.colors.background).toBe("#fcfcfd");
+      expect(DAYLIGHT_PALETTE.colors.foreground).toBe("#1c2024");
     });
 
-    it("has pure white card and popover surfaces", () => {
-      expect(DAYLIGHT_PALETTE.colors.card).toBe("#ffffff");
-      expect(DAYLIGHT_PALETTE.colors.popover).toBe("#ffffff");
-      expect(DAYLIGHT_PALETTE.colors.cardForeground).toBe("#000000");
-      expect(DAYLIGHT_PALETTE.colors.popoverForeground).toBe("#000000");
+    it("has Radix Slate light card and popover surfaces", () => {
+      expect(DAYLIGHT_PALETTE.colors.card).toBe("#fcfcfd");
+      expect(DAYLIGHT_PALETTE.colors.popover).toBe("#fcfcfd");
+      expect(DAYLIGHT_PALETTE.colors.cardForeground).toBe("#1c2024");
+      expect(DAYLIGHT_PALETTE.colors.popoverForeground).toBe("#1c2024");
     });
 
-    it("has pure black primary color", () => {
-      expect(DAYLIGHT_PALETTE.colors.primary).toBe("#000000");
-      expect(DAYLIGHT_PALETTE.colors.primaryForeground).toBe("#ffffff");
+    it("has Radix Slate dark primary color", () => {
+      expect(DAYLIGHT_PALETTE.colors.primary).toBe("#1c2024");
+      expect(DAYLIGHT_PALETTE.colors.primaryForeground).toBe("#fcfcfd");
+    });
+
+    it("has light card palette colors", () => {
+      expect(DAYLIGHT_PALETTE.cardColors).toBe(LIGHT_CARD_PALETTE);
+      expect(DAYLIGHT_PALETTE.cardColors.purple.accent).toBe("#8e4ec6");
     });
 
     it("is registered in the store by default", () => {

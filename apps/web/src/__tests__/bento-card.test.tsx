@@ -61,21 +61,15 @@ describe("BentoCard", () => {
     expect(el.style.gridRow).toBe("1 / 3");
   });
 
-  it("applies colorScheme bg and border classes", () => {
+  it("applies palette color styles", () => {
     render(
-      <BentoCard
-        testId="test-card"
-        colorScheme={{
-          bg: "bg-gradient-to-br from-sky-500/15",
-          border: "border-sky-500/10",
-        }}
-      >
+      <BentoCard testId="test-card" paletteColor="purple">
         Content
       </BentoCard>,
     );
     const el = screen.getByTestId("test-card");
-    expect(el.className).toContain("bg-gradient-to-br");
-    expect(el.className).toContain("border-sky-500/10");
+    expect(el.style.borderColor).toBe("var(--color-card-purple-border)");
+    expect(el.style.backgroundColor).toBe("var(--color-card-purple-tint)");
   });
 
   it("applies custom borderRadius class", () => {

@@ -24,10 +24,7 @@ export function CalendarCard() {
       testId="widget-card-calendar"
       gridColumn={config?.gridColumn}
       gridRow={config?.gridRow}
-      colorScheme={{
-        bg: config?.colorScheme.bg,
-        border: config?.colorScheme.border,
-      }}
+      paletteColor={config?.colorScheme.color}
       onClick={() => expandCard("calendar")}
       className="relative overflow-hidden"
     >

@@ -1,14 +1,13 @@
 import { getCardConfig } from "@/components/hub/card-registry";
 import { displayValue } from "@/components/hub/display-value";
 import { useClimate } from "@/hooks/use-climate";
-import { useThemeStore } from "@/stores/theme-store";
+import { cardColorVar } from "@/lib/palette";
 import { ChevronDown, ChevronUp, Thermometer } from "lucide-react";
 
 const TEMP_STEP_DEGREES = 1;
 
 export function ClimateCard() {
   const config = getCardConfig("climate");
-  const isDark = useThemeStore((s) => s.activePaletteId === "midnight");
   const { entityId, currentTemp, targetTemp, tempUnit, isLoading, isError, setTemperature } =
     useClimate();
 
@@ -33,20 +32,12 @@ export function ClimateCard() {
   return (
     <div
       data-testid="widget-card-climate"
-      className={`
-        rounded-2xl overflow-hidden transition-all duration-150 ease-out border
-        ${config?.colorScheme.bg ?? ""}
-        ${config?.colorScheme.border ?? ""}
-      `}
+      className="rounded-2xl overflow-hidden transition-all duration-150 ease-out border"
       style={{
         ...(config?.gridColumn ? { gridColumn: config.gridColumn } : {}),
         ...(config?.gridRow ? { gridRow: config.gridRow } : {}),
-        borderColor: config?.colorScheme.border
-          ? undefined
-          : isDark
-            ? "rgba(255,255,255,0.08)"
-            : "rgba(0,0,0,0.06)",
-        boxShadow: isDark ? "none" : "0 1px 3px rgba(0,0,0,0.08)",
+        borderColor: config ? cardColorVar(config.colorScheme.color, "border") : undefined,
+        backgroundColor: config ? cardColorVar(config.colorScheme.color, "tint") : undefined,
       }}
     >
       <div className="flex flex-col h-full">

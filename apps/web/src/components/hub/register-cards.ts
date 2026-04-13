@@ -14,7 +14,7 @@ registerCard({
   id: "clock",
   gridColumn: "1 / 4",
   gridRow: "1 / 3",
-  colorScheme: { bg: "", accent: "#fafafa", border: "border-white/25" },
+  colorScheme: { color: "iris" },
   component: ClockCard,
   expandedView: ClockStateCarousel,
 });
@@ -23,11 +23,7 @@ registerCard({
   id: "countdown",
   gridColumn: "4 / 7",
   gridRow: "1 / 2",
-  colorScheme: {
-    bg: "bg-purple-600/20",
-    accent: "#8b5cf6",
-    border: "border-purple-500",
-  },
+  colorScheme: { color: "purple" },
   component: CountdownCardMini,
   expandedView: CountdownCardExpanded,
 });
@@ -36,11 +32,7 @@ registerCard({
   id: "music",
   gridColumn: "4 / 5",
   gridRow: "2 / 3",
-  colorScheme: {
-    bg: "bg-slate-600/20",
-    accent: "#06b6d4",
-    border: "border-slate-500",
-  },
+  colorScheme: { color: "blue" },
   component: MusicCard,
   expandedView: ExpandedMusic,
 });
@@ -49,11 +41,7 @@ registerCard({
   id: "lights",
   gridColumn: "1 / 2",
   gridRow: "3 / 4",
-  colorScheme: {
-    bg: "bg-amber-400/20",
-    accent: "#f59e0b",
-    border: "border-amber-400",
-  },
+  colorScheme: { color: "amber" },
   component: LightsCard,
 });
 
@@ -61,11 +49,7 @@ registerCard({
   id: "fan",
   gridColumn: "2 / 3",
   gridRow: "3 / 4",
-  colorScheme: {
-    bg: "bg-cyan-500/20",
-    accent: "#22d3ee",
-    border: "border-cyan-500",
-  },
+  colorScheme: { color: "cyan" },
   component: FanCard,
 });
 
@@ -73,11 +57,7 @@ registerCard({
   id: "climate",
   gridColumn: "3 / 4",
   gridRow: "3 / 4",
-  colorScheme: {
-    bg: "bg-green-500/20",
-    accent: "#22c55e",
-    border: "border-green-500",
-  },
+  colorScheme: { color: "teal" },
   component: ClimateCard,
 });
 
@@ -85,7 +65,7 @@ registerCard({
   id: "wifi",
   gridColumn: "1 / 4",
   gridRow: "4 / 5",
-  colorScheme: { bg: "", accent: "#22c55e", border: "border-green-500" },
+  colorScheme: { color: "green" },
   component: WifiCard,
 });
 
@@ -93,11 +73,7 @@ registerCard({
   id: "settings",
   gridColumn: "4 / 5",
   gridRow: "4 / 5",
-  colorScheme: {
-    bg: "bg-neutral-600/20",
-    accent: "#a3a3a3",
-    border: "border-neutral-500",
-  },
+  colorScheme: { color: "slate" },
   component: SettingsCard,
   expandedView: SettingsCardExpanded,
 });
