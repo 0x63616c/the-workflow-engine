@@ -125,7 +125,7 @@ export function SolarSystem() {
       >
         <div
           className="flex items-baseline gap-1"
-          style={{ fontFamily: "'GeistMono', monospace", fontWeight: 100 }}
+          style={{ fontFamily: "var(--font-mono, monospace)", fontWeight: 100 }}
         >
           <span className="text-5xl">{hours}</span>
           <span className="text-5xl">:</span>
@@ -135,8 +135,8 @@ export function SolarSystem() {
           </span>
         </div>
         <div
-          className="mt-1 text-xs tracking-widest opacity-60"
-          style={{ fontFamily: "'GeistMono', monospace", fontWeight: 300 }}
+          className="mt-2 text-sm tracking-widest"
+          style={{ fontFamily: "var(--font-mono, monospace)", fontWeight: 300 }}
         >
           {dateStr}
         </div>

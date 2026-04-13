@@ -150,7 +150,7 @@ export function GameOfLife() {
       >
         <div
           className="flex items-baseline gap-1"
-          style={{ fontFamily: "'GeistMono', monospace", fontWeight: 100 }}
+          style={{ fontFamily: "var(--font-mono, monospace)", fontWeight: 100 }}
         >
           <span className="text-8xl">{hours}</span>
           <span className="text-8xl">:</span>
@@ -161,7 +161,7 @@ export function GameOfLife() {
         </div>
         <div
           className="mt-2 text-sm tracking-widest"
-          style={{ fontFamily: "'GeistMono', monospace", fontWeight: 300 }}
+          style={{ fontFamily: "var(--font-mono, monospace)", fontWeight: 300 }}
         >
           {dateStr}
         </div>
