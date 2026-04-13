@@ -161,3 +161,35 @@ describe("ha singleton", () => {
     expect(ha).toBeInstanceOf(HomeAssistantIntegration);
   });
 });
+
+describe("HomeAssistantIntegration init guard", () => {
+  it("throws if getEntities called before init", async () => {
+    const client = new HomeAssistantIntegration();
+    await expect(client.getEntities("light")).rejects.toThrow(
+      "HomeAssistantIntegration: init() must be called before use",
+    );
+  });
+
+  it("throws if getEntity called before init", async () => {
+    const client = new HomeAssistantIntegration();
+    await expect(client.getEntity("light.test")).rejects.toThrow(
+      "HomeAssistantIntegration: init() must be called before use",
+    );
+  });
+
+  it("throws if callService called before init", async () => {
+    const client = new HomeAssistantIntegration();
+    await expect(client.callService("light", "turn_on", {})).rejects.toThrow(
+      "HomeAssistantIntegration: init() must be called before use",
+    );
+  });
+
+  it("does not throw after init is called", async () => {
+    const client = new HomeAssistantIntegration();
+    await client.init();
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => [] });
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(client.getEntities("light")).resolves.toEqual([]);
+    vi.unstubAllGlobals();
+  });
+});

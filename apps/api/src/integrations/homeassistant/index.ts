@@ -8,10 +8,18 @@ export class HomeAssistantIntegration implements Integration {
 
   private baseUrl = "";
   private token = "";
+  private initialized = false;
 
   async init(): Promise<void> {
     this.baseUrl = env.HA_URL;
     this.token = env.HA_TOKEN;
+    this.initialized = true;
+  }
+
+  private assertInitialized(): void {
+    if (!this.initialized) {
+      throw new Error("HomeAssistantIntegration: init() must be called before use");
+    }
   }
 
   async getState(): Promise<Record<string, unknown>> {
@@ -50,11 +58,13 @@ export class HomeAssistantIntegration implements Integration {
   }
 
   async getEntities(domain: string): Promise<HaEntity[]> {
+    this.assertInitialized();
     const all = await this.request<HaEntity[]>(`${this.baseUrl}/api/states`);
     return all.filter((e) => e.entity_id.startsWith(`${domain}.`));
   }
 
   async getEntity(entityId: string): Promise<HaEntity> {
+    this.assertInitialized();
     return this.request<HaEntity>(`${this.baseUrl}/api/states/${entityId}`);
   }
 
@@ -63,6 +73,7 @@ export class HomeAssistantIntegration implements Integration {
     service: string,
     params: Record<string, unknown>,
   ): Promise<void> {
+    this.assertInitialized();
     await this.request(`${this.baseUrl}/api/services/${domain}/${service}`, {
       method: "POST",
       body: JSON.stringify(params),
@@ -71,3 +82,6 @@ export class HomeAssistantIntegration implements Integration {
 }
 
 export const ha = new HomeAssistantIntegration();
+// Eagerly initialize the singleton so env vars are read at startup.
+// Tests that need a clean instance should construct HomeAssistantIntegration directly.
+ha.init();

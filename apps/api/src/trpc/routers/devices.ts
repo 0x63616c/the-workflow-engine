@@ -16,42 +16,33 @@ import {
 } from "../../services/ha-service";
 import { publicProcedure, router } from "../init";
 
+async function withHaErrorHandling<T>(fn: () => Promise<T>): Promise<T | { error: string }> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (err instanceof HaError) return { error: "HA unavailable" };
+    throw err;
+  }
+}
+
 export const devicesRouter = router({
-  lights: publicProcedure.query(async () => {
-    try {
-      return await getLightsState();
-    } catch (err) {
-      if (err instanceof HaError) return { error: "HA unavailable" };
-      throw err;
-    }
-  }),
+  lights: publicProcedure.query(() => withHaErrorHandling(() => getLightsState())),
 
-  lightsOn: publicProcedure.mutation(async () => {
-    try {
+  lightsOn: publicProcedure.mutation(() =>
+    withHaErrorHandling(async () => {
       await turnAllLightsOn();
-    } catch (err) {
-      if (err instanceof HaError) return { error: "HA unavailable" };
-      throw err;
-    }
-  }),
+      return { success: true };
+    }),
+  ),
 
-  lightsOff: publicProcedure.mutation(async () => {
-    try {
+  lightsOff: publicProcedure.mutation(() =>
+    withHaErrorHandling(async () => {
       await turnAllLightsOff();
-    } catch (err) {
-      if (err instanceof HaError) return { error: "HA unavailable" };
-      throw err;
-    }
-  }),
+      return { success: true };
+    }),
+  ),
 
-  mediaPlayers: publicProcedure.query(async () => {
-    try {
-      return await getMediaPlayers();
-    } catch (err) {
-      if (err instanceof HaError) return { error: "HA unavailable" };
-      throw err;
-    }
-  }),
+  mediaPlayers: publicProcedure.query(() => withHaErrorHandling(() => getMediaPlayers())),
 
   mediaPlayerCommand: publicProcedure
     .input(
@@ -60,14 +51,12 @@ export const devicesRouter = router({
         command: z.enum(["play", "pause", "next", "previous", "shuffle", "repeat"]),
       }),
     )
-    .mutation(async ({ input }) => {
-      try {
+    .mutation(({ input }) =>
+      withHaErrorHandling(async () => {
         await mediaPlayerCommand(input.entityId, input.command);
-      } catch (err) {
-        if (err instanceof HaError) return { error: "HA unavailable" };
-        throw err;
-      }
-    }),
+        return { success: true };
+      }),
+    ),
 
   setVolume: publicProcedure
     .input(
@@ -76,56 +65,41 @@ export const devicesRouter = router({
         volumeLevel: z.number().min(0).max(100),
       }),
     )
-    .mutation(async ({ input }) => {
-      try {
+    .mutation(({ input }) =>
+      withHaErrorHandling(async () => {
         await setVolume(input.entityId, input.volumeLevel);
-      } catch (err) {
-        if (err instanceof HaError) return { error: "HA unavailable" };
-        throw err;
-      }
-    }),
+        return { success: true };
+      }),
+    ),
 
-  climate: publicProcedure.query(async () => {
-    try {
-      return await getClimateState();
-    } catch (err) {
-      if (err instanceof HaError) return { error: "HA unavailable" };
-      throw err;
-    }
-  }),
+  climate: publicProcedure.query(() => withHaErrorHandling(() => getClimateState())),
 
   fanOn: publicProcedure
     .input(z.object({ entityId: z.string(), fanEntityId: z.string().nullable().optional() }))
-    .mutation(async ({ input }) => {
-      try {
+    .mutation(({ input }) =>
+      withHaErrorHandling(async () => {
         await turnFanOn(input.entityId, input.fanEntityId);
-      } catch (err) {
-        if (err instanceof HaError) return { error: "HA unavailable" };
-        throw err;
-      }
-    }),
+        return { success: true };
+      }),
+    ),
 
   fanOff: publicProcedure
     .input(z.object({ entityId: z.string(), fanEntityId: z.string().nullable().optional() }))
-    .mutation(async ({ input }) => {
-      try {
+    .mutation(({ input }) =>
+      withHaErrorHandling(async () => {
         await turnFanOff(input.entityId, input.fanEntityId);
-      } catch (err) {
-        if (err instanceof HaError) return { error: "HA unavailable" };
-        throw err;
-      }
-    }),
+        return { success: true };
+      }),
+    ),
 
   setTemperature: publicProcedure
     .input(z.object({ entityId: z.string(), temperature: z.number().min(65).max(80) }))
-    .mutation(async ({ input }) => {
-      try {
+    .mutation(({ input }) =>
+      withHaErrorHandling(async () => {
         await setTemperature(input.entityId, input.temperature);
-      } catch (err) {
-        if (err instanceof HaError) return { error: "HA unavailable" };
-        throw err;
-      }
-    }),
+        return { success: true };
+      }),
+    ),
 
   onStateChange: publicProcedure
     .input(z.object({ domains: z.array(z.string()).optional() }).optional())
