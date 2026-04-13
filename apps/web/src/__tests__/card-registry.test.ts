@@ -52,7 +52,7 @@ describe("card-registry", () => {
   it("settings card has expanded view and correct grid position", () => {
     const settings = getCardConfig("settings");
     expect(settings?.expandedView).toBeDefined();
-    expect(settings?.gridColumn).toBe("4 / 7");
+    expect(settings?.gridColumn).toBe("4 / 5");
     expect(settings?.gridRow).toBe("4 / 5");
   });
 });

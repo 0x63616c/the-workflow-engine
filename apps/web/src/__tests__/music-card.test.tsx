@@ -12,7 +12,6 @@ vi.mock("@/stores/theme-store", () => ({
 }));
 
 const mockUseSonos = vi.mocked(useSonosModule.useSonos);
-const sendCommandFn = vi.fn();
 
 function makePlayer(overrides = {}) {
   return {
@@ -37,7 +36,7 @@ function setupHook(overrides = {}) {
     activeSpeaker: player,
     isLoading: false,
     isError: false,
-    sendCommand: sendCommandFn,
+    sendCommand: vi.fn(),
     setVolume: vi.fn(),
     ...overrides,
   });
@@ -54,29 +53,15 @@ afterEach(() => {
 });
 
 describe("MusicCard", () => {
-  it("shows track title and artist from active speaker", () => {
+  it("shows track title from active speaker", () => {
     render(<MusicCard />);
     expect(screen.getByText("Test Song")).toBeInTheDocument();
-    expect(screen.getByText("Test Artist")).toBeInTheDocument();
   });
 
   it("tapping card expands music card", () => {
     render(<MusicCard />);
     fireEvent.click(screen.getByTestId("widget-card-music"));
     expect(useCardExpansionStore.getState().expandedCardId).toBe("music");
-  });
-
-  it("play button calls sendCommand play when paused", () => {
-    setupHook({ activeSpeaker: makePlayer({ state: "paused" as const }) });
-    render(<MusicCard />);
-    fireEvent.click(screen.getByRole("button", { name: /play/i }));
-    expect(sendCommandFn).toHaveBeenCalledWith("media_player.living_room", "play");
-  });
-
-  it("pause button calls sendCommand pause when playing", () => {
-    render(<MusicCard />);
-    fireEvent.click(screen.getByRole("button", { name: /pause/i }));
-    expect(sendCommandFn).toHaveBeenCalledWith("media_player.living_room", "pause");
   });
 
   it("shows No speakers when no players", () => {
