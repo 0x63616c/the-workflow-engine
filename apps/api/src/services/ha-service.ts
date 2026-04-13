@@ -49,7 +49,7 @@ export async function getClimateState(): Promise<ClimateState | null> {
   const attrs = entity.attributes;
   const hvacMode = entity.state;
   const hvacAction = (attrs.hvac_action as string) ?? null;
-  const fanOn = hvacMode === "fan_only" || hvacAction === "fan";
+  const fanOn = hvacMode === "fan_only" || (hvacMode !== "off" && hvacAction === "fan");
 
   const climateName = entity.entity_id.replace("climate.", "");
   const fanEntities = await ha.getEntities("fan");

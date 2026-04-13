@@ -28,8 +28,10 @@ export function FanCard() {
             className={`transition-colors ${fanOn ? "text-cyan-400" : "text-muted-foreground/40"}`}
           />
         </div>
-        <div className="text-2xl font-light text-foreground">
-          {displayValue({ isLoading, isError, value: fanOn ? "On" : "Off" })}
+        <div className="flex items-end justify-end">
+          <span className="text-base text-muted-foreground/50">
+            {displayValue({ isLoading, isError, value: fanOn ? "ON" : "OFF" })}
+          </span>
         </div>
       </div>
     </BentoCard>

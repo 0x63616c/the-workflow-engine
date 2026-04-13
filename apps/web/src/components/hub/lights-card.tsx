@@ -10,7 +10,7 @@ export function LightsCard() {
 
   const majorityOn = totalCount > 0 && onCount > totalCount / 2;
   const disabled = isLoading || isError;
-  const stateLabel = displayValue({ isLoading, isError, value: majorityOn ? "On" : "Off" });
+  const stateLabel = displayValue({ isLoading, isError, value: majorityOn ? "ON" : "OFF" });
 
   const handleToggle = () => {
     if (disabled) return;
@@ -37,11 +37,8 @@ export function LightsCard() {
             className={`transition-colors ${majorityOn ? "text-amber-400" : "text-muted-foreground/40"}`}
           />
         </div>
-        <div className="flex items-center justify-between">
-          <span className="text-2xl font-light text-foreground">{stateLabel}</span>
-          <span className="text-base text-muted-foreground/50">
-            {majorityOn ? "Turn Off" : "Turn On"}
-          </span>
+        <div className="flex items-end justify-end">
+          <span className="text-base text-muted-foreground/50">{stateLabel}</span>
         </div>
       </div>
     </BentoCard>
