@@ -31,6 +31,15 @@ vi.mock("@/components/art-clock/states/black-hole", () => ({
 vi.mock("@/components/art-clock/states/radar", () => ({
   Radar: () => <div data-testid="state-radar" />,
 }));
+vi.mock("@/components/art-clock/states/solar-system", () => ({
+  SolarSystem: () => <div data-testid="state-solar-system" />,
+}));
+vi.mock("@/components/art-clock/states/pixel-art", () => ({
+  PixelArt: () => <div data-testid="state-pixel-art" />,
+}));
+vi.mock("@/components/art-clock/states/game-of-life", () => ({
+  GameOfLife: () => <div data-testid="state-game-of-life" />,
+}));
 
 // Mock framer-motion to avoid animation issues in jsdom
 vi.mock("framer-motion", () => ({
@@ -85,9 +94,9 @@ describe("ClockStateCarousel", () => {
     expect(indicator).toHaveStyle({ opacity: "1" });
   });
 
-  it("renders 11 indicator dots", () => {
+  it("renders 12 indicator dots", () => {
     render(<ClockStateCarousel />);
     const dots = screen.getAllByTestId(/^state-dot-/);
-    expect(dots).toHaveLength(11);
+    expect(dots).toHaveLength(12);
   });
 });
