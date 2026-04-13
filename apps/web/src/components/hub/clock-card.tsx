@@ -25,13 +25,16 @@ export function ClockCard() {
       className="flex flex-col items-center justify-center"
     >
       <div className="text-center">
-        <div className="text-7xl font-extralight tracking-tight text-foreground tabular-nums">
+        <div
+          className="font-extralight tracking-tight text-foreground tabular-nums"
+          style={{ fontSize: "9rem", lineHeight: 1 }}
+        >
           {hours}
           <span className="text-foreground/30 mx-1">:</span>
           {minutes}
-        </div>
-        <div className="text-base font-light text-muted-foreground/60 mt-2 tracking-wide">
-          {period}
+          <span className="text-3xl font-light text-muted-foreground/60 ml-3 tracking-wide align-baseline">
+            {period}
+          </span>
         </div>
       </div>
       <div className="mt-4 text-center">

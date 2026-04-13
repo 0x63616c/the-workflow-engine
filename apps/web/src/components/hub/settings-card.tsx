@@ -48,7 +48,7 @@ export function SettingsCard() {
       >
         <div className="flex flex-col justify-between h-full">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Settings</span>
+            <span className="text-2xl text-muted-foreground">Settings</span>
             <Settings size={16} className="text-muted-foreground/60" />
           </div>
         </div>
@@ -454,7 +454,7 @@ export function SettingsCardExpanded() {
               label="Build"
               value={
                 <span className="font-mono text-xs bg-foreground/[0.06] px-2 py-0.5 rounded">
-                  {buildHash}
+                  #{buildHash}
                 </span>
               }
               last
