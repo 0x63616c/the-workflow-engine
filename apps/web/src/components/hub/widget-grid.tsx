@@ -49,7 +49,7 @@ export function WidgetGrid() {
     return () => observer.disconnect();
   }, []);
 
-  const { remainingSeconds } = useIdleTimeout(() => expandCard("clock"), idleTimeout_MS, {
+  useIdleTimeout(() => expandCard("clock"), idleTimeout_MS, {
     enabled: expandedCardId === null,
   });
 
@@ -97,9 +97,6 @@ export function WidgetGrid() {
           return <Component key={card.id} />;
         })}
       </div>
-      <span className="absolute bottom-2 right-16 font-mono text-xs tabular-nums text-muted-foreground/30">
-        {remainingSeconds}
-      </span>
     </div>
   );
 }
