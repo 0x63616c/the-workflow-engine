@@ -1,6 +1,6 @@
 import { CardOverlay } from "@/components/hub/card-overlay";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -61,44 +61,17 @@ describe("CardOverlay", () => {
     expect(screen.getByTestId("card-overlay-content")).toBeInTheDocument();
   });
 
-  it("clock dismiss button is hidden by default (opacity 0, pointer-events none)", () => {
+  it("clock overlay has no dismiss button", () => {
     useCardExpansionStore.setState({ expandedCardId: "clock" });
     render(<CardOverlay />);
-    const btn = screen.getByTestId("clock-dismiss");
-    expect(btn).toHaveStyle({ opacity: "0", pointerEvents: "none" });
+    expect(screen.queryByTestId("clock-dismiss")).not.toBeInTheDocument();
   });
 
-  it("clock dismiss button becomes visible after tapping the clock view", () => {
+  it("tapping the clock overlay background calls contractCard", () => {
     useCardExpansionStore.setState({ expandedCardId: "clock" });
     render(<CardOverlay />);
 
     fireEvent.click(screen.getByTestId("card-overlay-content"));
-
-    const btn = screen.getByTestId("clock-dismiss");
-    expect(btn).toHaveStyle({ opacity: "1", pointerEvents: "auto" });
-  });
-
-  it("clock dismiss button auto-hides after 10 seconds", () => {
-    useCardExpansionStore.setState({ expandedCardId: "clock" });
-    render(<CardOverlay />);
-
-    fireEvent.click(screen.getByTestId("card-overlay-content"));
-    const btn = screen.getByTestId("clock-dismiss");
-    expect(btn).toHaveStyle({ opacity: "1" });
-
-    act(() => {
-      vi.advanceTimersByTime(10_000);
-    });
-
-    expect(btn).toHaveStyle({ opacity: "0" });
-  });
-
-  it("clock dismiss button calls contractCard", () => {
-    useCardExpansionStore.setState({ expandedCardId: "clock" });
-    render(<CardOverlay />);
-
-    fireEvent.click(screen.getByTestId("card-overlay-content"));
-    fireEvent.click(screen.getByTestId("clock-dismiss"));
 
     expect(useCardExpansionStore.getState().expandedCardId).toBeNull();
   });
