@@ -49,8 +49,8 @@ export const countdownEventsRouter = router({
       });
     }),
 
-  remove: publicProcedure.input(z.object({ id: z.number() })).mutation(({ ctx, input }) => {
-    removeCountdownEvent(ctx.db, input.id);
+  remove: publicProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+    await removeCountdownEvent(ctx.db, input.id);
     return { success: true };
   }),
 });
