@@ -318,6 +318,34 @@ jobs:
           VITE_WIFI_PASSWORD: ${{ secrets.WIFI_PASSWORD }}
         run: kamal deploy
 
+      - name: Verify deployment health
+        id: health-check
+        run: |
+          echo "Waiting for app to respond..."
+          MAX_ATTEMPTS=6
+          DELAY_SECONDS=10
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://homelab/up || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "Health check passed on attempt $i"
+              exit 0
+            fi
+            echo "Attempt $i/$MAX_ATTEMPTS: got $STATUS, retrying in ${DELAY_SECONDS}s..."
+            sleep $DELAY_SECONDS
+          done
+          echo "Health check failed after $MAX_ATTEMPTS attempts"
+          exit 1
+
+      - name: Notify health check result
+        if: always() && steps.deploy-timer.outputs.start_time
+        uses: ./.github/actions/slack-notify-thread
+        with:
+          channel: ${{ env.SLACK_CHANNEL }}
+          thread_ts: ${{ needs.notify-start.outputs.thread_ts }}
+          message: ${{ steps.health-check.outcome == 'success' && 'Health check passed — app is responding' || 'Health check failed — app is not responding' }}
+          emoji: ${{ steps.health-check.outcome == 'success' && ':white_check_mark:' || ':rotating_light:' }}
+          slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
+
       - name: Calculate deploy duration
         id: deploy-duration
         if: always()
