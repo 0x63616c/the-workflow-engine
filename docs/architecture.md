@@ -1,63 +1,173 @@
 # Architecture
 
-## Overview
+## System Diagram
 
-The Workflow Engine is a monorepo containing a web frontend and a tRPC API backend. It is designed to orchestrate workflow automation with pluggable integrations and background job processing.
+```mermaid
+graph TB
+    subgraph iPad["iPad Pro 12.9&quot; (Wall-Mounted)"]
+        PWA["React PWA<br/>Vite + TanStack Router + React 19"]
+        Zustand["Zustand Stores<br/>theme, cards, nav, timer"]
+        TQ["TanStack Query<br/>server state"]
+        PWA --> Zustand
+        PWA --> TQ
+    end
+
+    subgraph Mac["Mac Mini (homelab, Tailscale)"]
+        subgraph Kamal["Kamal-Managed Containers"]
+            subgraph App["App Container (Bun, :4301)"]
+                Server["Bun.serve"]
+                TRPC["/trpc endpoint"]
+                InngestH["/api/inngest"]
+                SPA["/assets/* SPA"]
+
+                subgraph Routers
+                    R_Dev["devices"]
+                    R_Count["countdownEvents"]
+                    R_Conf["appConfig"]
+                    R_HP["health"]
+                end
+
+                subgraph Services
+                    HASvc["ha-service.ts"]
+                    WSRelay["HaWebSocketRelay<br/>(SSE subscriptions)"]
+                end
+
+                subgraph Evee["Evee (Slack Bot)"]
+                    Bolt["Slack Bolt<br/>Socket Mode"]
+                    LLM["OpenRouter<br/>Gemma 4 31B"]
+                end
+
+                Server --> TRPC & InngestH & SPA
+                TRPC --> R_Dev & R_Count & R_Conf & R_HP
+                R_Dev --> HASvc & WSRelay
+                Bolt --> LLM
+            end
+
+            PG["PostgreSQL<br/>Drizzle ORM"]
+            Inngest["Inngest<br/>:8288"]
+
+            subgraph Logging["Logging Stack"]
+                Grafana["Grafana"]
+                Loki["Loki"]
+                Alloy["Alloy"]
+                Alloy --> Loki --> Grafana
+            end
+        end
+
+        TRPC --> PG
+        InngestH --> Inngest
+    end
+
+    subgraph HA["Home Assistant (QEMU VM)"]
+        REST["REST API<br/>/api/states, /api/services"]
+        WS["WebSocket API<br/>state_changed events"]
+        Lights["Lights"]
+        Climate["Climate"]
+        Media["Media Players"]
+        Fans["Fans / Switches"]
+        REST --- Lights & Climate & Media & Fans
+        WS --- Lights & Climate & Media & Fans
+    end
+
+    subgraph Ext["External Services"]
+        GHCR["GHCR<br/>Container Registry"]
+        GHA["GitHub Actions<br/>CI/CD"]
+        Slack["Slack<br/>World Wide Webb"]
+        OR["OpenRouter API"]
+        OP["1Password<br/>Homelab vault"]
+    end
+
+    %% Frontend to Backend
+    TQ -- "HTTP batch<br/>(queries, mutations)" --> TRPC
+    TQ -. "HTTP SSE<br/>(subscriptions)" .-> TRPC
+
+    %% Backend to HA
+    HASvc -- "REST calls" --> REST
+    WSRelay -- "Persistent WebSocket" --> WS
+
+    %% Evee
+    Bolt -- "Socket Mode" --> Slack
+    LLM -- "Chat completions" --> OR
+
+    %% CI/CD
+    GHA -- "docker push" --> GHCR
+    GHA -- "kamal deploy<br/>via Tailscale" --> Server
+    GHA -- "notifications" --> Slack
+    OP -. "secrets" .-> GHA
+```
+
+## Real-Time HA State Flow
+
+```mermaid
+sequenceDiagram
+    participant HA as Home Assistant
+    participant Relay as HaWebSocketRelay
+    participant Router as devices router
+    participant Client as TanStack Query
+    participant UI as React UI
+
+    HA->>Relay: WebSocket state_changed
+    Relay->>Relay: Filter allowed domains<br/>(light, climate, media_player, fan, switch)
+    Relay->>Router: EventEmitter "stateChanged"
+    Router-->>Client: HTTP SSE (tRPC subscription)
+    Client->>Client: Invalidate queries
+    Client->>UI: Re-render with new state
+```
+
+## CI/CD Pipeline
+
+```mermaid
+flowchart LR
+    Push["Push to main"] --> CI
+
+    subgraph CI["CI Checks (parallel)"]
+        Lint
+        Typecheck
+        Test
+        Boundaries
+        Docker["Docker Build"]
+        Shell["ShellCheck + shfmt"]
+        Migrate["DB Migrations"]
+    end
+
+    CI --> Deploy
+
+    subgraph Deploy
+        TS["Tailscale VPN"] --> SSH["SSH to homelab"]
+        SSH --> KD["kamal deploy"]
+        KD --> Health["GET /up"]
+    end
+
+    Deploy --> Notify["Slack notification"]
+```
 
 ## Monorepo Structure
 
 ```
 the-workflow-engine/
   apps/
-    web/       React SPA (Vite, TanStack Router, tRPC client)
-    api/       tRPC API server (Bun, Drizzle ORM, Inngest)
+    web/         React SPA (Vite, TanStack Router, tRPC client)
+    api/         tRPC API server (Bun, Drizzle ORM, Inngest, Evee)
   libs/
-    shared/    Shared types and Zod schemas
-  scripts/     Build/CI tooling (boundary checker)
-  docs/        Documentation
-  infra/       Deployment config (planned)
+    shared/      Shared types and Zod schemas (@repo/shared)
+  scripts/       Dev helpers, boundary checker, deploy
+  docs/          Architecture, screenshots
+  infra/         Kamal config, Evee manifest, logging
 ```
 
 Workspace packages: `@repo/web`, `@repo/api`, `@repo/shared`.
-
-## Data Flow
-
-```
-Browser
-  |
-  |  HTTP (queries/mutations)
-  v
-Vite Dev Server (port 4200)
-  |
-  |  proxy /trpc -> localhost:4201
-  v
-tRPC Fetch Handler (port 4201)
-  |
-  |  also: WebSocket (port 4202) for subscriptions
-  v
-tRPC Routers
-  |
-  v
-Services (business logic)
-  |
-  +---> Drizzle ORM ---> SQLite (file-based, ./data.db)
-  |
-  +---> Inngest Client ---> Inngest Server (port 8288)
-  |
-  +---> Integration Plugins
-```
 
 ## API Layers
 
 The API enforces a layered architecture with strict import boundaries:
 
-1. **db/**: Database schema and Drizzle client. Only imports `drizzle-orm`, `bun:sqlite`, `@repo/shared`.
+1. **db/**: Database schema and Drizzle client. Only imports `drizzle-orm`, `@repo/shared`.
 2. **services/**: Business logic. Imports `db/`, `integrations/types`, `@repo/shared`.
-3. **trpc/routers/**: HTTP/WS endpoint definitions. Imports `services/`, `@trpc/*`, `zod`, tRPC init/context.
+3. **trpc/routers/**: HTTP endpoint definitions. Imports `services/`, `@trpc/*`, `zod`, tRPC init/context.
 4. **inngest/functions/**: Background jobs. Imports `services/`, `inngest`, `@repo/shared`.
 5. **integrations/**: Plugin implementations. Only imports `@repo/shared` and own files.
 
-These boundaries are enforced by `scripts/check-boundaries.ts` (`bun run check:boundaries`).
+Boundaries enforced by `scripts/check-boundaries.ts` in pre-commit hooks and CI.
 
 ## Port Scheme
 
@@ -65,30 +175,22 @@ These boundaries are enforced by `scripts/check-boundaries.ts` (`bun run check:b
 |----------|-------------|--------------------|
 | Web      | 4200        | 4200 + N           |
 | API      | 4201        | 4201 + N           |
-| WS       | 4202        | 4202 + N           |
 | Inngest  | 8288        | 8288 + N           |
 
-`PORT_OFFSET` (0-99) allows multiple instances to run side-by-side (e.g., for parallel development or CI).
+`PORT_OFFSET` (0-99) allows multiple instances to run side-by-side for parallel development.
 
 ## Local Development
 
 Tilt orchestrates all services:
 
 ```bash
-tilt up                             # Start everything
-PORT_OFFSET=10 tilt up              # Start on offset ports
-tilt down                           # Stop everything
+tilt up                        # Start everything
+PORT_OFFSET=10 tilt up         # Start on offset ports
+tilt down                      # Stop everything
 ```
 
-Tilt starts: Docker Compose (Inngest), API (bun --watch), Web (vite dev). The API depends on Inngest, and the Web depends on the API.
-
-## ID System
-
-TypeID is used for entity identifiers. IDs are prefixed, time-sortable strings (e.g., `user_2x4y6z8a...`). Stored as `text` (varchar) columns in SQLite.
-
-## Auth (planned)
-
-JWT via `jose` library, password hashing via `Bun.password` (argon2). Not yet implemented.
+Tilt starts: Docker Compose (Inngest + Postgres) -> API (bun --watch) -> Web (vite dev).
+Secrets loaded from 1Password at dev start (HA_TOKEN, Slack tokens, OpenRouter key).
 
 ## Integration Plugin System
 
