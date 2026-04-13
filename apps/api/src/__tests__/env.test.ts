@@ -1,10 +1,17 @@
 import { describe, expect, it } from "vitest";
 
+const SLACK_DEFAULTS = {
+  SLACK_BOT_TOKEN: "xoxb-test-token",
+  SLACK_APP_TOKEN: "xapp-test-token",
+  OPENROUTER_API_KEY: "test-openrouter-key",
+};
+
 describe("env schema", () => {
   it("parses HA_URL with valid URL", async () => {
     const { envSchema } = await import("../env");
     const result = envSchema.safeParse({
       ...process.env,
+      ...SLACK_DEFAULTS,
       HA_URL: "http://homeassistant.local:8123",
       HA_TOKEN: "abc123",
     });
@@ -18,6 +25,7 @@ describe("env schema", () => {
     const { envSchema } = await import("../env");
     const result = envSchema.safeParse({
       ...process.env,
+      ...SLACK_DEFAULTS,
       HA_URL: undefined,
       HA_TOKEN: "abc123",
     });
@@ -31,6 +39,7 @@ describe("env schema", () => {
     const { envSchema } = await import("../env");
     const result = envSchema.safeParse({
       ...process.env,
+      ...SLACK_DEFAULTS,
       HA_URL: "http://homeassistant.local:8123",
       HA_TOKEN: undefined,
     });
@@ -41,6 +50,7 @@ describe("env schema", () => {
     const { envSchema } = await import("../env");
     const result = envSchema.safeParse({
       ...process.env,
+      ...SLACK_DEFAULTS,
       HA_URL: "http://homeassistant.local:8123",
       HA_TOKEN: "",
     });
@@ -51,6 +61,7 @@ describe("env schema", () => {
     const { envSchema } = await import("../env");
     const result = envSchema.safeParse({
       ...process.env,
+      ...SLACK_DEFAULTS,
       NODE_ENV: "production",
       HA_TOKEN: "real-token",
       INNGEST_EVENT_KEY: "local-dev-event-key-00000000",
@@ -63,6 +74,7 @@ describe("env schema", () => {
     const { envSchema } = await import("../env");
     const result = envSchema.safeParse({
       ...process.env,
+      ...SLACK_DEFAULTS,
       NODE_ENV: "production",
       HA_TOKEN: "real-token",
       INNGEST_EVENT_KEY: "real-event-key-1234567890",
@@ -75,6 +87,7 @@ describe("env schema", () => {
     const { envSchema } = await import("../env");
     const result = envSchema.safeParse({
       ...process.env,
+      ...SLACK_DEFAULTS,
       NODE_ENV: "production",
       HA_TOKEN: "real-token",
       INNGEST_EVENT_KEY: "real-event-key-1234567890",
@@ -87,6 +100,7 @@ describe("env schema", () => {
     const { envSchema } = await import("../env");
     const result = envSchema.safeParse({
       ...process.env,
+      ...SLACK_DEFAULTS,
       NODE_ENV: "development",
       HA_TOKEN: "any-token",
     });

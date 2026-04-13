@@ -111,6 +111,12 @@ oauth_config:
       - team:read
   pkce_enabled: false
 settings:
+  event_subscriptions:
+    bot_events:
+      - app_mention
+      - message.im
+      - assistant_thread_started
+      - assistant_thread_context_changed
   org_deploy_enabled: false
-  socket_mode_enabled: false
+  socket_mode_enabled: true
   token_rotation_enabled: false
