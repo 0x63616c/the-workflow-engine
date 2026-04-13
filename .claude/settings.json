@@ -3,30 +3,15 @@
     "PreToolUse": [
       {
         "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "INPUT=$(cat /dev/stdin); CMD=$(echo \"$INPUT\" | jq -r '.tool_input.command'); BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown'); case \"$CMD\" in *'git checkout -b '*|*'git switch -c '*|*'git switch --create '*) echo 'BLOCK: Do not create branches directly. Use a worktree instead (EnterWorktree tool or using-git-worktrees skill).' >&2; exit 2;; *'git push --force'*|*'git push -f'*) echo 'BLOCK: Force push is too dangerous and is not allowed.' >&2; exit 2;; esac; case \"$BRANCH\" in main) case \"$CMD\" in *'git push'*) echo 'BLOCK: Cannot git push directly from main branch. Use a worktree instead (EnterWorktree tool or using-git-worktrees skill).' >&2; exit 2;; *'git reset --hard'*) echo 'BLOCK: Cannot git reset --hard on main branch. Use a worktree instead (EnterWorktree tool or using-git-worktrees skill).' >&2; exit 2;; *'git merge '*) echo 'BLOCK: Cannot git merge on main branch. Use a worktree instead (EnterWorktree tool or using-git-worktrees skill).' >&2; exit 2;; esac;; esac"
-          }
-        ]
+        "hooks": [{ "type": "command", "command": "bash .claude/hooks/guard-bash.sh" }]
       },
       {
         "matcher": "Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown'); case \"$BRANCH\" in main) echo 'BLOCK: Cannot edit files on main branch. Use a worktree first (EnterWorktree tool or using-git-worktrees skill).' >&2; exit 2;; esac"
-          }
-        ]
+        "hooks": [{ "type": "command", "command": "bash .claude/hooks/guard-edit.sh" }]
       },
       {
         "matcher": "Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown'); case \"$BRANCH\" in main) echo 'BLOCK: Cannot edit files on main branch. Use a worktree first (EnterWorktree tool or using-git-worktrees skill).' >&2; exit 2;; esac"
-          }
-        ]
+        "hooks": [{ "type": "command", "command": "bash .claude/hooks/guard-edit.sh" }]
       }
     ]
   }
