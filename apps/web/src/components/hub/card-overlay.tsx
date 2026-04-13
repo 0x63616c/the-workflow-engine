@@ -1,4 +1,5 @@
 import { ClockStateCarousel } from "@/components/art-clock/clock-state-carousel";
+import { getCardConfig } from "@/components/hub/card-registry";
 import { CountdownCardExpanded } from "@/components/hub/countdown-card";
 import { SettingsCardExpanded } from "@/components/hub/settings-card";
 import { SonosAlbumArt } from "@/components/sonos/sonos-album-art";
@@ -8,6 +9,7 @@ import { SonosSpeakerList } from "@/components/sonos/sonos-speaker-list";
 import { useLights } from "@/hooks/use-lights";
 import { useSonos } from "@/hooks/use-sonos";
 import { useSwipe } from "@/hooks/use-swipe";
+import { cardColorVar } from "@/lib/palette";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
@@ -129,6 +131,8 @@ export function CardOverlay() {
   );
 
   const isClock = expandedCardId === "clock";
+  const cardConfig = expandedCardId ? getCardConfig(expandedCardId) : undefined;
+  const paletteColor = cardConfig?.colorScheme.color;
 
   return (
     <AnimatePresence>
@@ -190,7 +194,10 @@ export function CardOverlay() {
                 data-testid="card-overlay-content"
                 className="w-[90%] h-[90%] bg-card rounded-2xl border pointer-events-auto overflow-auto"
                 style={{
-                  borderColor: "color-mix(in srgb, var(--color-foreground) 8%, transparent)",
+                  borderColor: paletteColor
+                    ? cardColorVar(paletteColor, "border")
+                    : "color-mix(in srgb, var(--color-foreground) 8%, transparent)",
+                  backgroundColor: paletteColor ? cardColorVar(paletteColor, "tint") : undefined,
                 }}
                 initial={{ scale: 0.92, opacity: 0, y: 16 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
