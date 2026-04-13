@@ -120,15 +120,15 @@ export function EarthMoon() {
           className="flex items-baseline gap-1"
           style={{ fontFamily: "var(--font-mono, monospace)", fontWeight: 100 }}
         >
-          <span className="text-5xl">{hours}</span>
-          <span className="text-5xl">:</span>
-          <span className="text-5xl">{minutes}</span>
-          <span className="ml-2 text-2xl" style={{ fontWeight: 200 }}>
+          <span className="text-8xl">{hours}</span>
+          <span className="text-8xl">:</span>
+          <span className="text-8xl">{minutes}</span>
+          <span className="ml-3 text-5xl" style={{ fontWeight: 200 }}>
             {period}
           </span>
         </div>
         <div
-          className="mt-2 text-sm tracking-widest"
+          className="mt-3 text-2xl tracking-widest"
           style={{ fontFamily: "var(--font-mono, monospace)", fontWeight: 300 }}
         >
           {dateStr}
