@@ -18,14 +18,19 @@ export async function initSlack(): Promise<void> {
 
   app.event("app_mention", async ({ event, client, say }) => {
     const threadTs = event.thread_ts ?? event.ts;
+    const userText = event.text.replace(/<@[A-Z0-9]+>/g, "").trim();
+    const normalized = userText.toLowerCase();
+
+    if (normalized === "ruok?" || normalized === "status?") {
+      await say({ text: "imok", thread_ts: threadTs });
+      return;
+    }
 
     await client.assistant.threads.setStatus({
       channel_id: event.channel,
       thread_ts: threadTs,
       status: "is thinking...",
     });
-
-    const userText = event.text.replace(/<@[A-Z0-9]+>/g, "").trim();
 
     try {
       const reply = await chatCompletion(userText);
