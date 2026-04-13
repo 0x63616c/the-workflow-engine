@@ -8,7 +8,7 @@ export type PinPadMode = "unlock" | "setup-enter" | "setup-confirm";
 
 interface PinPadOverlayProps {
   mode: PinPadMode;
-  onSuccess: (pin?: string) => void;
+  onSuccess: (pin?: string) => void | Promise<void>;
   onDismiss: () => void;
 }
 
@@ -72,7 +72,7 @@ export function PinPadOverlay({ mode, onSuccess, onDismiss }: PinPadOverlayProps
           await handleWrongPin();
         }
       } else if (mode === "setup-enter" || mode === "setup-confirm") {
-        onSuccess(pin);
+        await onSuccess(pin);
       }
       submittingRef.current = false;
     },

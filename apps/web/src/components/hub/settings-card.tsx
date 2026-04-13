@@ -294,10 +294,13 @@ export function SettingsCardExpanded() {
         setPinSetupMode("setup-enter");
         return;
       }
-      await setPin(pin);
-      enable();
-      setPendingPin(null);
-      setPinSetupMode("idle");
+      try {
+        await setPin(pin);
+        enable();
+      } finally {
+        setPendingPin(null);
+        setPinSetupMode("idle");
+      }
     },
     [pendingPin, setPin, enable],
   );
