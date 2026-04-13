@@ -65,7 +65,7 @@ export function CountdownCardMini({ events }: CountdownCardMiniProps) {
     >
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-muted-foreground">Countdown</span>
+          <span className="text-2xl text-muted-foreground">Countdown</span>
           <Calendar size={14} className="text-muted-foreground shrink-0" />
         </div>
         {visibleEvents.length === 0 ? (
