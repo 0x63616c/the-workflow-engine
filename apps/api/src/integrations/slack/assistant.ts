@@ -1,7 +1,6 @@
 import { Assistant } from "@slack/bolt";
-import { log } from "../../lib/logger";
 import { LOADING_MESSAGES } from "./constants";
-import { chatCompletion } from "./openrouter";
+import { handleConversation } from "./handler";
 
 export const eveeAssistant = new Assistant({
   threadStarted: async ({ say, setStatus }) => {
@@ -18,17 +17,19 @@ export const eveeAssistant = new Assistant({
       return;
     }
 
-    await setStatus({
-      status: "is thinking...",
-      loading_messages: LOADING_MESSAGES,
+    await handleConversation({
+      messages: [{ role: "user", content: userText }],
+      reply: async (text) => {
+        await say(text);
+      },
+      setStatus: async (status) => {
+        await setStatus({ status, loading_messages: LOADING_MESSAGES });
+      },
+      context: {
+        threadTs: "ts" in message ? (message.ts ?? "dm") : "dm",
+        channel: "channel" in message ? (message.channel ?? "dm") : "dm",
+        userId: "user" in message ? ((message.user as string) ?? "unknown") : "unknown",
+      },
     });
-
-    try {
-      const reply = await chatCompletion(userText);
-      await say(reply);
-    } catch (err) {
-      log.error({ err }, "OpenRouter chat completion failed (DM)");
-      await say("Sorry, I'm having trouble right now. Try again in a bit.");
-    }
   },
 });

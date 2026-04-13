@@ -2,9 +2,16 @@ import { App, LogLevel } from "@slack/bolt";
 import { env } from "../../env";
 import { log } from "../../lib/logger";
 import { eveeAssistant } from "./assistant";
-import { chatCompletion } from "./openrouter";
+import { handleConversation } from "./handler";
+import {
+  type ImageDownload,
+  type SlackThreadMessage,
+  buildThreadMessages,
+  stripMentions,
+} from "./thread";
 
 let app: App | null = null;
+let botUserId: string | null = null;
 
 export async function initSlack(): Promise<void> {
   app = new App({
@@ -14,11 +21,15 @@ export async function initSlack(): Promise<void> {
     logLevel: LogLevel.INFO,
   });
 
+  const authResult = await app.client.auth.test();
+  botUserId = authResult.user_id ?? null;
+  log.info({ botUserId }, "Evee bot user ID resolved");
+
   app.assistant(eveeAssistant);
 
   app.event("app_mention", async ({ event, client, say }) => {
     const threadTs = event.thread_ts ?? event.ts;
-    const userText = event.text.replace(/<@[A-Z0-9]+>/g, "").trim();
+    const userText = stripMentions(event.text);
     const normalized = userText.toLowerCase();
 
     if (normalized === "ruok?" || normalized === "status?") {
@@ -26,22 +37,54 @@ export async function initSlack(): Promise<void> {
       return;
     }
 
-    await client.assistant.threads.setStatus({
-      channel_id: event.channel,
-      thread_ts: threadTs,
-      status: "is thinking...",
+    const result = await client.conversations.replies({
+      channel: event.channel,
+      ts: threadTs,
     });
 
-    try {
-      const reply = await chatCompletion(userText);
-      await say({ text: reply, thread_ts: threadTs });
-    } catch (err) {
-      log.error({ err }, "OpenRouter chat completion failed (mention)");
-      await say({
-        text: "Sorry, I'm having trouble right now. Try again in a bit.",
-        thread_ts: threadTs,
-      });
-    }
+    const rawMessages = (result.messages ?? []) as SlackThreadMessage[];
+
+    const messages = await buildThreadMessages(rawMessages, botUserId ?? "", {
+      lookupUser: async (userId) => {
+        const info = await client.users.info({ user: userId });
+        return (
+          info.user?.profile?.display_name || info.user?.real_name || info.user?.name || userId
+        );
+      },
+      downloadFile: async (url) => {
+        const response = await fetch(url, {
+          headers: { Authorization: `Bearer ${env.SLACK_BOT_TOKEN}` },
+        });
+        const buffer = await response.arrayBuffer();
+        const base64 = Buffer.from(buffer).toString("base64");
+        const mimeType = response.headers.get("content-type") ?? "image/png";
+        return { base64, mimeType } satisfies ImageDownload;
+      },
+    });
+
+    await handleConversation({
+      messages,
+      reply: async (text) => {
+        await say({ text, thread_ts: threadTs });
+      },
+      setStatus: async (status) => {
+        try {
+          await client.assistant.threads.setStatus({
+            channel_id: event.channel,
+            thread_ts: threadTs,
+            status,
+          });
+        } catch {
+          // assistant.threads.setStatus only works in the AI assistant panel,
+          // not in regular channel threads. Safe to ignore.
+        }
+      },
+      context: {
+        threadTs,
+        channel: event.channel,
+        userId: event.user ?? "unknown",
+      },
+    });
   });
 
   await app.start();
