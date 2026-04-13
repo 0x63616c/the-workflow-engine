@@ -49,7 +49,9 @@ export function SettingsCard() {
         <div className="flex flex-col justify-between h-full">
           <div className="flex items-center justify-between">
             <span className="text-2xl text-muted-foreground">Settings</span>
-            <Settings size={16} className="text-muted-foreground/60" />
+
+
+            <Settings size={32} className="text-muted-foreground/40" />
           </div>
         </div>
       </BentoCard>
