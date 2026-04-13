@@ -30,7 +30,7 @@ git -C "$TMPDIR" commit --allow-empty -m "init" -q
 run_bash_hook() {
   local branch="$1" cmd="$2"
   git -C "$TMPDIR" checkout -q -B "$branch" 2>/dev/null
-  echo "{\"tool_input\":{\"command\":\"$cmd\"}}" | \
+  echo "{\"tool_input\":{\"command\":\"$cmd\"}}" |
     GIT_DIR="$TMPDIR/.git" bash "$SCRIPT_DIR/guard-bash.sh" 2>/dev/null
 }
 
