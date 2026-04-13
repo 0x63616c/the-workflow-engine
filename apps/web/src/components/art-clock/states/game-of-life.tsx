@@ -1,11 +1,9 @@
 import { formatDate, formatTime } from "@/components/art-clock/art-clock";
-import {
-  canvasLogicalSize,
-  resizeCanvasToParent,
-} from "@/components/art-clock/states/canvas-utils";
+import { canvasLogicalSize } from "@/components/art-clock/states/canvas-utils";
+import { useCanvasAnimation } from "@/hooks/use-canvas-animation";
 import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 
 const CLOCK_UPDATE_INTERVAL_MS = 1000;
 const CELL_SIZE_PX = 5;
@@ -52,8 +50,6 @@ function stepGrid(grid: Uint8Array, next: Uint8Array, cols: number, rows: number
 }
 
 export function GameOfLife() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>(0);
   const gridRef = useRef<Uint8Array>(new Uint8Array(0));
   const nextGridRef = useRef<Uint8Array>(new Uint8Array(0));
   const colsRef = useRef(0);
@@ -70,13 +66,10 @@ export function GameOfLife() {
   const colorsRef = useRef({ foreground, background });
   colorsRef.current = { foreground, background };
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const seed = () => {
+  const canvasRef = useCanvasAnimation({
+    onResize(width, height) {
+      colsRef.current = Math.ceil(width / CELL_SIZE_PX);
+      rowsRef.current = Math.ceil(height / CELL_SIZE_PX);
       const cols = colsRef.current;
       const rows = rowsRef.current;
       gridRef.current = buildGrid(cols, rows);
@@ -84,18 +77,8 @@ export function GameOfLife() {
       generationRef.current = 0;
       lastCheckedPopRef.current = 0;
       stagnationCountRef.current = 0;
-    };
-
-    const resize = () => {
-      const { width, height } = resizeCanvasToParent(canvas);
-      colsRef.current = Math.ceil(width / CELL_SIZE_PX);
-      rowsRef.current = Math.ceil(height / CELL_SIZE_PX);
-      seed();
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
-    const draw = (timestamp: number) => {
+    },
+    draw(ctx, canvas, timestamp) {
       const { width: w, height: h } = canvasLogicalSize(canvas);
       const dpr = window.devicePixelRatio;
       const cols = colsRef.current;
@@ -126,7 +109,13 @@ export function GameOfLife() {
             stagnationCountRef.current >= STAGNATION_THRESHOLD ||
             populationRef.current < MIN_POPULATION
           ) {
-            seed();
+            colsRef.current = Math.ceil(w / CELL_SIZE_PX);
+            rowsRef.current = Math.ceil(h / CELL_SIZE_PX);
+            gridRef.current = buildGrid(colsRef.current, rowsRef.current);
+            nextGridRef.current = new Uint8Array(colsRef.current * rowsRef.current);
+            generationRef.current = 0;
+            lastCheckedPopRef.current = 0;
+            stagnationCountRef.current = 0;
           }
         }
       }
@@ -148,17 +137,8 @@ export function GameOfLife() {
           }
         }
       }
-
-      rafRef.current = requestAnimationFrame(draw);
-    };
-
-    rafRef.current = requestAnimationFrame(draw);
-
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
+    },
+  });
 
   return (
     <div className="absolute inset-0 bg-background">

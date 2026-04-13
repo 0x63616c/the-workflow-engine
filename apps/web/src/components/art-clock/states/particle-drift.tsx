@@ -1,11 +1,9 @@
 import { formatDate, formatTime } from "@/components/art-clock/art-clock";
-import {
-  canvasLogicalSize,
-  resizeCanvasToParent,
-} from "@/components/art-clock/states/canvas-utils";
+import { canvasLogicalSize } from "@/components/art-clock/states/canvas-utils";
+import { useCanvasAnimation } from "@/hooks/use-canvas-animation";
 import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 
 const CLOCK_UPDATE_INTERVAL_MS = 1000;
 const PARTICLE_COUNT = 300;
@@ -30,8 +28,6 @@ function initParticles(w: number, h: number): Particle[] {
 }
 
 export function ParticleDrift() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>(0);
   const particlesRef = useRef<Particle[]>([]);
   const startTimeRef = useRef<number>(Date.now());
   const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
@@ -41,20 +37,11 @@ export function ParticleDrift() {
   const colorsRef = useRef({ foreground, foregroundAlpha });
   colorsRef.current = { foreground, foregroundAlpha };
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const resize = () => {
-      const { width, height } = resizeCanvasToParent(canvas);
+  const canvasRef = useCanvasAnimation({
+    onResize(width, height) {
       particlesRef.current = initParticles(width, height);
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
-    const draw = () => {
+    },
+    draw(ctx, canvas) {
       const { width: w, height: h } = canvasLogicalSize(canvas);
       const dpr = window.devicePixelRatio;
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
@@ -111,17 +98,8 @@ export function ParticleDrift() {
         ctx.fillStyle = fgAlpha(0.8);
         ctx.fill();
       }
-
-      rafRef.current = requestAnimationFrame(draw);
-    };
-
-    rafRef.current = requestAnimationFrame(draw);
-
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
+    },
+  });
 
   return (
     <div className="absolute inset-0 bg-background">

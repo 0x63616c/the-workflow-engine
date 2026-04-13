@@ -1,11 +1,9 @@
 import { formatDate, formatTime } from "@/components/art-clock/art-clock";
-import {
-  canvasLogicalSize,
-  resizeCanvasToParent,
-} from "@/components/art-clock/states/canvas-utils";
+import { canvasLogicalSize } from "@/components/art-clock/states/canvas-utils";
+import { useCanvasAnimation } from "@/hooks/use-canvas-animation";
 import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 
 const CLOCK_UPDATE_INTERVAL_MS = 1000;
 const SWEEP_SPEED_RAD_PER_MS = (2 * Math.PI) / 4000;
@@ -27,8 +25,6 @@ function randomBlip(maxRadius: number): Blip {
 }
 
 export function Radar() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>(0);
   const startTimeRef = useRef<number>(Date.now());
   const blipsRef = useRef<Blip[]>([]);
   const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
@@ -38,21 +34,12 @@ export function Radar() {
   const colorsRef = useRef({ foreground, foregroundAlpha });
   colorsRef.current = { foreground, foregroundAlpha };
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const resize = () => {
-      const { width, height } = resizeCanvasToParent(canvas);
+  const canvasRef = useCanvasAnimation({
+    onResize(width, height) {
       const maxR = Math.min(width, height) * 0.42;
       blipsRef.current = Array.from({ length: BLIP_COUNT }, () => randomBlip(maxR));
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
-    const draw = () => {
+    },
+    draw(ctx, canvas) {
       const { width: w, height: h } = canvasLogicalSize(canvas);
       const dpr = window.devicePixelRatio;
       const elapsed = Date.now() - startTimeRef.current;
@@ -133,17 +120,8 @@ export function Radar() {
           ctx.fill();
         }
       }
-
-      rafRef.current = requestAnimationFrame(draw);
-    };
-
-    rafRef.current = requestAnimationFrame(draw);
-
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
+    },
+  });
 
   return (
     <div className="absolute inset-0 bg-background">
