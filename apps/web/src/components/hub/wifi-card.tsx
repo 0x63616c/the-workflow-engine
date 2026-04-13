@@ -19,18 +19,20 @@ export function WifiCard() {
   const [flipped, setFlipped] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [qrSvg, setQrSvg] = useState<string>("");
+  const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [countdown, setCountdown] = useState(0);
   const isDark = useThemeStore((s) => s.activePaletteId === "midnight");
 
   useEffect(() => {
     const uri = generateWifiUri(WIFI_SSID, WIFI_PASSWORD, WIFI_ENCRYPTION);
-    QRCode.toString(uri, {
-      type: "svg",
-      width: 80,
-      margin: 1,
-      color: isDark ? { dark: "#ffffff", light: "#000000" } : { dark: "#000000", light: "#ffffff" },
-    }).then(setQrSvg);
+    QRCode.toDataURL(uri, {
+      width: 200,
+      margin: 2,
+      color: isDark
+        ? { dark: "#ffffffFF", light: "#00000000" }
+        : { dark: "#000000FF", light: "#ffffff00" },
+      errorCorrectionLevel: "M",
+    }).then(setQrDataUrl);
   }, [isDark]);
 
   const handleCopy = useCallback(async (e: React.MouseEvent) => {
@@ -66,7 +68,7 @@ export function WifiCard() {
   return (
     <div
       data-testid="widget-card-wifi"
-      className="[perspective:600px]"
+      className="[perspective:800px]"
       style={{
         ...(config?.gridColumn ? { gridColumn: config.gridColumn } : {}),
         ...(config?.gridRow ? { gridRow: config.gridRow } : {}),
@@ -78,19 +80,26 @@ export function WifiCard() {
       >
         {/* Front */}
         <div className="absolute inset-0 [backface-visibility:hidden]">
-          <BentoCard testId="widget-card-wifi-front" onClick={handleFlip} className="h-full">
+          <BentoCard
+            testId="widget-card-wifi-front"
+            onClick={handleFlip}
+            paletteColor={config?.colorScheme.color}
+            className="h-full"
+          >
             <div className="flex flex-col justify-between h-full">
               <div>
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-3">
                   <div className="relative">
-                    <Wifi size={16} className="text-foreground" />
-                    <div className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-green-500" />
+                    <Wifi size={16} className="text-card-green-accent" />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   </div>
-                  <span className="text-base text-muted-foreground">WiFi</span>
+                  <span className="text-sm text-muted-foreground">WiFi</span>
                 </div>
-                <div className="text-xl font-medium text-foreground">{WIFI_SSID}</div>
+                <div className="text-2xl font-semibold text-foreground tracking-tight">
+                  {WIFI_SSID}
+                </div>
               </div>
-              <div className="text-sm text-muted-foreground/40 mt-2">tap to share</div>
+              <div className="text-sm text-muted-foreground/40">tap to share</div>
             </div>
           </BentoCard>
         </div>
@@ -103,65 +112,66 @@ export function WifiCard() {
           <BentoCard
             testId="widget-card-wifi-back"
             onClick={handleFlip}
+            paletteColor={config?.colorScheme.color}
             className="relative h-full overflow-hidden"
           >
             <div className="flex flex-col justify-between h-full">
-              <div className="space-y-2">
-                <div className="flex items-center gap-1.5">
-                  <Wifi size={12} className="text-accent" />
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Wifi size={14} className="text-card-green-accent" />
                   <span className="text-sm font-medium text-foreground">{WIFI_SSID}</span>
                 </div>
+              </div>
 
-                <div className="flex items-center gap-1">
-                  <span className="text-sm font-mono text-muted-foreground">
-                    {showPassword ? WIFI_PASSWORD : "\u2022".repeat(WIFI_PASSWORD.length)}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowPassword(!showPassword);
-                    }}
-                    className="p-2 rounded hover:bg-muted transition-colors"
-                  >
-                    {showPassword ? (
-                      <EyeOff size={14} className="text-muted-foreground" />
-                    ) : (
-                      <Eye size={14} className="text-muted-foreground" />
-                    )}
-                  </button>
-                </div>
+              {/* QR Code */}
+              <div className="flex items-center justify-center flex-1 py-2">
+                {qrDataUrl && (
+                  <div data-testid="qr-container" className="rounded-xl overflow-hidden">
+                    <img
+                      src={qrDataUrl}
+                      alt={`WiFi QR code for ${WIFI_SSID}`}
+                      className="w-32 h-32"
+                      draggable={false}
+                    />
+                  </div>
+                )}
+              </div>
 
+              {/* Password + actions */}
+              <div className="flex items-center gap-2">
+                <span className="flex-1 text-sm font-mono text-muted-foreground truncate">
+                  {showPassword
+                    ? WIFI_PASSWORD
+                    : "\u2022".repeat(Math.min(WIFI_PASSWORD.length, 12))}
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowPassword(!showPassword);
+                  }}
+                  className="p-1.5 rounded-lg hover:bg-card-green-accent/10 transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff size={14} className="text-muted-foreground" />
+                  ) : (
+                    <Eye size={14} className="text-muted-foreground" />
+                  )}
+                </button>
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="
-                    w-full py-1.5 rounded-lg text-sm font-medium
-                    bg-accent/15 text-accent hover:bg-accent/25
-                    transition-colors flex items-center justify-center gap-1
-                  "
+                  className="p-1.5 rounded-lg hover:bg-card-green-accent/10 transition-colors"
+                  aria-label={copied ? "Copied" : "Copy password"}
                 >
                   {copied ? (
-                    <>
-                      <Check size={10} />
-                      Copied
-                    </>
+                    <Check size={14} className="text-emerald-500" />
                   ) : (
-                    <>
-                      <Copy size={10} />
-                      Copy
-                    </>
+                    <Copy size={14} className="text-muted-foreground" />
                   )}
                 </button>
-              </div>
-
-              <div className="flex justify-center">
-                <div
-                  data-testid="qr-container"
-                  className={`rounded-md overflow-hidden p-1 ${isDark ? "bg-black" : "bg-white"}`}
-                  // biome-ignore lint/security/noDangerouslySetInnerHtml: QR SVG from trusted qrcode library
-                  dangerouslySetInnerHTML={{ __html: qrSvg }}
-                />
               </div>
             </div>
             {countdown > 0 && (

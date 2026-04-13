@@ -63,8 +63,8 @@ registerCard({
 
 registerCard({
   id: "wifi",
-  gridColumn: "1 / 4",
-  gridRow: "4 / 5",
+  gridColumn: "5 / 7",
+  gridRow: "2 / 4",
   colorScheme: { color: "green" },
   component: WifiCard,
 });

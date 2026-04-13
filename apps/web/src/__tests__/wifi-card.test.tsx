@@ -4,12 +4,12 @@ import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const QRCodeMock = vi.hoisted(() => ({
-  toString: vi.fn().mockResolvedValue('<svg data-testid="qr-svg"></svg>'),
+  toDataURL: vi.fn().mockResolvedValue("data:image/png;base64,fake"),
 }));
 
 vi.mock("qrcode", () => ({ default: QRCodeMock }));
 
-describe("WifiCard QR code theme", () => {
+describe("WifiCard", () => {
   afterEach(() => {
     cleanup();
     useThemeStore.setState({
@@ -20,52 +20,53 @@ describe("WifiCard QR code theme", () => {
     vi.clearAllMocks();
   });
 
-  it("renders QR with white modules on black in dark (midnight) mode", async () => {
+  it("renders QR with light modules on transparent in dark mode", async () => {
     useThemeStore.setState({ activePaletteId: "midnight" });
     render(<WifiCard />);
     await waitFor(() => {
-      expect(QRCodeMock.toString).toHaveBeenCalledWith(
+      expect(QRCodeMock.toDataURL).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          color: { dark: "#ffffff", light: "#000000" },
+          color: { dark: "#ffffffFF", light: "#00000000" },
         }),
       );
     });
   });
 
-  it("renders QR with black modules on white in light (daylight) mode", async () => {
+  it("renders QR with dark modules on transparent in light mode", async () => {
     useThemeStore.setState({ activePaletteId: "daylight" });
     render(<WifiCard />);
     await waitFor(() => {
-      expect(QRCodeMock.toString).toHaveBeenCalledWith(
+      expect(QRCodeMock.toDataURL).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          color: { dark: "#000000", light: "#ffffff" },
+          color: { dark: "#000000FF", light: "#ffffff00" },
         }),
       );
     });
   });
 
-  it("renders QR container with dark background in dark mode", async () => {
-    useThemeStore.setState({ activePaletteId: "midnight" });
+  it("renders front face with SSID and tap prompt", () => {
     render(<WifiCard />);
-    // Click front to flip to back to reveal QR
+    expect(screen.getByTestId("widget-card-wifi-front")).toBeInTheDocument();
+    expect(screen.getByText("tap to share")).toBeInTheDocument();
+  });
+
+  it("flips to back on click, shows QR and password", async () => {
+    render(<WifiCard />);
     const front = screen.getByTestId("widget-card-wifi-front");
     act(() => front.click());
     await waitFor(() => {
-      const container = screen.getByTestId("qr-container");
-      expect(container.className).toContain("bg-black");
+      const img = screen.getByAltText("WiFi QR code for HomeNet");
+      expect(img).toBeInTheDocument();
     });
   });
 
-  it("renders QR container with white background in light mode", async () => {
-    useThemeStore.setState({ activePaletteId: "daylight" });
+  it("reveals password on eye button click after flip", async () => {
     render(<WifiCard />);
-    const front = screen.getByTestId("widget-card-wifi-front");
-    act(() => front.click());
-    await waitFor(() => {
-      const container = screen.getByTestId("qr-container");
-      expect(container.className).toContain("bg-white");
-    });
+    act(() => screen.getByTestId("widget-card-wifi-front").click());
+    const toggleBtn = screen.getByLabelText("Show password");
+    act(() => toggleBtn.click());
+    expect(screen.getByText("welcome2024")).toBeInTheDocument();
   });
 });

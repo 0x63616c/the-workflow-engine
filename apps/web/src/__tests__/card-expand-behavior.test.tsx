@@ -27,7 +27,10 @@ vi.mock("@/components/art-clock/art-clock", () => ({
 }));
 
 vi.mock("qrcode", () => ({
-  default: { toString: vi.fn().mockResolvedValue("<svg></svg>") },
+  default: {
+    toString: vi.fn().mockResolvedValue("<svg></svg>"),
+    toDataURL: vi.fn().mockResolvedValue("data:image/png;base64,mock"),
+  },
 }));
 
 vi.mock("@/hooks/use-sonos", () => ({
