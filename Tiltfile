@@ -7,6 +7,11 @@ port_inngest = 8288 + port_offset
 os.putenv("INNGEST_PORT", str(port_inngest))
 docker_compose("docker-compose.yml")
 
+ha_token = str(local("op read 'op://Homelab/Home Assistant Token/credential' --no-newline", quiet=True))
+slack_bot_token = str(local("op read 'op://Homelab/Slack Bot (Evee)/slack_bot_token' --no-newline", quiet=True))
+slack_app_token = str(local("op read 'op://Homelab/Slack Bot (Evee)/slack_app_token' --no-newline", quiet=True))
+openrouter_api_key = str(local("op read 'op://Homelab/OpenRouter/credential' --no-newline", quiet=True))
+
 local_resource(
     "api",
     serve_cmd="bun --watch apps/api/src/server.ts",
@@ -14,6 +19,10 @@ local_resource(
         "PORT": str(4201),
         "PORT_OFFSET": str(port_offset),
         "INNGEST_DEV": "1",
+        "HA_TOKEN": ha_token,
+        "SLACK_BOT_TOKEN": slack_bot_token,
+        "SLACK_APP_TOKEN": slack_app_token,
+        "OPENROUTER_API_KEY": openrouter_api_key,
     },
     deps=["apps/api/src"],
     resource_deps=["inngest"],
