@@ -24,7 +24,7 @@ export const eveeAssistant = new Assistant({
     });
 
     try {
-      const reply = await chatCompletion(userText);
+      const reply = await chatCompletion([{ role: "user", content: userText }]);
       await say(reply);
     } catch (err) {
       log.error({ err }, "OpenRouter chat completion failed (DM)");

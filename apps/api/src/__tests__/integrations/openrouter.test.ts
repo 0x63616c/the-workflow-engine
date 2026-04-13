@@ -21,7 +21,7 @@ import { chatCompletion } from "../../integrations/slack/openrouter";
 
 describe("openrouter", () => {
   it("returns a chat completion response", async () => {
-    const result = await chatCompletion("Hi Evee!");
+    const result = await chatCompletion([{ role: "user", content: "Hi Evee!" }]);
     expect(result).toBe("Hello! I'm Evee.");
   });
 
@@ -35,7 +35,7 @@ describe("openrouter", () => {
     const { chatCompletion: freshChat } = await import("../../integrations/slack/openrouter");
     // The module-level client is already instantiated, so we test the default path
     // by checking the function exists and returns a string
-    const result = await freshChat("test");
+    const result = await freshChat([{ role: "user", content: "test" }]);
     expect(typeof result).toBe("string");
   });
 });

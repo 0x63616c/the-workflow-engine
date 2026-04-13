@@ -2,9 +2,10 @@ import { App, LogLevel } from "@slack/bolt";
 import { env } from "../../env";
 import { log } from "../../lib/logger";
 import { eveeAssistant } from "./assistant";
-import { chatCompletion } from "./openrouter";
+import { type ChatMessage, chatCompletion } from "./openrouter";
 
 let app: App | null = null;
+let botUserId: string | null = null;
 
 export async function initSlack(): Promise<void> {
   app = new App({
@@ -13,6 +14,10 @@ export async function initSlack(): Promise<void> {
     socketMode: true,
     logLevel: LogLevel.INFO,
   });
+
+  const authResult = await app.client.auth.test();
+  botUserId = authResult.user_id ?? null;
+  log.info({ botUserId }, "Evee bot user ID resolved");
 
   app.assistant(eveeAssistant);
 
@@ -33,7 +38,8 @@ export async function initSlack(): Promise<void> {
     });
 
     try {
-      const reply = await chatCompletion(userText);
+      const messages = await buildThreadMessages(client, event.channel, threadTs);
+      const reply = await chatCompletion(messages);
       await say({ text: reply, thread_ts: threadTs });
     } catch (err) {
       log.error({ err }, "OpenRouter chat completion failed (mention)");
@@ -46,6 +52,37 @@ export async function initSlack(): Promise<void> {
 
   await app.start();
   log.info("Slack (Evee) connected via Socket Mode");
+}
+
+function stripMentions(text: string): string {
+  return text.replace(/<@[A-Z0-9]+>/g, "").trim();
+}
+
+async function buildThreadMessages(
+  client: App["client"],
+  channel: string,
+  threadTs: string,
+): Promise<ChatMessage[]> {
+  const result = await client.conversations.replies({
+    channel,
+    ts: threadTs,
+  });
+
+  const threadMessages = result.messages ?? [];
+  const messages: ChatMessage[] = [];
+
+  for (const msg of threadMessages) {
+    const text = stripMentions(msg.text ?? "");
+    if (!text) continue;
+
+    if (msg.user === botUserId) {
+      messages.push({ role: "assistant", content: text });
+    } else {
+      messages.push({ role: "user", content: text });
+    }
+  }
+
+  return messages;
 }
 
 export async function stopSlack(): Promise<void> {
