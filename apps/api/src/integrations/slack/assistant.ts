@@ -1,4 +1,5 @@
 import { Assistant } from "@slack/bolt";
+import { log } from "../../lib/logger";
 import { LOADING_MESSAGES } from "./constants";
 import { chatCompletion } from "./openrouter";
 
@@ -15,7 +16,13 @@ export const eveeAssistant = new Assistant({
     });
 
     const userText = "text" in message ? (message.text ?? "") : "";
-    const reply = await chatCompletion(userText);
-    await say(reply);
+
+    try {
+      const reply = await chatCompletion(userText);
+      await say(reply);
+    } catch (err) {
+      log.error({ err }, "OpenRouter chat completion failed (DM)");
+      await say("Sorry, I'm having trouble right now. Try again in a bit.");
+    }
   },
 });

@@ -2,7 +2,6 @@ import { App, LogLevel } from "@slack/bolt";
 import { env } from "../../env";
 import { log } from "../../lib/logger";
 import { eveeAssistant } from "./assistant";
-import { LOADING_MESSAGES } from "./constants";
 import { chatCompletion } from "./openrouter";
 
 let app: App | null = null;
@@ -27,12 +26,17 @@ export async function initSlack(): Promise<void> {
     });
 
     const userText = event.text.replace(/<@[A-Z0-9]+>/g, "").trim();
-    const reply = await chatCompletion(userText);
 
-    await say({
-      text: reply,
-      thread_ts: threadTs,
-    });
+    try {
+      const reply = await chatCompletion(userText);
+      await say({ text: reply, thread_ts: threadTs });
+    } catch (err) {
+      log.error({ err }, "OpenRouter chat completion failed (mention)");
+      await say({
+        text: "Sorry, I'm having trouble right now. Try again in a bit.",
+        thread_ts: threadTs,
+      });
+    }
   });
 
   await app.start();
