@@ -15,11 +15,11 @@ Autonomous build pipeline. Single prompt -> finished implementation with spec, p
 
 ## Subagent Skill Injection
 
-Every subagent MUST have `/caveman:caveman` and `/auto-pilot` prepended to prompt. Cuts token waste across all agents. Example:
+Every subagent MUST have `/auto-pilot` prepended to prompt. Example:
 
 ```
 Agent({
-  prompt: "/caveman:caveman\n/auto-pilot\n\n<rest of agent prompt>"
+  prompt: "/auto-pilot\n\n<rest of agent prompt>"
 })
 ```
 

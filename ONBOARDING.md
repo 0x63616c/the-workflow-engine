@@ -15,9 +15,7 @@ Work Type Breakdown:
 Top Skills & Commands:
 ```
   /clear              ██████████░░░░░░░░░░  10x/month
-  /caveman:caveman    ██████████░░░░░░░░░░  10x/month
   /plugin             █████░░░░░░░░░░░░░░░   5x/month
-  /caveman:compress   ██░░░░░░░░░░░░░░░░░░   2x/month
   /auto-pilot         █░░░░░░░░░░░░░░░░░░░   1x/month
 ```
 
@@ -35,8 +33,6 @@ Top MCP Servers:
 - [ ] computer-use — Visual testing and browser interaction for the iPad PWA UI. Ask Calum for the setup command or check `.claude/settings.json` in the repo.
 
 ### Skills to Know About
-- `/caveman:caveman` — Compressed communication mode. Team convention: every session starts with this. Cuts token usage ~75% while keeping technical accuracy.
-- `/caveman:compress` — Compresses memory/config files into caveman format to save input tokens. Used for CLAUDE.md and similar files.
 - `/auto-pilot` — Full autonomous build pipeline: spec, plan, implement (TDD), review, E2E verify, PR. Only triggers on explicit `/auto-pilot` invocation.
 - `/clear` — Resets conversation context. Used frequently between tasks to keep context clean.
 - `/plugin` — Manages Claude Code plugins.
