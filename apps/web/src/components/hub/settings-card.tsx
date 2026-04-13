@@ -6,6 +6,8 @@ import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { Settings } from "lucide-react";
 
 const DEFAULT_IDLE_TIMEOUT_MS = 45_000;
+const DEFAULT_DIM_TIMEOUT_MS = 60_000;
+const DEFAULT_DIM_BRIGHTNESS = 0.2;
 
 export function SettingsCard() {
   const expandCard = useCardExpansionStore((s) => s.expandCard);
@@ -41,6 +43,10 @@ export function SettingsCardExpanded() {
   const idleTimeout_MS =
     (get("display.idleTimeout_MS") as number | null) ?? DEFAULT_IDLE_TIMEOUT_MS;
   const idleTimeout_S = Math.round(idleTimeout_MS / 1000);
+  const dimTimeout_MS = (get("display.dimTimeout_MS") as number | null) ?? DEFAULT_DIM_TIMEOUT_MS;
+  const dimTimeout_S = Math.round(dimTimeout_MS / 1000);
+  const dimBrightness = (get("display.dimBrightness") as number | null) ?? DEFAULT_DIM_BRIGHTNESS;
+  const dimBrightnessPercent = Math.round(dimBrightness * 100);
 
   const apiStatus = pingQuery.isError
     ? "Unavailable"
@@ -70,6 +76,14 @@ export function SettingsCardExpanded() {
         <div className="flex items-center justify-between py-2 border-b border-white/5">
           <span className="text-sm text-foreground">Idle timeout</span>
           <span className="text-sm text-muted-foreground">{idleTimeout_S}s</span>
+        </div>
+        <div className="flex items-center justify-between py-2 border-b border-white/5">
+          <span className="text-sm text-foreground">Dim timeout</span>
+          <span className="text-sm text-muted-foreground">{dimTimeout_S}s</span>
+        </div>
+        <div className="flex items-center justify-between py-2 border-b border-white/5">
+          <span className="text-sm text-foreground">Dim brightness</span>
+          <span className="text-sm text-muted-foreground">{dimBrightnessPercent}%</span>
         </div>
       </section>
 
