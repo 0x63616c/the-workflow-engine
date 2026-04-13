@@ -13,12 +13,13 @@ import { cardColorVar } from "@/lib/palette";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const SPRING = { type: "spring", stiffness: 300, damping: 30 } as const;
 const BACKDROP_TRANSITION = { duration: 0.2, ease: "easeOut" } as const;
 const CONTENT_TRANSITION = { ...SPRING } as const;
 const CLOSE_BUTTON_TRANSITION = { delay: 0.15, duration: 0.15 } as const;
+const CONTROLS_AUTO_HIDE_DELAY_MS = 10_000;
 
 function ExpandedLights() {
   const { onCount, totalCount, isLoading, isError, turnOn, turnOff } = useLights();
@@ -113,6 +114,42 @@ const EXPANDED_VIEWS: Record<string, () => React.JSX.Element> = {
   settings: SettingsCardExpanded,
 };
 
+function useClockControls() {
+  const [controlsVisible, setControlsVisible] = useState(false);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showControls = useCallback(() => {
+    setControlsVisible(true);
+
+    if (hideTimerRef.current !== null) {
+      clearTimeout(hideTimerRef.current);
+    }
+
+    hideTimerRef.current = setTimeout(() => {
+      setControlsVisible(false);
+      hideTimerRef.current = null;
+    }, CONTROLS_AUTO_HIDE_DELAY_MS);
+  }, []);
+
+  const resetControls = useCallback(() => {
+    if (hideTimerRef.current !== null) {
+      clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+    setControlsVisible(false);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (hideTimerRef.current !== null) {
+        clearTimeout(hideTimerRef.current);
+      }
+    };
+  }, []);
+
+  return { controlsVisible, showControls, resetControls };
+}
+
 export function CardOverlay() {
   const expandedCardId = useCardExpansionStore((s) => s.expandedCardId);
   const contractCard = useCardExpansionStore((s) => s.contractCard);
@@ -121,14 +158,16 @@ export function CardOverlay() {
   const swipeHandlers = useMemo(() => ({ onSwipeDown: contractCard }), [contractCard]);
   useSwipe(contentRef, swipeHandlers, { enabled: expandedCardId !== null });
 
-  const handleClockTap = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.target === e.currentTarget) {
-        contractCard();
-      }
-    },
-    [contractCard],
-  );
+  const { controlsVisible, showControls, resetControls } = useClockControls();
+
+  const handleClockTap = useCallback(() => {
+    showControls();
+  }, [showControls]);
+
+  const handleDismiss = useCallback(() => {
+    resetControls();
+    contractCard();
+  }, [contractCard, resetControls]);
 
   const isClock = expandedCardId === "clock";
   const cardConfig = expandedCardId ? getCardConfig(expandedCardId) : undefined;
@@ -147,26 +186,27 @@ export function CardOverlay() {
             exit={{ opacity: 0 }}
             transition={BACKDROP_TRANSITION}
           >
-            {/* biome-ignore lint/a11y/useKeyWithClickEvents: full-screen clock tap to dismiss */}
+            {/* biome-ignore lint/a11y/useKeyWithClickEvents: full-screen clock tap to show controls */}
             <div
               ref={contentRef}
               data-testid="card-overlay-content"
               className="h-full w-full relative"
               onClick={handleClockTap}
             >
-              <ClockStateCarousel />
-              <motion.button
+              <ClockStateCarousel controlsVisible={controlsVisible} />
+              <button
                 type="button"
                 data-testid="clock-dismiss"
-                onClick={contractCard}
+                onClick={handleDismiss}
                 className="absolute top-4 right-4 z-20 p-2 rounded-full bg-foreground/5 hover:bg-foreground/10 transition-colors"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={CLOSE_BUTTON_TRANSITION}
+                style={{
+                  opacity: controlsVisible ? 1 : 0,
+                  transition: "opacity 150ms ease",
+                  pointerEvents: controlsVisible ? "auto" : "none",
+                }}
               >
                 <X className="w-5 h-5 text-foreground/60" />
-              </motion.button>
+              </button>
             </div>
           </motion.div>
         ) : (
