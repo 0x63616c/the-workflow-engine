@@ -1,8 +1,6 @@
 import { formatDate, formatTime } from "@/components/art-clock/art-clock";
-import {
-  canvasLogicalSize,
-  resizeCanvasToParent,
-} from "@/components/art-clock/states/canvas-utils";
+import { canvasLogicalSize } from "@/components/art-clock/states/canvas-utils";
+import { useCanvasAnimation } from "@/hooks/use-canvas-animation";
 import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
 import { useEffect, useRef } from "react";
@@ -431,8 +429,6 @@ function generateStars(count: number, gw: number, gh: number, seed: number): Sta
 }
 
 export function PixelArt() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>(0);
   const startTimeRef = useRef<number>(Date.now());
   const bgBuildingsRef = useRef<Building[]>([]);
   const fgBuildingsRef = useRef<Building[]>([]);
@@ -449,27 +445,18 @@ export function PixelArt() {
     timeRef.current = { hours, minutes, period, dateStr };
   }, [hours, minutes, period, dateStr]);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const resize = () => {
-      const { width: w, height: h } = resizeCanvasToParent(canvas);
-      const gw = Math.ceil(w / GRID);
-      const gh = Math.ceil(h / GRID);
+  const canvasRef = useCanvasAnimation({
+    onResize(width, height) {
+      const gw = Math.ceil(width / GRID);
+      const gh = Math.ceil(height / GRID);
       const bgMaxH = gh * 0.4 * GRID;
       const fgMaxH = gh * 0.55 * GRID;
 
-      bgBuildingsRef.current = generateBuildings(1, 40, bgMaxH, w);
-      fgBuildingsRef.current = generateBuildings(7, 25, fgMaxH, w);
+      bgBuildingsRef.current = generateBuildings(1, 40, bgMaxH, width);
+      fgBuildingsRef.current = generateBuildings(7, 25, fgMaxH, width);
       starsRef.current = generateStars(80, gw, Math.floor(gh * 0.45), 42);
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
-    const draw = () => {
+    },
+    draw(ctx, canvas) {
       const { width: w, height: h } = canvasLogicalSize(canvas);
       const dpr = window.devicePixelRatio;
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
@@ -593,17 +580,8 @@ export function PixelArt() {
       const dateX = Math.round((w - dateW) / (GRID * 2)) * (GRID * 2);
       const dateY = timeY + 7 * timeCellSize + dateCellSize * 2;
       drawText(ctx, ds, dateX, dateY, dateCellSize);
-
-      rafRef.current = requestAnimationFrame(draw);
-    };
-
-    rafRef.current = requestAnimationFrame(draw);
-
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
+    },
+  });
 
   return (
     <div className="absolute inset-0 bg-background">
