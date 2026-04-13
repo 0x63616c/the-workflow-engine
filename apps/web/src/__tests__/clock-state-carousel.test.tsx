@@ -13,9 +13,6 @@ vi.mock("@/components/art-clock/states/wireframe-globe", () => ({
 vi.mock("@/components/art-clock/states/constellation-map", () => ({
   ConstellationMap: () => <div data-testid="state-constellation-map" />,
 }));
-vi.mock("@/components/art-clock/states/topographic-contours", () => ({
-  TopographicContours: () => <div data-testid="state-topographic-contours" />,
-}));
 vi.mock("@/components/art-clock/states/pendulum", () => ({
   Pendulum: () => <div data-testid="state-pendulum" />,
 }));
@@ -80,8 +77,8 @@ describe("ClockStateCarousel", () => {
     expect(screen.getByTestId("state-wireframe-globe")).toBeInTheDocument();
   });
 
-  it("renders state-radar when clockStateIndex is 8", () => {
-    useNavigationStore.setState({ clockStateIndex: 8 });
+  it("renders state-radar when clockStateIndex is 7", () => {
+    useNavigationStore.setState({ clockStateIndex: 7 });
     render(<ClockStateCarousel />);
     expect(screen.getByTestId("state-radar")).toBeInTheDocument();
   });
@@ -94,9 +91,9 @@ describe("ClockStateCarousel", () => {
     expect(indicator).toHaveStyle({ opacity: "1" });
   });
 
-  it("renders 12 indicator dots", () => {
+  it("renders 11 indicator dots", () => {
     render(<ClockStateCarousel />);
     const dots = screen.getAllByTestId(/^state-dot-/);
-    expect(dots).toHaveLength(12);
+    expect(dots).toHaveLength(11);
   });
 });
