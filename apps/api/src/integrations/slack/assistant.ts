@@ -10,12 +10,18 @@ export const eveeAssistant = new Assistant({
   },
 
   userMessage: async ({ message, say, setStatus }) => {
+    const userText = "text" in message ? (message.text ?? "") : "";
+    const normalized = userText.toLowerCase().trim();
+
+    if (normalized === "ruok?" || normalized === "status?") {
+      await say("imok");
+      return;
+    }
+
     await setStatus({
       status: "is thinking...",
       loading_messages: LOADING_MESSAGES,
     });
-
-    const userText = "text" in message ? (message.text ?? "") : "";
 
     try {
       const reply = await chatCompletion(userText);
