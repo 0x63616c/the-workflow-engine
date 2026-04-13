@@ -54,9 +54,9 @@ jobs:
       matrix:
         include:
           - name: ShellCheck
-            command: shellcheck .claude/hooks/*.sh
+            command: find . -name '*.sh' -not -path './.git/*' | xargs shellcheck
           - name: shfmt
-            command: shfmt -d -i 2 -ci .claude/hooks/*.sh
+            command: find . -name '*.sh' -not -path './.git/*' | xargs shfmt -d -i 2 -ci
           - name: Shell Guards
             command: bash .claude/hooks/test-guards.sh
     steps:

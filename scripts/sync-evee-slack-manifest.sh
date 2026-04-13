@@ -19,7 +19,7 @@ fi
 ACCESS_TOKEN="${1:-}"
 if [ -z "$ACCESS_TOKEN" ]; then
   echo "Paste Configuration Access Token (xoxe.xoxp-...):"
-  read -s ACCESS_TOKEN
+  read -rs ACCESS_TOKEN
   echo ""
 fi
 
