@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { useState } from "react";
+import { FontProvider } from "./components/font-provider";
 import { ThemeProvider } from "./components/theme-provider";
 import { trpc, trpcClient } from "./lib/trpc";
 import { routeTree } from "./routeTree.gen";
@@ -20,7 +21,9 @@ export function App() {
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <RouterProvider router={router} />
+          <FontProvider>
+            <RouterProvider router={router} />
+          </FontProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </trpc.Provider>
