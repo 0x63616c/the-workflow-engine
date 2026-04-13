@@ -3,11 +3,14 @@ import { getRegisteredCards } from "@/components/hub/card-registry";
 import { CountdownCardMini } from "@/components/hub/countdown-card";
 import { useAppConfig } from "@/hooks/use-app-config";
 import { useIdleTimeout } from "@/hooks/use-idle-timeout";
+import { useScreenDimming } from "@/hooks/use-screen-dimming";
 import { trpc } from "@/lib/trpc";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { useEffect, useRef, useState } from "react";
 
 const DEFAULT_IDLE_TIMEOUT_MS = 45_000;
+const DEFAULT_DIM_TIMEOUT_MS = 60_000;
+const DEFAULT_DIM_BRIGHTNESS = 0.2;
 const GRID_COLS = 6;
 const GRID_ROWS = 4;
 const GRID_PADDING_PX = 40; // p-5 = 20px each side
@@ -26,6 +29,10 @@ export function WidgetGrid() {
   const { get: getConfig } = useAppConfig();
   const idleTimeout_MS =
     (getConfig("display.idleTimeout_MS") as number | null) ?? DEFAULT_IDLE_TIMEOUT_MS;
+  const dimTimeout_MS =
+    (getConfig("display.dimTimeout_MS") as number | null) ?? DEFAULT_DIM_TIMEOUT_MS;
+  const dimBrightness =
+    (getConfig("display.dimBrightness") as number | null) ?? DEFAULT_DIM_BRIGHTNESS;
   const gridRef = useRef<HTMLDivElement>(null);
   const [cellSize_PX, setCellSize_PX] = useState(0);
 
@@ -45,6 +52,11 @@ export function WidgetGrid() {
   const { remainingSeconds } = useIdleTimeout(() => expandCard("clock"), idleTimeout_MS, {
     enabled: expandedCardId === null,
   });
+
+  // Dim when idle on the main grid or when clock art is showing (passive).
+  // Disable when any interactive card is expanded (settings, music, lights, etc.).
+  const dimmingEnabled = expandedCardId === null || expandedCardId === "clock";
+  useScreenDimming({ enabled: dimmingEnabled, dimTimeout_MS, dimBrightness });
 
   const cards = getRegisteredCards();
 
