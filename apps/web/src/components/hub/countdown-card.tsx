@@ -64,9 +64,9 @@ export function CountdownCardMini({ events }: CountdownCardMiniProps) {
       onClick={() => expandCard("countdown")}
     >
       <div className="flex flex-col h-full">
-        <div className="flex items-center gap-1.5 mb-2">
-          <Calendar size={18} className="text-muted-foreground shrink-0" />
-          <span className="text-base text-muted-foreground">Countdown</span>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm text-muted-foreground">Countdown</span>
+          <Calendar size={14} className="text-muted-foreground shrink-0" />
         </div>
         {visibleEvents.length === 0 ? (
           <div className="text-base text-muted-foreground/50">No events</div>

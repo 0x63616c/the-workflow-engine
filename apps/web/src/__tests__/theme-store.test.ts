@@ -54,10 +54,10 @@ describe("theme-store", () => {
     expect(palette.colors.foreground).toBe("#edeef0");
   });
 
-  it("midnight palette has Radix Slate dark card and popover surfaces", () => {
+  it("midnight palette has pure black card and popover surfaces", () => {
     const palette = useThemeStore.getState().getActivePalette();
-    expect(palette.colors.card).toBe("#18191b");
-    expect(palette.colors.popover).toBe("#18191b");
+    expect(palette.colors.card).toBe("#000000");
+    expect(palette.colors.popover).toBe("#000000");
     expect(palette.colors.cardForeground).toBe("#edeef0");
     expect(palette.colors.popoverForeground).toBe("#edeef0");
   });
