@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "INPUT=$(cat /dev/stdin); CMD=$(echo \"$INPUT\" | jq -r '.tool_input.command'); BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown'); case \"$CMD\" in *'git checkout -b '*|*'git switch -c '*|*'git switch --create '*) echo 'BLOCK: Do not create branches directly. Use a worktree instead (EnterWorktree tool or using-git-worktrees skill).' >&2; exit 2;; *'git push --force'*|*'git push -f'*) echo 'BLOCK: Force push is too dangerous and is not allowed.' >&2; exit 2;; esac; case \"$BRANCH\" in main) case \"$CMD\" in *'git push'*) echo 'BLOCK: Cannot git push directly from main branch. Use a worktree instead (EnterWorktree tool or using-git-worktrees skill).' >&2; exit 2;; *'git reset --hard'*) echo 'BLOCK: Cannot git reset --hard on main branch. Use a worktree instead (EnterWorktree tool or using-git-worktrees skill).' >&2; exit 2;; *'git merge '*) echo 'BLOCK: Cannot git merge on main branch. Use a worktree instead (EnterWorktree tool or using-git-worktrees skill).' >&2; exit 2;; esac;; esac"
+            "command": "INPUT=$(cat /dev/stdin); CMD=$(echo \"$INPUT\" | jq -r '.tool_input.command'); BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown'); case \"$CMD\" in *'git checkout -b '*|*'git switch -c '*|*'git switch --create '*) echo 'BLOCK: Do not create branches directly. Use the EnterWorktree tool or using-git-worktrees skill.' >&2; exit 2;; esac; case \"$CMD\" in *'--force-with-lease'*) ;; *'git push --force'*|*'git push -f '*) echo 'BLOCK: Bare force push not allowed. Use --force-with-lease.' >&2; exit 2;; esac; case \"$BRANCH\" in main) case \"$CMD\" in *'git push'*) echo 'BLOCK: You are on the main branch. You MUST enter a worktree before doing any work.' >&2; echo 'BLOCK: Use the EnterWorktree tool or the using-git-worktrees skill.' >&2; echo 'BLOCK: Do NOT try other tools to work around this.' >&2; exit 2;; *'git reset --hard'*) echo 'BLOCK: You are on the main branch. Cannot reset --hard here.' >&2; echo 'BLOCK: Use the EnterWorktree tool or the using-git-worktrees skill first.' >&2; exit 2;; *'git merge '*) echo 'BLOCK: You are on the main branch. Cannot merge here.' >&2; echo 'BLOCK: Use the EnterWorktree tool or the using-git-worktrees skill first.' >&2; exit 2;; esac; WRITES_FILE=false; case \"$CMD\" in *'>'*|*'tee '*|*'tee>'*) WRITES_FILE=true;; *'cat <<'*|*'cat >'*|*'cat>'*) WRITES_FILE=true;; *'sed -i'*) WRITES_FILE=true;; *'cp '*|*'mv '*|*'install '*) WRITES_FILE=true;; *'mkdir '*|*'touch '*) WRITES_FILE=true;; *'patch '*|*'dd '*) WRITES_FILE=true;; esac; if [ \"$WRITES_FILE\" = true ]; then echo 'BLOCK: You are on the main branch. ALL file modifications are blocked, including via bash.' >&2; echo 'BLOCK: Do NOT use cat, echo, printf, heredocs, tee, sed, cp, mv, touch, mkdir, or any shell trick.' >&2; echo 'BLOCK: You MUST use the EnterWorktree tool or using-git-worktrees skill to enter a worktree FIRST.' >&2; echo 'BLOCK: This is the ONLY way to proceed. No workarounds. No exceptions.' >&2; exit 2; fi;; esac"
           }
         ]
       },
@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown'); case \"$BRANCH\" in main) echo 'BLOCK: Cannot edit files on main branch. Use a worktree first (EnterWorktree tool or using-git-worktrees skill).' >&2; exit 2;; esac"
+            "command": "BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown'); case \"$BRANCH\" in main) echo 'BLOCK: You are on the main branch. ALL file modifications are blocked.' >&2; echo 'BLOCK: You MUST use the EnterWorktree tool or using-git-worktrees skill to enter a worktree FIRST.' >&2; echo 'BLOCK: Do NOT try to circumvent this by using Bash, Write, cat, echo, or any other tool.' >&2; echo 'BLOCK: Only after entering a worktree can you modify files. No exceptions. No workarounds.' >&2; exit 2;; esac"
           }
         ]
       },
@@ -24,7 +24,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown'); case \"$BRANCH\" in main) echo 'BLOCK: Cannot edit files on main branch. Use a worktree first (EnterWorktree tool or using-git-worktrees skill).' >&2; exit 2;; esac"
+            "command": "BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown'); case \"$BRANCH\" in main) echo 'BLOCK: You are on the main branch. ALL file modifications are blocked.' >&2; echo 'BLOCK: You MUST use the EnterWorktree tool or using-git-worktrees skill to enter a worktree FIRST.' >&2; echo 'BLOCK: Do NOT try to circumvent this by using Bash, Edit, cat, echo, or any other tool.' >&2; echo 'BLOCK: Only after entering a worktree can you modify files. No exceptions. No workarounds.' >&2; exit 2;; esac"
           }
         ]
       }
