@@ -32,7 +32,6 @@ describe("devices.climate", () => {
       hvacMode: "cool",
       hvacAction: "cooling",
       fanOn: false,
-      fanEntityId: null,
       targetTemp: 72,
     };
     vi.mocked(haService.getClimateState).mockResolvedValueOnce(mockState);
@@ -54,10 +53,10 @@ describe("devices.climate", () => {
 });
 
 describe("devices.fanOn", () => {
-  it("calls turnFanOn with entityId and fanEntityId", async () => {
+  it("calls turnFanOn with entityId", async () => {
     vi.mocked(haService.turnFanOn).mockResolvedValueOnce(undefined);
-    await caller.devices.fanOn({ entityId: "climate.lr", fanEntityId: "fan.lr" });
-    expect(haService.turnFanOn).toHaveBeenCalledWith("climate.lr", "fan.lr");
+    await caller.devices.fanOn({ entityId: "climate.lr" });
+    expect(haService.turnFanOn).toHaveBeenCalledWith("climate.lr");
   });
 
   it("returns error on HaError", async () => {
@@ -68,9 +67,9 @@ describe("devices.fanOn", () => {
 });
 
 describe("devices.fanOff", () => {
-  it("calls turnFanOff with entityId and fanEntityId", async () => {
+  it("calls turnFanOff with entityId", async () => {
     vi.mocked(haService.turnFanOff).mockResolvedValueOnce(undefined);
-    await caller.devices.fanOff({ entityId: "climate.lr", fanEntityId: "fan.lr" });
-    expect(haService.turnFanOff).toHaveBeenCalledWith("climate.lr", "fan.lr");
+    await caller.devices.fanOff({ entityId: "climate.lr" });
+    expect(haService.turnFanOff).toHaveBeenCalledWith("climate.lr");
   });
 });

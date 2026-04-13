@@ -17,7 +17,6 @@ const setTemperatureFn = vi.fn();
 function setupHook(overrides = {}) {
   mockUseClimate.mockReturnValue({
     entityId: "climate.living_room",
-    fanEntityId: null,
     friendlyName: "Living Room AC",
     currentTemp: 72,
     targetTemp: 72,

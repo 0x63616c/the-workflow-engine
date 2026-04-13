@@ -48,7 +48,6 @@ vi.mock("@/hooks/use-sonos", () => ({
 vi.mock("@/hooks/use-climate", () => ({
   useClimate: () => ({
     entityId: "climate.living_room",
-    fanEntityId: null,
     friendlyName: "Living Room AC",
     currentTemp: 72,
     tempUnit: "F",

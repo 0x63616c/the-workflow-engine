@@ -19,24 +19,20 @@ beforeEach(() => {
 
 describe("getClimateState()", () => {
   it("returns state for first climate entity", async () => {
-    mockGetEntities.mockImplementation(async (domain: string) => {
-      if (domain === "climate") {
-        return [
-          {
-            entity_id: "climate.living_room",
-            state: "cool",
-            attributes: {
-              friendly_name: "Living Room AC",
-              current_temperature: 72,
-              temperature_unit: "F",
-              hvac_action: "cooling",
-            },
-            last_updated: "",
-          },
-        ];
-      }
-      return [];
-    });
+    mockGetEntities.mockResolvedValueOnce([
+      {
+        entity_id: "climate.living_room",
+        state: "cool",
+        attributes: {
+          friendly_name: "Living Room AC",
+          current_temperature: 72,
+          temperature_unit: "F",
+          hvac_action: "cooling",
+          fan_mode: "auto",
+        },
+        last_updated: "",
+      },
+    ]);
 
     const result = await getClimateState();
     expect(result).toEqual({
@@ -47,7 +43,6 @@ describe("getClimateState()", () => {
       hvacMode: "cool",
       hvacAction: "cooling",
       fanOn: false,
-      fanEntityId: null,
       targetTemp: null,
     });
   });
@@ -59,238 +54,126 @@ describe("getClimateState()", () => {
   });
 
   it("picks first entity alphabetically by entity_id", async () => {
-    mockGetEntities.mockImplementation(async (domain: string) => {
-      if (domain === "climate") {
-        return [
-          {
-            entity_id: "climate.z_bedroom",
-            state: "off",
-            attributes: {
-              friendly_name: "Bedroom",
-              current_temperature: 68,
-              temperature_unit: "F",
-            },
-            last_updated: "",
-          },
-          {
-            entity_id: "climate.a_living_room",
-            state: "cool",
-            attributes: {
-              friendly_name: "Living Room",
-              current_temperature: 72,
-              temperature_unit: "F",
-            },
-            last_updated: "",
-          },
-        ];
-      }
-      return [];
-    });
+    mockGetEntities.mockResolvedValueOnce([
+      {
+        entity_id: "climate.z_bedroom",
+        state: "off",
+        attributes: {
+          friendly_name: "Bedroom",
+          current_temperature: 68,
+          temperature_unit: "F",
+          fan_mode: "auto",
+        },
+        last_updated: "",
+      },
+      {
+        entity_id: "climate.a_living_room",
+        state: "cool",
+        attributes: {
+          friendly_name: "Living Room",
+          current_temperature: 72,
+          temperature_unit: "F",
+          fan_mode: "auto",
+        },
+        last_updated: "",
+      },
+    ]);
 
     const result = await getClimateState();
     expect(result?.entityId).toBe("climate.a_living_room");
   });
 
-  it("fanOn true when hvac_mode is fan_only", async () => {
-    mockGetEntities.mockImplementation(async (domain: string) => {
-      if (domain === "climate") {
-        return [
-          {
-            entity_id: "climate.living_room",
-            state: "fan_only",
-            attributes: { current_temperature: 72, temperature_unit: "F" },
-            last_updated: "",
-          },
-        ];
-      }
-      return [];
-    });
+  it("fanOn true when fan_mode is on", async () => {
+    mockGetEntities.mockResolvedValueOnce([
+      {
+        entity_id: "climate.living_room",
+        state: "off",
+        attributes: { current_temperature: 72, temperature_unit: "F", fan_mode: "on" },
+        last_updated: "",
+      },
+    ]);
 
     const result = await getClimateState();
     expect(result?.fanOn).toBe(true);
   });
 
-  it("fanOn true when hvac_action is fan", async () => {
-    mockGetEntities.mockImplementation(async (domain: string) => {
-      if (domain === "climate") {
-        return [
-          {
-            entity_id: "climate.living_room",
-            state: "cool",
-            attributes: { current_temperature: 72, temperature_unit: "F", hvac_action: "fan" },
-            last_updated: "",
-          },
-        ];
-      }
-      return [];
-    });
+  it("fanOn false when fan_mode is auto", async () => {
+    mockGetEntities.mockResolvedValueOnce([
+      {
+        entity_id: "climate.living_room",
+        state: "cool",
+        attributes: { current_temperature: 72, temperature_unit: "F", fan_mode: "auto" },
+        last_updated: "",
+      },
+    ]);
 
     const result = await getClimateState();
-    expect(result?.fanOn).toBe(true);
+    expect(result?.fanOn).toBe(false);
   });
 
-  it("fanOn false when cooling", async () => {
-    mockGetEntities.mockImplementation(async (domain: string) => {
-      if (domain === "climate") {
-        return [
-          {
-            entity_id: "climate.living_room",
-            state: "cool",
-            attributes: { current_temperature: 72, temperature_unit: "F", hvac_action: "cooling" },
-            last_updated: "",
-          },
-        ];
-      }
-      return [];
-    });
+  it("fanOn false when fan_mode is missing", async () => {
+    mockGetEntities.mockResolvedValueOnce([
+      {
+        entity_id: "climate.living_room",
+        state: "cool",
+        attributes: { current_temperature: 72, temperature_unit: "F" },
+        last_updated: "",
+      },
+    ]);
 
     const result = await getClimateState();
     expect(result?.fanOn).toBe(false);
   });
 
   it("handles missing current_temperature", async () => {
-    mockGetEntities.mockImplementation(async (domain: string) => {
-      if (domain === "climate") {
-        return [
-          {
-            entity_id: "climate.living_room",
-            state: "off",
-            attributes: { temperature_unit: "F" },
-            last_updated: "",
-          },
-        ];
-      }
-      return [];
-    });
+    mockGetEntities.mockResolvedValueOnce([
+      {
+        entity_id: "climate.living_room",
+        state: "off",
+        attributes: { temperature_unit: "F" },
+        last_updated: "",
+      },
+    ]);
 
     const result = await getClimateState();
     expect(result?.currentTemp).toBeNull();
   });
 
   it("detects Celsius unit", async () => {
-    mockGetEntities.mockImplementation(async (domain: string) => {
-      if (domain === "climate") {
-        return [
-          {
-            entity_id: "climate.living_room",
-            state: "cool",
-            attributes: { current_temperature: 22, temperature_unit: "\u00b0C" },
-            last_updated: "",
-          },
-        ];
-      }
-      return [];
-    });
+    mockGetEntities.mockResolvedValueOnce([
+      {
+        entity_id: "climate.living_room",
+        state: "cool",
+        attributes: { current_temperature: 22, temperature_unit: "\u00b0C" },
+        last_updated: "",
+      },
+    ]);
 
     const result = await getClimateState();
     expect(result?.tempUnit).toBe("C");
-  });
-
-  it("sets fanEntityId when exact fan match exists", async () => {
-    mockGetEntities.mockImplementation(async (domain: string) => {
-      if (domain === "climate") {
-        return [
-          {
-            entity_id: "climate.living_room",
-            state: "cool",
-            attributes: { current_temperature: 72, temperature_unit: "F" },
-            last_updated: "",
-          },
-        ];
-      }
-      if (domain === "fan") {
-        return [{ entity_id: "fan.living_room", state: "off", attributes: {}, last_updated: "" }];
-      }
-      return [];
-    });
-
-    const result = await getClimateState();
-    expect(result?.fanEntityId).toBe("fan.living_room");
-  });
-
-  it("sets fanEntityId null when no fan match", async () => {
-    mockGetEntities.mockImplementation(async (domain: string) => {
-      if (domain === "climate") {
-        return [
-          {
-            entity_id: "climate.living_room",
-            state: "cool",
-            attributes: { current_temperature: 72, temperature_unit: "F" },
-            last_updated: "",
-          },
-        ];
-      }
-      if (domain === "fan") {
-        return [];
-      }
-      return [];
-    });
-
-    const result = await getClimateState();
-    expect(result?.fanEntityId).toBeNull();
-  });
-
-  it("does not match fan entity with partial name", async () => {
-    mockGetEntities.mockImplementation(async (domain: string) => {
-      if (domain === "climate") {
-        return [
-          {
-            entity_id: "climate.living_room",
-            state: "cool",
-            attributes: { current_temperature: 72, temperature_unit: "F" },
-            last_updated: "",
-          },
-        ];
-      }
-      if (domain === "fan") {
-        return [
-          { entity_id: "fan.living_room_ceiling", state: "off", attributes: {}, last_updated: "" },
-        ];
-      }
-      return [];
-    });
-
-    const result = await getClimateState();
-    expect(result?.fanEntityId).toBeNull();
   });
 });
 
 const mockCallService = vi.mocked(ha.callService);
 
 describe("turnFanOn()", () => {
-  it("uses climate.set_hvac_mode fan_only when fanEntityId null", async () => {
+  it("calls climate.set_fan_mode with fan_mode on", async () => {
     mockCallService.mockResolvedValueOnce(undefined);
-    await turnFanOn("climate.living_room", null);
-    expect(mockCallService).toHaveBeenCalledWith("climate", "set_hvac_mode", {
+    await turnFanOn("climate.living_room");
+    expect(mockCallService).toHaveBeenCalledWith("climate", "set_fan_mode", {
       entity_id: "climate.living_room",
-      hvac_mode: "fan_only",
-    });
-  });
-
-  it("uses fan.turn_on when fanEntityId provided", async () => {
-    mockCallService.mockResolvedValueOnce(undefined);
-    await turnFanOn("climate.living_room", "fan.living_room");
-    expect(mockCallService).toHaveBeenCalledWith("fan", "turn_on", {
-      entity_id: "fan.living_room",
+      fan_mode: "on",
     });
   });
 });
 
 describe("turnFanOff()", () => {
-  it("uses climate.set_hvac_mode off when fanEntityId null", async () => {
+  it("calls climate.set_fan_mode with fan_mode auto", async () => {
     mockCallService.mockResolvedValueOnce(undefined);
-    await turnFanOff("climate.living_room", null);
-    expect(mockCallService).toHaveBeenCalledWith("climate", "set_hvac_mode", {
+    await turnFanOff("climate.living_room");
+    expect(mockCallService).toHaveBeenCalledWith("climate", "set_fan_mode", {
       entity_id: "climate.living_room",
-      hvac_mode: "off",
-    });
-  });
-
-  it("uses fan.turn_off when fanEntityId provided", async () => {
-    mockCallService.mockResolvedValueOnce(undefined);
-    await turnFanOff("climate.living_room", "fan.living_room");
-    expect(mockCallService).toHaveBeenCalledWith("fan", "turn_off", {
-      entity_id: "fan.living_room",
+      fan_mode: "auto",
     });
   });
 });

@@ -74,23 +74,19 @@ export const devicesRouter = router({
 
   climate: publicProcedure.query(() => withHaErrorHandling(() => getClimateState())),
 
-  fanOn: publicProcedure
-    .input(z.object({ entityId: z.string(), fanEntityId: z.string().nullable().optional() }))
-    .mutation(({ input }) =>
-      withHaErrorHandling(async () => {
-        await turnFanOn(input.entityId, input.fanEntityId);
-        return { success: true };
-      }),
-    ),
+  fanOn: publicProcedure.input(z.object({ entityId: z.string() })).mutation(({ input }) =>
+    withHaErrorHandling(async () => {
+      await turnFanOn(input.entityId);
+      return { success: true };
+    }),
+  ),
 
-  fanOff: publicProcedure
-    .input(z.object({ entityId: z.string(), fanEntityId: z.string().nullable().optional() }))
-    .mutation(({ input }) =>
-      withHaErrorHandling(async () => {
-        await turnFanOff(input.entityId, input.fanEntityId);
-        return { success: true };
-      }),
-    ),
+  fanOff: publicProcedure.input(z.object({ entityId: z.string() })).mutation(({ input }) =>
+    withHaErrorHandling(async () => {
+      await turnFanOff(input.entityId);
+      return { success: true };
+    }),
+  ),
 
   setTemperature: publicProcedure
     .input(z.object({ entityId: z.string(), temperature: z.number().min(65).max(80) }))

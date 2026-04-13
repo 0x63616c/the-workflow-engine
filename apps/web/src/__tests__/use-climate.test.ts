@@ -46,7 +46,6 @@ function setupMocks({
         hvacMode: string;
         hvacAction: string | null;
         fanOn: boolean;
-        fanEntityId: string | null;
         targetTemp: number | null;
       }
     | { error: string }
@@ -86,7 +85,6 @@ describe("useClimate", () => {
         hvacMode: "cool",
         hvacAction: "cooling",
         fanOn: false,
-        fanEntityId: null,
         targetTemp: 72,
       },
     });
@@ -112,18 +110,18 @@ describe("useClimate", () => {
     expect(result.current.isError).toBe(true);
   });
 
-  it("turnFanOn calls fanOn mutation with entityId and fanEntityId", () => {
+  it("turnFanOn calls fanOn mutation with entityId", () => {
     const { fanOnMutate } = setupMocks();
     const { result } = renderHook(() => useClimate());
-    result.current.turnFanOn("climate.lr", "fan.lr");
-    expect(fanOnMutate).toHaveBeenCalledWith({ entityId: "climate.lr", fanEntityId: "fan.lr" });
+    result.current.turnFanOn("climate.lr");
+    expect(fanOnMutate).toHaveBeenCalledWith({ entityId: "climate.lr" });
   });
 
-  it("turnFanOff calls fanOff mutation with entityId and fanEntityId", () => {
+  it("turnFanOff calls fanOff mutation with entityId", () => {
     const { fanOffMutate } = setupMocks();
     const { result } = renderHook(() => useClimate());
-    result.current.turnFanOff("climate.lr", "fan.lr");
-    expect(fanOffMutate).toHaveBeenCalledWith({ entityId: "climate.lr", fanEntityId: "fan.lr" });
+    result.current.turnFanOff("climate.lr");
+    expect(fanOffMutate).toHaveBeenCalledWith({ entityId: "climate.lr" });
   });
 
   it("setTemperature calls setTemperature mutation", () => {
