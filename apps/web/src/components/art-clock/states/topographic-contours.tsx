@@ -1,4 +1,5 @@
 import { formatDate, formatTime } from "@/components/art-clock/art-clock";
+import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
 import { useEffect, useRef } from "react";
 import { createNoise3D } from "simplex-noise";
@@ -49,6 +50,9 @@ export function TopographicContours() {
   const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
   const { hours, minutes, period } = formatTime(now);
   const dateStr = formatDate(now);
+  const { foregroundAlpha } = useClockColors();
+  const colorsRef = useRef({ foregroundAlpha });
+  colorsRef.current = { foregroundAlpha };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -73,6 +77,7 @@ export function TopographicContours() {
       const dpr = window.devicePixelRatio;
       const elapsed = Date.now() - startTimeRef.current;
       const t = elapsed * NOISE_TIME_SPEED;
+      const { foregroundAlpha: fgAlpha } = colorsRef.current;
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
@@ -92,7 +97,7 @@ export function TopographicContours() {
         const absLevel = Math.abs(level);
         const opacity = 0.12 + 0.55 * absLevel;
         const isMajor = Math.abs(level * 10) % 5 < 0.1;
-        ctx.strokeStyle = `rgba(255,255,255,${opacity})`;
+        ctx.strokeStyle = fgAlpha(opacity);
         ctx.lineWidth = isMajor ? 1.2 : 0.6;
 
         for (let row = 0; row < rows - 1; row++) {
@@ -173,11 +178,11 @@ export function TopographicContours() {
   }, []);
 
   return (
-    <div className="absolute inset-0 bg-black">
+    <div className="absolute inset-0 bg-background">
       <canvas ref={canvasRef} data-testid="contours-canvas" className="absolute inset-0" />
       <div
         data-testid="contours-time-overlay"
-        className="absolute inset-0 flex flex-col items-center justify-center text-white"
+        className="absolute inset-0 flex flex-col items-center justify-center text-foreground"
         style={{ pointerEvents: "none" }}
       >
         <div className="flex items-baseline gap-1" style={{ fontWeight: 100 }}>

@@ -1,4 +1,5 @@
 import { formatDate, formatTime } from "@/components/art-clock/art-clock";
+import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
 import { useEffect, useRef } from "react";
 
@@ -436,6 +437,9 @@ export function PixelArt() {
   const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
   const { hours, minutes, period } = formatTime(now);
   const dateStr = formatDate(now);
+  const { foreground, background } = useClockColors();
+  const colorsRef = useRef({ foreground, background });
+  colorsRef.current = { foreground, background };
 
   useEffect(() => {
     timeRef.current = { hours, minutes, period, dateStr };
@@ -472,16 +476,17 @@ export function PixelArt() {
       const h = window.innerHeight;
       const dpr = window.devicePixelRatio;
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
+      const { foreground: fg, background: bg } = colorsRef.current;
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingEnabled = false;
 
-      // Black background
-      ctx.fillStyle = "#000000";
+      // Background
+      ctx.fillStyle = bg;
       ctx.fillRect(0, 0, w, h);
 
       // Stars — twinkle by toggling on slow sine
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = fg;
       for (const star of starsRef.current) {
         const on = Math.sin(elapsed * 0.7 + star.phase) > 0.3;
         if (on) {
@@ -510,7 +515,7 @@ export function PixelArt() {
         (bgBuildingsRef.current[bgBuildingsRef.current.length - 1]?.x +
           (bgBuildingsRef.current[bgBuildingsRef.current.length - 1]?.width ?? 0) +
           GRID || w);
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = fg;
       const bgSpan = bgBuildingsRef.current.reduce(
         (acc, b) => Math.max(acc, b.x + b.width + GRID),
         0,
@@ -521,8 +526,8 @@ export function PixelArt() {
           const by = h - b.height;
           if (bx + b.width < 0 || bx > w) continue;
           ctx.fillRect(bx, by, b.width, b.height);
-          // Carve windows out (black)
-          ctx.fillStyle = "#000000";
+          // Carve windows out (background color)
+          ctx.fillStyle = bg;
           const ww = GRID - 2;
           const wh = GRID - 2;
           for (let row = 0; row < b.windowRows; row++) {
@@ -536,7 +541,7 @@ export function PixelArt() {
               }
             }
           }
-          ctx.fillStyle = "#ffffff";
+          ctx.fillStyle = fg;
         }
       }
 
@@ -552,7 +557,7 @@ export function PixelArt() {
           const by = h - b.height;
           if (bx + b.width < 0 || bx > w) continue;
           ctx.fillRect(bx, by, b.width, b.height);
-          ctx.fillStyle = "#000000";
+          ctx.fillStyle = bg;
           const ww = GRID - 2;
           const wh = GRID - 2;
           for (let row = 0; row < b.windowRows; row++) {
@@ -565,7 +570,7 @@ export function PixelArt() {
               }
             }
           }
-          ctx.fillStyle = "#ffffff";
+          ctx.fillStyle = fg;
         }
       }
 
@@ -579,7 +584,7 @@ export function PixelArt() {
       const timeX = Math.round((w - totalW) / (GRID * 3)) * (GRID * 3);
       const timeY = Math.round((h * 0.18) / (GRID * 3)) * (GRID * 3);
 
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = fg;
       drawText(ctx, timeStr, timeX, timeY, timeCellSize);
       const periodX = timeX + timeW + timeCellSize * 2;
       const periodY = timeY + timeCellSize * 4; // baseline align — period sits lower
@@ -604,7 +609,7 @@ export function PixelArt() {
   }, []);
 
   return (
-    <div className="absolute inset-0 bg-black">
+    <div className="absolute inset-0 bg-background">
       <canvas ref={canvasRef} data-testid="pixel-art-canvas" className="absolute inset-0" />
       <div
         data-testid="pixel-art-time-overlay"

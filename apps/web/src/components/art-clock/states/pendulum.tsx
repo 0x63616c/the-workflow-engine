@@ -1,4 +1,5 @@
 import { formatDate, formatTime } from "@/components/art-clock/art-clock";
+import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
 import { useEffect, useRef } from "react";
 
@@ -18,6 +19,9 @@ export function Pendulum() {
   const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
   const { hours, minutes, period } = formatTime(now);
   const dateStr = formatDate(now);
+  const { foregroundAlpha } = useClockColors();
+  const colorsRef = useRef({ foregroundAlpha });
+  colorsRef.current = { foregroundAlpha };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -39,6 +43,7 @@ export function Pendulum() {
       const h = window.innerHeight;
       const dpr = window.devicePixelRatio;
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
+      const { foregroundAlpha: fgAlpha } = colorsRef.current;
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
@@ -63,7 +68,7 @@ export function Pendulum() {
         ctx.beginPath();
         ctx.moveTo(pivotX, 0);
         ctx.lineTo(pos.x, pos.y);
-        ctx.strokeStyle = `rgba(255,255,255,${opacity})`;
+        ctx.strokeStyle = fgAlpha(opacity);
         ctx.lineWidth = 1.5;
         ctx.stroke();
       }
@@ -80,11 +85,11 @@ export function Pendulum() {
   }, []);
 
   return (
-    <div className="absolute inset-0 bg-black">
+    <div className="absolute inset-0 bg-background">
       <canvas ref={canvasRef} data-testid="pendulum-canvas" className="absolute inset-0" />
       <div
         data-testid="pendulum-time-overlay"
-        className="absolute top-6 left-0 right-0 flex flex-col items-center text-white"
+        className="absolute top-6 left-0 right-0 flex flex-col items-center text-foreground"
         style={{ pointerEvents: "none" }}
       >
         <div className="flex items-baseline gap-1" style={{ fontWeight: 100 }}>

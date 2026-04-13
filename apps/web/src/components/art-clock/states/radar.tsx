@@ -1,4 +1,5 @@
 import { formatDate, formatTime } from "@/components/art-clock/art-clock";
+import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
 import { useEffect, useRef } from "react";
 
@@ -29,6 +30,9 @@ export function Radar() {
   const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
   const { hours, minutes, period } = formatTime(now);
   const dateStr = formatDate(now);
+  const { foreground, foregroundAlpha } = useClockColors();
+  const colorsRef = useRef({ foreground, foregroundAlpha });
+  colorsRef.current = { foreground, foregroundAlpha };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -56,11 +60,12 @@ export function Radar() {
       const cx = w / 2;
       const cy = h / 2;
       const maxR = Math.min(w, h) * 0.42;
+      const { foreground: fg, foregroundAlpha: fgAlpha } = colorsRef.current;
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
 
-      ctx.strokeStyle = "rgba(255,255,255,0.15)";
+      ctx.strokeStyle = fgAlpha(0.15);
       ctx.lineWidth = 0.5;
       for (let ring = 1; ring <= 4; ring++) {
         ctx.beginPath();
@@ -75,7 +80,7 @@ export function Radar() {
       ctx.lineTo(cx, cy + maxR);
       ctx.stroke();
 
-      ctx.fillStyle = "rgba(255,255,255,0.3)";
+      ctx.fillStyle = fgAlpha(0.3);
       ctx.font = "100 10px 'GeistMono', monospace";
       ctx.textAlign = "center";
       ctx.fillText("N", cx, cy - maxR - 6);
@@ -92,7 +97,7 @@ export function Radar() {
         const opacity = (1 - fraction) * 0.12;
         ctx.beginPath();
         ctx.arc(cx, cy, maxR * 0.01, arcStart - 0.05, arcStart + 0.05);
-        ctx.strokeStyle = `rgba(255,255,255,${opacity})`;
+        ctx.strokeStyle = fgAlpha(opacity);
         ctx.lineWidth = maxR;
         ctx.stroke();
       }
@@ -100,7 +105,7 @@ export function Radar() {
       ctx.beginPath();
       ctx.moveTo(cx, cy);
       ctx.lineTo(cx + maxR * Math.cos(sweepAngle), cy + maxR * Math.sin(sweepAngle));
-      ctx.strokeStyle = "rgba(255,255,255,0.7)";
+      ctx.strokeStyle = fgAlpha(0.7);
       ctx.lineWidth = 1;
       ctx.stroke();
 
@@ -124,7 +129,7 @@ export function Radar() {
           const by = cy + blip.radius * Math.sin(blip.angle - Math.PI / 2);
           ctx.beginPath();
           ctx.arc(bx, by, 3, 0, 2 * Math.PI);
-          ctx.fillStyle = `rgba(255,255,255,${opacity})`;
+          ctx.fillStyle = fgAlpha(opacity);
           ctx.fill();
         }
       }
@@ -141,11 +146,11 @@ export function Radar() {
   }, []);
 
   return (
-    <div className="absolute inset-0 bg-black">
+    <div className="absolute inset-0 bg-background">
       <canvas ref={canvasRef} data-testid="radar-canvas" className="absolute inset-0" />
       <div
         data-testid="radar-time-overlay"
-        className="absolute inset-0 flex flex-col items-center justify-center text-white"
+        className="absolute inset-0 flex flex-col items-center justify-center text-foreground"
         style={{ pointerEvents: "none" }}
       >
         <div

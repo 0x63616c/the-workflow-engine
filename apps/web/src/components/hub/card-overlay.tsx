@@ -137,7 +137,7 @@ export function CardOverlay() {
           <motion.div
             key="clock-overlay"
             data-testid="card-overlay"
-            className="fixed inset-0 z-50 bg-black"
+            className="fixed inset-0 z-50 bg-background"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -155,13 +155,13 @@ export function CardOverlay() {
                 type="button"
                 data-testid="clock-dismiss"
                 onClick={contractCard}
-                className="absolute top-4 right-4 z-20 p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+                className="absolute top-4 right-4 z-20 p-2 rounded-full bg-foreground/5 hover:bg-foreground/10 transition-colors"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={CLOSE_BUTTON_TRANSITION}
               >
-                <X className="w-5 h-5 text-white/60" />
+                <X className="w-5 h-5 text-foreground/60" />
               </motion.button>
             </div>
           </motion.div>

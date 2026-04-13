@@ -61,8 +61,8 @@ class ClockStateBoundary extends Component<ClockStateBoundaryProps, ClockStateBo
   render() {
     if (this.state.hasError) {
       return (
-        <div className="absolute inset-0 flex items-center justify-center bg-black">
-          <p className="text-white/40 text-sm">This clock state failed to load</p>
+        <div className="absolute inset-0 flex items-center justify-center bg-background">
+          <p className="text-foreground/40 text-sm">This clock state failed to load</p>
         </div>
       );
     }
@@ -114,20 +114,20 @@ export function ClockStateCarousel({ controlsVisible = true }: ClockStateCarouse
         type="button"
         data-testid="clock-prev"
         onClick={goPrev}
-        className="absolute left-0 top-0 bottom-0 w-20 z-10 flex items-center justify-center hover:bg-white/5 active:bg-white/10 transition-colors"
+        className="absolute left-0 top-0 bottom-0 w-20 z-10 flex items-center justify-center hover:bg-foreground/5 active:bg-foreground/10 transition-colors"
         style={controlStyle}
       >
-        <ChevronLeft className="w-8 h-8 text-white/60" />
+        <ChevronLeft className="w-8 h-8 text-foreground/60" />
       </button>
 
       <button
         type="button"
         data-testid="clock-next"
         onClick={goNext}
-        className="absolute right-0 top-0 bottom-0 w-20 z-10 flex items-center justify-center hover:bg-white/5 active:bg-white/10 transition-colors"
+        className="absolute right-0 top-0 bottom-0 w-20 z-10 flex items-center justify-center hover:bg-foreground/5 active:bg-foreground/10 transition-colors"
         style={controlStyle}
       >
-        <ChevronRight className="w-8 h-8 text-white/60" />
+        <ChevronRight className="w-8 h-8 text-foreground/60" />
       </button>
 
       <StateIndicatorDots

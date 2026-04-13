@@ -1,4 +1,5 @@
 import { formatDate, formatTime } from "@/components/art-clock/art-clock";
+import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
 import { useEffect, useRef } from "react";
 
@@ -12,6 +13,9 @@ export function WaveformPulse() {
   const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
   const { hours, minutes, period } = formatTime(now);
   const dateStr = formatDate(now);
+  const { background, foregroundAlpha } = useClockColors();
+  const colorsRef = useRef({ background, foregroundAlpha });
+  colorsRef.current = { background, foregroundAlpha };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -33,17 +37,21 @@ export function WaveformPulse() {
       const h = window.innerHeight;
       const dpr = window.devicePixelRatio;
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
+      const { background: bg, foregroundAlpha: fgAlpha } = colorsRef.current;
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      ctx.fillStyle = "rgba(0,0,0,0.15)";
+      // Use background color with alpha for the trailing fade effect
+      ctx.fillStyle = bg;
+      ctx.globalAlpha = 0.15;
       ctx.fillRect(0, 0, w, h);
+      ctx.globalAlpha = 1;
 
       const amplitude =
         0.04 * h * (0.5 + 0.5 * Math.sin((elapsed / CALM_ACTIVE_PERIOD_S) * 2 * Math.PI));
 
       ctx.beginPath();
-      ctx.strokeStyle = "rgba(255,255,255,0.9)";
+      ctx.strokeStyle = fgAlpha(0.9);
       ctx.lineWidth = 1;
 
       for (let x = 0; x <= w; x++) {
@@ -69,11 +77,11 @@ export function WaveformPulse() {
   }, []);
 
   return (
-    <div className="absolute inset-0 bg-black">
+    <div className="absolute inset-0 bg-background">
       <canvas ref={canvasRef} data-testid="waveform-canvas" className="absolute inset-0" />
       <div
         data-testid="waveform-time-overlay"
-        className="absolute inset-0 flex flex-col items-center justify-center text-white"
+        className="absolute inset-0 flex flex-col items-center justify-center text-foreground"
         style={{ pointerEvents: "none" }}
       >
         <div className="flex items-baseline gap-1 mb-20" style={{ fontWeight: 100 }}>

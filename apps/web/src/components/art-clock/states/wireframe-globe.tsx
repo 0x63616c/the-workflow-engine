@@ -3,6 +3,7 @@ import {
   CONTINENT_NAMES,
   CONTINENT_OUTLINES,
 } from "@/components/art-clock/states/continent-outlines";
+import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
 import { Billboard, Line, OrbitControls, Text } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
@@ -61,7 +62,7 @@ function cityTimeInfo(tz: string): { time: string; period: string; offset: strin
   }
 }
 
-function ContinentLines() {
+function ContinentLines({ color }: { color: string }) {
   const points = useMemo(() => {
     return CONTINENT_OUTLINES.map((outline) => {
       const linePoints: [number, number, number][] = [];
@@ -89,7 +90,7 @@ function ContinentLines() {
         <Line
           key={CONTINENT_NAMES[i]}
           points={pts}
-          color="#aaccee"
+          color={color}
           lineWidth={1.5}
           transparent
           opacity={0.85}
@@ -99,7 +100,11 @@ function ContinentLines() {
   );
 }
 
-function CityLabel({ city }: { city: (typeof CITIES)[number] }) {
+function CityLabel({
+  city,
+  foreground,
+  background,
+}: { city: (typeof CITIES)[number]; foreground: string; background: string }) {
   const pos = latLngToVec3(city.lat, city.lng, GLOBE_RADIUS);
   const labelPos = latLngToVec3(city.lat, city.lng, GLOBE_RADIUS + 0.45);
   const info = cityTimeInfo(city.tz);
@@ -108,17 +113,17 @@ function CityLabel({ city }: { city: (typeof CITIES)[number] }) {
     <group>
       <mesh position={pos}>
         <sphereGeometry args={[0.05, 8, 8]} />
-        <meshBasicMaterial color="white" />
+        <meshBasicMaterial color={foreground} />
       </mesh>
       <Billboard position={labelPos}>
-        {/* Black background plane behind text */}
+        {/* Background plane behind text */}
         <mesh position={[0, 0, -0.001]}>
           <planeGeometry args={[1.2, 0.3]} />
-          <meshBasicMaterial color="black" transparent opacity={0.9} />
+          <meshBasicMaterial color={background} transparent opacity={0.9} />
         </mesh>
         <Text
           fontSize={0.1}
-          color="white"
+          color={foreground}
           anchorX="center"
           anchorY="bottom"
           position={[0, 0.01, 0]}
@@ -128,7 +133,7 @@ function CityLabel({ city }: { city: (typeof CITIES)[number] }) {
         </Text>
         <Text
           fontSize={0.08}
-          color="rgba(255,255,255,0.7)"
+          color={foreground}
           anchorX="center"
           anchorY="top"
           position={[0, -0.02, 0]}
@@ -138,7 +143,7 @@ function CityLabel({ city }: { city: (typeof CITIES)[number] }) {
       </Billboard>
       <Line
         points={[pos.toArray(), labelPos.toArray()]}
-        color="white"
+        color={foreground}
         lineWidth={0.5}
         transparent
         opacity={0.4}
@@ -147,8 +152,13 @@ function CityLabel({ city }: { city: (typeof CITIES)[number] }) {
   );
 }
 
-function Globe() {
+function Globe({ foreground, background }: { foreground: string; background: string }) {
   const groupRef = useRef<THREE.Group>(null);
+  // Muted version of foreground for wireframe sphere
+  const wireframeColor = useMemo(() => {
+    // Mix foreground toward background for a subtle wireframe
+    return foreground;
+  }, [foreground]);
 
   useFrame(() => {
     if (groupRef.current) {
@@ -161,15 +171,15 @@ function Globe() {
       {/* Subtle wireframe sphere */}
       <mesh>
         <sphereGeometry args={[GLOBE_RADIUS, GRID_SEGMENTS, GRID_SEGMENTS]} />
-        <meshBasicMaterial wireframe color="#1a1a2e" transparent opacity={0.3} />
+        <meshBasicMaterial wireframe color={wireframeColor} transparent opacity={0.15} />
       </mesh>
 
       {/* Continent outlines */}
-      <ContinentLines />
+      <ContinentLines color={foreground} />
 
       {/* City markers */}
       {CITIES.map((city) => (
-        <CityLabel key={city.name} city={city} />
+        <CityLabel key={city.name} city={city} foreground={foreground} background={background} />
       ))}
     </group>
   );
@@ -179,9 +189,10 @@ export function WireframeGlobe() {
   const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
   const { hours, minutes, period } = formatTime(now);
   const [canvasReady, setCanvasReady] = useState(false);
+  const { foreground, background } = useClockColors();
 
   return (
-    <div className="absolute inset-0 bg-black">
+    <div className="absolute inset-0 bg-background">
       <div
         className="transition-opacity duration-700"
         style={{ height: "70%", width: "100%", opacity: canvasReady ? 1 : 0 }}
@@ -192,13 +203,13 @@ export function WireframeGlobe() {
           onCreated={() => setCanvasReady(true)}
         >
           <OrbitControls enabled={false} />
-          <Globe />
+          <Globe foreground={foreground} background={background} />
         </Canvas>
       </div>
 
       <div
         data-testid="globe-time-overlay"
-        className="absolute bottom-16 left-0 right-0 flex items-baseline justify-center gap-1 text-white"
+        className="absolute bottom-16 left-0 right-0 flex items-baseline justify-center gap-1 text-foreground"
         style={{ fontWeight: 100 }}
       >
         <span className="text-9xl">{hours}</span>
