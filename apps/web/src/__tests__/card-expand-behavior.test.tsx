@@ -73,7 +73,7 @@ describe("Card expansion behavior", () => {
 
   it("WifiCard does NOT set expandedCardId (no expanded view)", () => {
     render(<WifiCard />);
-    fireEvent.click(screen.getByTestId("widget-card-wifi"));
+    fireEvent.click(screen.getByTestId("widget-card-wifi-front"));
     expect(useCardExpansionStore.getState().expandedCardId).toBeNull();
   });
 

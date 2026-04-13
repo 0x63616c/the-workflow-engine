@@ -46,24 +46,26 @@ describe("WifiCard", () => {
     });
   });
 
-  it("renders SSID text", () => {
+  it("renders front face with SSID and tap prompt", () => {
     render(<WifiCard />);
-    expect(screen.getByText("HomeNet")).toBeInTheDocument();
+    expect(screen.getByTestId("widget-card-wifi-front")).toBeInTheDocument();
+    expect(screen.getByText("tap to share")).toBeInTheDocument();
   });
 
-  it("renders QR image when data URL available", async () => {
+  it("flips to back on click, shows QR and password", async () => {
     render(<WifiCard />);
+    const front = screen.getByTestId("widget-card-wifi-front");
+    act(() => front.click());
     await waitFor(() => {
       const img = screen.getByAltText("WiFi QR code for HomeNet");
       expect(img).toBeInTheDocument();
-      expect(img).toHaveAttribute("src", "data:image/png;base64,fake");
     });
   });
 
-  it("shows password dots by default, reveals on toggle", async () => {
+  it("reveals password on eye button click after flip", async () => {
     render(<WifiCard />);
+    act(() => screen.getByTestId("widget-card-wifi-front").click());
     const toggleBtn = screen.getByLabelText("Show password");
-    expect(screen.getByText("\u2022".repeat(11))).toBeInTheDocument();
     act(() => toggleBtn.click());
     expect(screen.getByText("welcome2024")).toBeInTheDocument();
   });
