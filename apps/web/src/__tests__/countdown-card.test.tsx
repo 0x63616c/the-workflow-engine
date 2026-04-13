@@ -24,7 +24,8 @@ describe("CountdownCardMini", () => {
     );
 
     expect(screen.getByText("Coachella W2")).toBeInTheDocument();
-    expect(screen.getByText("5 days")).toBeInTheDocument();
+    expect(screen.getByText("5")).toBeInTheDocument();
+    expect(screen.getByText("days")).toBeInTheDocument();
 
     vi.useRealTimers();
   });
@@ -50,7 +51,8 @@ describe("CountdownCardMini", () => {
       />,
     );
 
-    expect(screen.getByText("Today")).toBeInTheDocument();
+    expect(screen.getByText("0")).toBeInTheDocument();
+    expect(screen.getByText("today")).toBeInTheDocument();
 
     vi.useRealTimers();
   });
@@ -71,7 +73,8 @@ describe("CountdownCardMini", () => {
       />,
     );
 
-    expect(screen.getByText("1 day")).toBeInTheDocument();
+    expect(screen.getByText("1")).toBeInTheDocument();
+    expect(screen.getByText("days")).toBeInTheDocument();
 
     vi.useRealTimers();
   });

@@ -51,6 +51,10 @@ export function CountdownCardMini({ nextEvent }: CountdownCardMiniProps) {
   const expandCard = useCardExpansionStore((s) => s.expandCard);
   const config = getCardConfig("countdown");
 
+  const days = nextEvent ? daysUntil(nextEvent.date) : null;
+  const daysNumber = days !== null ? Math.abs(days) : null;
+  const daysLabel = days !== null && days < 0 ? "days ago" : "days";
+
   return (
     <BentoCard
       testId="widget-card-countdown"
@@ -62,23 +66,30 @@ export function CountdownCardMini({ nextEvent }: CountdownCardMiniProps) {
       }}
       onClick={() => expandCard("countdown")}
     >
-      <div className="flex flex-col justify-between h-full">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Calendar size={16} className="text-muted-foreground" />
-            <span className="text-base text-muted-foreground">Countdown</span>
+      <div className="flex items-center justify-between h-full gap-4">
+        <div className="flex flex-col justify-center min-w-0">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Calendar size={13} className="text-muted-foreground shrink-0" />
+            <span className="text-xs text-muted-foreground">Countdown</span>
           </div>
           {nextEvent ? (
-            <>
-              <div className="text-xl font-medium text-foreground truncate">{nextEvent.title}</div>
-              <div className="text-3xl font-light text-foreground mt-1">
-                {formatDaysRemaining(daysUntil(nextEvent.date))}
-              </div>
-            </>
+            <div className="text-xl font-medium text-foreground leading-tight truncate">
+              {nextEvent.title}
+            </div>
           ) : (
-            <div className="text-xl text-muted-foreground/50">No events</div>
+            <div className="text-base text-muted-foreground/50">No events</div>
           )}
         </div>
+        {nextEvent && days !== null && (
+          <div className="flex flex-col items-end justify-center shrink-0">
+            <div className="text-6xl font-bold text-foreground leading-none tabular-nums">
+              {days === 0 ? "0" : daysNumber}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {days === 0 ? "today" : daysLabel}
+            </div>
+          </div>
+        )}
       </div>
     </BentoCard>
   );
