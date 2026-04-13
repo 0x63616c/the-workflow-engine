@@ -1,5 +1,5 @@
 import { PinPadOverlay } from "@/components/hub/pin-pad";
-import { usePinStore } from "@/stores/pin-store";
+import { PIN_LENGTH, usePinStore } from "@/stores/pin-store";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -36,6 +36,15 @@ vi.mock("framer-motion", () => ({
 const mockOnSuccess = vi.fn();
 const mockOnDismiss = vi.fn();
 
+const TEST_PIN = "123456";
+const WRONG_PIN = "987654";
+
+function clickPin(pin: string) {
+  for (const digit of pin) {
+    fireEvent.click(screen.getByTestId(`pin-btn-${digit}`));
+  }
+}
+
 function renderOverlay(mode: "unlock" | "setup-enter" | "setup-confirm" = "unlock") {
   return render(<PinPadOverlay mode={mode} onSuccess={mockOnSuccess} onDismiss={mockOnDismiss} />);
 }
@@ -56,10 +65,10 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("PinPadOverlay: dot indicators", () => {
-  it("renders 4 dot indicators initially all empty", () => {
+  it("renders PIN_LENGTH dot indicators initially all empty", () => {
     renderOverlay();
     const dots = screen.getAllByTestId("pin-dot");
-    expect(dots).toHaveLength(4);
+    expect(dots).toHaveLength(PIN_LENGTH);
     for (const dot of dots) {
       expect(dot).toHaveAttribute("data-filled", "false");
     }
@@ -75,14 +84,11 @@ describe("PinPadOverlay: dot indicators", () => {
     });
   });
 
-  it("fills all 4 dots after 4 digit presses and calls onSuccess", async () => {
-    // Use setup-confirm to verify all 4 dots fill without PIN check clearing them
+  it("fills all dots after PIN_LENGTH digit presses and calls onSuccess", async () => {
     renderOverlay("setup-confirm");
-    for (const digit of ["1", "2", "3", "4"]) {
-      fireEvent.click(screen.getByTestId(`pin-btn-${digit}`));
-    }
+    clickPin(TEST_PIN);
     await waitFor(() => {
-      expect(mockOnSuccess).toHaveBeenCalledWith("1234");
+      expect(mockOnSuccess).toHaveBeenCalledWith(TEST_PIN);
     });
   });
 });
@@ -124,14 +130,11 @@ describe("PinPadOverlay: digit buttons", () => {
   });
 });
 
-describe("PinPadOverlay: auto-submit on 4 digits", () => {
+describe("PinPadOverlay: auto-submit on PIN_LENGTH digits", () => {
   it("calls onSuccess when correct PIN entered (unlock mode)", async () => {
-    await usePinStore.getState().setPin("1234");
+    usePinStore.getState().setPin(TEST_PIN);
     renderOverlay("unlock");
-
-    for (const digit of ["1", "2", "3", "4"]) {
-      fireEvent.click(screen.getByTestId(`pin-btn-${digit}`));
-    }
+    clickPin(TEST_PIN);
 
     await waitFor(() => {
       expect(mockOnSuccess).toHaveBeenCalledTimes(1);
@@ -139,12 +142,9 @@ describe("PinPadOverlay: auto-submit on 4 digits", () => {
   });
 
   it("shakes and clears on wrong PIN — does not call onSuccess", async () => {
-    await usePinStore.getState().setPin("1234");
+    usePinStore.getState().setPin(TEST_PIN);
     renderOverlay("unlock");
-
-    for (const digit of ["9", "8", "7", "6"]) {
-      fireEvent.click(screen.getByTestId(`pin-btn-${digit}`));
-    }
+    clickPin(WRONG_PIN);
 
     await waitFor(() => {
       expect(stableControls.start).toHaveBeenCalled();
@@ -159,11 +159,9 @@ describe("PinPadOverlay: auto-submit on 4 digits", () => {
     expect(mockOnSuccess).not.toHaveBeenCalled();
   });
 
-  it("does not accept more than 4 digits", async () => {
+  it("does not accept more than PIN_LENGTH digits", async () => {
     renderOverlay("setup-confirm");
-    for (const digit of ["1", "2", "3", "4"]) {
-      fireEvent.click(screen.getByTestId(`pin-btn-${digit}`));
-    }
+    clickPin(TEST_PIN);
     await waitFor(() => expect(mockOnSuccess).toHaveBeenCalled());
     mockOnSuccess.mockClear();
     fireEvent.click(screen.getByTestId("pin-btn-5"));
@@ -185,17 +183,14 @@ describe("PinPadOverlay: cancel / dismiss", () => {
 });
 
 describe("PinPadOverlay: setup mode", () => {
-  it("in setup-enter mode, calls onSuccess with the PIN after 4 digits without saving hash", async () => {
+  it("in setup-enter mode, calls onSuccess with the PIN without saving hash", async () => {
     renderOverlay("setup-enter");
-
-    for (const digit of ["5", "6", "7", "8"]) {
-      fireEvent.click(screen.getByTestId(`pin-btn-${digit}`));
-    }
+    clickPin("567890");
 
     await waitFor(() => {
       expect(mockOnSuccess).toHaveBeenCalledTimes(1);
     });
-    expect(mockOnSuccess).toHaveBeenCalledWith("5678");
+    expect(mockOnSuccess).toHaveBeenCalledWith("567890");
     expect(usePinStore.getState().pinHash).toBeNull();
   });
 });

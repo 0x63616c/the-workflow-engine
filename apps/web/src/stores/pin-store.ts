@@ -1,12 +1,16 @@
 import { create } from "zustand";
 
-async function hashPin(pin: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(pin);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+// FNV-1a hash. No crypto.subtle dependency, works on plain HTTP.
+function hashPin(pin: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < pin.length; i++) {
+    hash ^= pin.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
 }
+
+export const PIN_LENGTH = 6;
 
 function loadFromStorage(): { pinHash: string | null; enabled: boolean } {
   try {
@@ -25,8 +29,8 @@ interface PinState {
 }
 
 interface PinActions {
-  setPin: (pin: string) => Promise<void>;
-  verifyPin: (pin: string) => Promise<boolean>;
+  setPin: (pin: string) => void;
+  verifyPin: (pin: string) => boolean;
   unlock: () => void;
   lock: () => void;
   enable: () => void;
@@ -40,8 +44,8 @@ export const usePinStore = create<PinState & PinActions>((set, get) => ({
   enabled: initial.enabled,
   isUnlocked: false,
 
-  setPin: async (pin: string) => {
-    const hash = await hashPin(pin);
+  setPin: (pin: string) => {
+    const hash = hashPin(pin);
     try {
       globalThis.localStorage?.setItem("pin-hash", hash);
       globalThis.localStorage?.setItem("pin-enabled", "true");
@@ -51,11 +55,10 @@ export const usePinStore = create<PinState & PinActions>((set, get) => ({
     set({ pinHash: hash, enabled: true });
   },
 
-  verifyPin: async (pin: string) => {
+  verifyPin: (pin: string) => {
     const { pinHash } = get();
     if (!pinHash) return false;
-    const hash = await hashPin(pin);
-    return hash === pinHash;
+    return hashPin(pin) === pinHash;
   },
 
   unlock: () => set({ isUnlocked: true }),

@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Store is imported after mocks are set up
 let usePinStore: typeof import("@/stores/pin-store").usePinStore;
 
 const mockLocalStorage = {
@@ -27,19 +26,8 @@ beforeEach(async () => {
   mockLocalStorage.removeItem.mockClear();
   globalThis.localStorage = mockLocalStorage as unknown as Storage;
 
-  // Mock crypto.subtle for hashing (use vi.stubGlobal since crypto is read-only in jsdom)
-  const mockDigest = vi.fn(async (_algorithm: string, data: ArrayBuffer) => {
-    // Deterministic fake hash: just return bytes of input as-is padded to 32 bytes
-    const view = new Uint8Array(data);
-    const result = new Uint8Array(32);
-    result.set(view.slice(0, Math.min(view.length, 32)));
-    return result.buffer;
-  });
-  vi.stubGlobal("crypto", { subtle: { digest: mockDigest } });
-
   const mod = await import("@/stores/pin-store");
   usePinStore = mod.usePinStore;
-  // Reset store state
   usePinStore.setState({ pinHash: null, enabled: false, isUnlocked: false });
 });
 
@@ -48,48 +36,44 @@ afterEach(() => {
 });
 
 describe("pin-store: setPin", () => {
-  it("stores a hashed value, not plaintext", async () => {
+  it("stores a hashed value, not plaintext", () => {
     const { setPin } = usePinStore.getState();
-    await setPin("1234");
+    setPin("123456");
     const { pinHash } = usePinStore.getState();
     expect(pinHash).not.toBeNull();
-    expect(pinHash).not.toBe("1234");
-    // Should be a hex string (64 chars for SHA-256)
+    expect(pinHash).not.toBe("123456");
     expect(pinHash).toMatch(/^[0-9a-f]+$/);
   });
 
-  it("persists pinHash to localStorage", async () => {
+  it("persists pinHash to localStorage", () => {
     const { setPin } = usePinStore.getState();
-    await setPin("5678");
+    setPin("567890");
     expect(mockLocalStorage.setItem).toHaveBeenCalledWith("pin-hash", expect.any(String));
   });
 
-  it("enables PIN after setPin", async () => {
+  it("enables PIN after setPin", () => {
     const { setPin } = usePinStore.getState();
-    await setPin("1234");
+    setPin("123456");
     expect(usePinStore.getState().enabled).toBe(true);
   });
 });
 
 describe("pin-store: verifyPin", () => {
-  it("returns true for correct PIN", async () => {
+  it("returns true for correct PIN", () => {
     const { setPin, verifyPin } = usePinStore.getState();
-    await setPin("1234");
-    const result = await verifyPin("1234");
-    expect(result).toBe(true);
+    setPin("123456");
+    expect(verifyPin("123456")).toBe(true);
   });
 
-  it("returns false for wrong PIN", async () => {
+  it("returns false for wrong PIN", () => {
     const { setPin, verifyPin } = usePinStore.getState();
-    await setPin("1234");
-    const result = await verifyPin("9999");
-    expect(result).toBe(false);
+    setPin("123456");
+    expect(verifyPin("999999")).toBe(false);
   });
 
-  it("returns false when no PIN is set", async () => {
+  it("returns false when no PIN is set", () => {
     const { verifyPin } = usePinStore.getState();
-    const result = await verifyPin("1234");
-    expect(result).toBe(false);
+    expect(verifyPin("123456")).toBe(false);
   });
 });
 
@@ -134,17 +118,14 @@ describe("pin-store: enable / disable", () => {
 
 describe("pin-store: localStorage persistence on init", () => {
   it("loads pinHash and enabled from localStorage on module init", async () => {
-    mockLocalStorage.store["pin-hash"] =
-      "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890";
+    mockLocalStorage.store["pin-hash"] = "abcdef12";
     mockLocalStorage.store["pin-enabled"] = "true";
 
     vi.resetModules();
     const mod = await import("@/stores/pin-store");
     const freshStore = mod.usePinStore;
 
-    expect(freshStore.getState().pinHash).toBe(
-      "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-    );
+    expect(freshStore.getState().pinHash).toBe("abcdef12");
     expect(freshStore.getState().enabled).toBe(true);
   });
 
