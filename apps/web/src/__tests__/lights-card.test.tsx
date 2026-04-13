@@ -37,34 +37,22 @@ beforeEach(() => {
 });
 
 describe("LightsCard", () => {
-  it("shows On when majority of lights on", () => {
+  it("shows ON when majority of lights on", () => {
     setupHook({ onCount: 3, totalCount: 5 });
     render(<LightsCard />);
-    expect(screen.getByText("On")).toBeInTheDocument();
+    expect(screen.getByText("ON")).toBeInTheDocument();
   });
 
-  it("shows Off when minority of lights on", () => {
+  it("shows OFF when minority of lights on", () => {
     setupHook({ onCount: 2, totalCount: 5 });
     render(<LightsCard />);
-    expect(screen.getByText("Off")).toBeInTheDocument();
+    expect(screen.getByText("OFF")).toBeInTheDocument();
   });
 
-  it("shows Off when exactly half on", () => {
+  it("shows OFF when exactly half on", () => {
     setupHook({ onCount: 2, totalCount: 4 });
     render(<LightsCard />);
-    expect(screen.getByText("Off")).toBeInTheDocument();
-  });
-
-  it("shows Turn Off label when majority on", () => {
-    setupHook({ onCount: 3, totalCount: 5 });
-    render(<LightsCard />);
-    expect(screen.getByText("Turn Off")).toBeInTheDocument();
-  });
-
-  it("shows Turn On label when majority off", () => {
-    setupHook({ onCount: 1, totalCount: 5 });
-    render(<LightsCard />);
-    expect(screen.getByText("Turn On")).toBeInTheDocument();
+    expect(screen.getByText("OFF")).toBeInTheDocument();
   });
 
   it("calls turnOff when card clicked and majority on", () => {

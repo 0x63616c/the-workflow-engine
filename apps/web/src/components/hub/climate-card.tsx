@@ -8,8 +8,16 @@ const TEMP_STEP_DEGREES = 1;
 
 export function ClimateCard() {
   const config = getCardConfig("climate");
-  const { entityId, currentTemp, targetTemp, tempUnit, isLoading, isError, setTemperature } =
-    useClimate();
+  const {
+    entityId,
+    currentTemp,
+    targetTemp,
+    tempUnit,
+    hvacMode,
+    isLoading,
+    isError,
+    setTemperature,
+  } = useClimate();
 
   const disabled = isLoading || isError || entityId == null;
   const displayTemp = displayValue({
@@ -60,10 +68,13 @@ export function ClimateCard() {
         {/* Bottom half - tap to decrease */}
         {/* biome-ignore lint/a11y/useKeyWithClickEvents: touch target for temp control */}
         <div
-          className={`flex-1 flex flex-col justify-center items-center p-3 ${disabled ? "opacity-40" : "cursor-pointer active:bg-foreground/5"}`}
+          className={`flex-1 flex flex-col justify-center items-center p-3 relative ${disabled ? "opacity-40" : "cursor-pointer active:bg-foreground/5"}`}
           onClick={disabled ? undefined : handleTempDown}
         >
           <ChevronDown size={20} className="text-muted-foreground/40" />
+          <span className="absolute bottom-3 right-4 text-base text-muted-foreground/50">
+            {displayValue({ isLoading, isError, value: hvacMode === "off" ? "OFF" : "ON" })}
+          </span>
         </div>
       </div>
     </div>

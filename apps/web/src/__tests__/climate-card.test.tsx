@@ -69,13 +69,13 @@ describe("ClimateCard", () => {
   it("shows N/A on error", () => {
     setupHook({ isError: true });
     render(<ClimateCard />);
-    expect(screen.getByText("N/A")).toBeInTheDocument();
+    expect(screen.getAllByText("N/A").length).toBeGreaterThanOrEqual(1);
   });
 
   it("shows -- when loading", () => {
     setupHook({ isLoading: true });
     render(<ClimateCard />);
-    expect(screen.getByText("--")).toBeInTheDocument();
+    expect(screen.getAllByText("--").length).toBeGreaterThanOrEqual(1);
   });
 
   it("does not call setTemperature when disabled", () => {
