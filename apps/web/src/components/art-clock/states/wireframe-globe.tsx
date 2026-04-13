@@ -5,7 +5,7 @@ import {
 } from "@/components/art-clock/states/continent-outlines";
 import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
-import { Billboard, Line, OrbitControls, Text } from "@react-three/drei";
+import { Billboard, Line, Text } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useMemo, useRef, useState } from "react";
 import * as THREE from "three";
@@ -195,14 +195,18 @@ export function WireframeGlobe() {
     <div className="absolute inset-0 bg-background">
       <div
         className="transition-opacity duration-700"
-        style={{ height: "70%", width: "100%", opacity: canvasReady ? 1 : 0 }}
+        style={{
+          height: "70%",
+          width: "100%",
+          opacity: canvasReady ? 1 : 0,
+          pointerEvents: "none",
+        }}
       >
         <Canvas
           orthographic
           camera={{ position: [0, 0, 5], zoom: 130 }}
           onCreated={() => setCanvasReady(true)}
         >
-          <OrbitControls enabled={false} />
           <Globe foreground={foreground} background={background} />
         </Canvas>
       </div>
