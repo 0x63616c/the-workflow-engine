@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import { env } from "../../env";
 
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
-const MODEL = "google/gemma-4-31b-it:free";
+const MODEL = "google/gemma-4-31b-it";
 
 const client = new OpenAI({
   apiKey: env.OPENROUTER_API_KEY,
