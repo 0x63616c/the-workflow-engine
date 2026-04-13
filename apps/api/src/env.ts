@@ -19,6 +19,9 @@ export const envSchema = z
     INNGEST_DEV: z.coerce.number().int().default(1),
     HA_URL: z.string().url().default("http://homeassistant.local:8123"),
     HA_TOKEN: z.string().min(1),
+    SLACK_BOT_TOKEN: z.string().min(1).startsWith("xoxb-"),
+    SLACK_APP_TOKEN: z.string().min(1).startsWith("xapp-"),
+    OPENROUTER_API_KEY: z.string().min(1),
   })
   .refine(
     (data) => data.NODE_ENV !== "production" || data.INNGEST_EVENT_KEY !== INNGEST_DEV_EVENT_KEY,

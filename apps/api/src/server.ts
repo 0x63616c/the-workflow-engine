@@ -8,6 +8,7 @@ import { EFFECTIVE_PORT, env } from "./env";
 import { inngest } from "./inngest/client";
 import { ha } from "./integrations/homeassistant";
 import { haRelay } from "./integrations/homeassistant/ws-relay";
+import { initSlack, stopSlack } from "./integrations/slack";
 import { log } from "./lib/logger";
 import { createContext } from "./trpc/context";
 import { appRouter } from "./trpc/routers";
@@ -15,6 +16,7 @@ import { appRouter } from "./trpc/routers";
 await runMigrations();
 await ha.init();
 haRelay.connect();
+await initSlack();
 
 const inngestHandler = serve({
   client: inngest,
@@ -91,6 +93,7 @@ const server = Bun.serve({
 log.info({ port: server.port, env: env.NODE_ENV, build: env.BUILD_HASH }, "API started");
 
 const shutdown = async () => {
+  await stopSlack();
   haRelay.destroy();
   await pool.end();
   process.exit(0);

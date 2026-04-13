@@ -3,72 +3,61 @@ display_information:
   description: The best bot! <3
   background_color: "#000000"
 features:
+  assistant_view:
+    assistant_description: Evee is a friendly assistant for the World Wide Webb workspace.
+    suggested_prompts: []
   bot_user:
     display_name: Evee
     always_online: true
 oauth_config:
   scopes:
     bot:
-      # Messaging
       - chat:write
       - chat:write.public
       - chat:write.customize
-      # Channels
       - channels:read
       - channels:history
       - channels:manage
       - channels:join
       - channels:write.invites
       - channels:write.topic
-      # Private channels
       - groups:read
       - groups:history
       - groups:write
       - groups:write.invites
-      # DMs
       - im:read
       - im:history
       - im:write
-      # Group DMs
       - mpim:read
       - mpim:history
       - mpim:write
-      # Reactions / Pins / Bookmarks
       - reactions:read
       - reactions:write
       - pins:read
       - pins:write
       - bookmarks:read
       - bookmarks:write
-      # Files
       - files:read
       - files:write
-      # Users
       - users:read
       - users:read.email
       - users.profile:read
       - users:write
-      # App features
       - app_mentions:read
       - assistant:write
       - commands
       - links:read
       - links:write
       - metadata.message:read
-      # Workflows / Canvases / Calls
       - canvases:read
       - canvases:write
       - calls:read
       - calls:write
       - workflows.templates:write
-      # Connections
-      - connections:write
       - conversations.connect:manage
       - conversations.connect:read
       - conversations.connect:write
-      # DND
       - dnd:read
-      # Misc
       - emoji:read
       - team:read
       - usergroups:read
@@ -111,6 +100,12 @@ oauth_config:
       - team:read
   pkce_enabled: false
 settings:
+  event_subscriptions:
+    bot_events:
+      - app_mention
+      - message.im
+      - assistant_thread_started
+      - assistant_thread_context_changed
   org_deploy_enabled: false
-  socket_mode_enabled: false
+  socket_mode_enabled: true
   token_rotation_enabled: false
