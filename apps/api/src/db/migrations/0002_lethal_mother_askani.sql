@@ -1,4 +1,4 @@
-CREATE TABLE "app_config" (
+CREATE TABLE IF NOT EXISTS "app_config" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"key" text NOT NULL,
 	"value" jsonb NOT NULL,
