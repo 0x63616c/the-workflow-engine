@@ -36,15 +36,11 @@ export interface ClimateState {
   hvacMode: string;
   hvacAction: string | null;
   fanOn: boolean;
-  fanEntityId: string | null;
   targetTemp: number | null;
 }
 
 export async function getClimateState(): Promise<ClimateState | null> {
-  const [entities, fanEntities] = await Promise.all([
-    ha.getEntities("climate"),
-    ha.getEntities("fan"),
-  ]);
+  const entities = await ha.getEntities("climate");
   if (entities.length === 0) return null;
 
   const entity = entities.sort((a, b) => a.entity_id.localeCompare(b.entity_id))[0];
@@ -52,10 +48,8 @@ export async function getClimateState(): Promise<ClimateState | null> {
   const attrs = entity.attributes;
   const hvacMode = entity.state;
   const hvacAction = (attrs.hvac_action as string) ?? null;
-  const fanOn = hvacMode === "fan_only" || (hvacMode !== "off" && hvacAction === "fan");
-
-  const climateName = entity.entity_id.replace("climate.", "");
-  const matchingFan = fanEntities.find((e) => e.entity_id.replace("fan.", "") === climateName);
+  const fanMode = (attrs.fan_mode as string) ?? null;
+  const fanOn = fanMode === "on";
 
   return {
     entityId: entity.entity_id,
@@ -65,31 +59,22 @@ export async function getClimateState(): Promise<ClimateState | null> {
     hvacMode,
     hvacAction,
     fanOn,
-    fanEntityId: matchingFan?.entity_id ?? null,
     targetTemp: typeof attrs.temperature === "number" ? attrs.temperature : null,
   };
 }
 
-export async function turnFanOn(entityId: string, fanEntityId?: string | null): Promise<void> {
-  if (fanEntityId) {
-    await ha.callService("fan", "turn_on", { entity_id: fanEntityId });
-  } else {
-    await ha.callService("climate", "set_hvac_mode", {
-      entity_id: entityId,
-      hvac_mode: "fan_only",
-    });
-  }
+export async function turnFanOn(entityId: string): Promise<void> {
+  await ha.callService("climate", "set_fan_mode", {
+    entity_id: entityId,
+    fan_mode: "on",
+  });
 }
 
-export async function turnFanOff(entityId: string, fanEntityId?: string | null): Promise<void> {
-  if (fanEntityId) {
-    await ha.callService("fan", "turn_off", { entity_id: fanEntityId });
-  } else {
-    await ha.callService("climate", "set_hvac_mode", {
-      entity_id: entityId,
-      hvac_mode: "off",
-    });
-  }
+export async function turnFanOff(entityId: string): Promise<void> {
+  await ha.callService("climate", "set_fan_mode", {
+    entity_id: entityId,
+    fan_mode: "auto",
+  });
 }
 
 export async function setTemperature(entityId: string, temperature: number): Promise<void> {

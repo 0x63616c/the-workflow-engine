@@ -42,7 +42,6 @@ export function useClimate() {
     hvacMode: string;
     hvacAction: string | null;
     fanOn: boolean;
-    fanEntityId: string | null;
     targetTemp: number | null;
   };
 
@@ -50,7 +49,6 @@ export function useClimate() {
 
   return {
     entityId: state?.entityId ?? null,
-    fanEntityId: state?.fanEntityId ?? null,
     friendlyName: state?.friendlyName ?? null,
     currentTemp: state?.currentTemp ?? null,
     tempUnit: state?.tempUnit ?? "F",
@@ -59,10 +57,8 @@ export function useClimate() {
     isLoading: climate.isLoading,
     isError: hasError || climate.isError,
     targetTemp: state?.targetTemp ?? null,
-    turnFanOn: (entityId: string, fanEntityId?: string | null) =>
-      fanOnMutation.mutate({ entityId, fanEntityId }),
-    turnFanOff: (entityId: string, fanEntityId?: string | null) =>
-      fanOffMutation.mutate({ entityId, fanEntityId }),
+    turnFanOn: (entityId: string) => fanOnMutation.mutate({ entityId }),
+    turnFanOff: (entityId: string) => fanOffMutation.mutate({ entityId }),
     setTemperature: (entityId: string, temperature: number) =>
       setTempMutation.mutate({ entityId, temperature }),
   };
