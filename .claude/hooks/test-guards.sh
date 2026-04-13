@@ -35,6 +35,8 @@ clean_git() {
 }
 
 clean_git init -q
+clean_git config user.email "test@test"
+clean_git config user.name "test"
 clean_git commit --allow-empty -m "init" -q
 
 run_bash_hook() {
