@@ -1,4 +1,5 @@
 import { formatDate, formatTime } from "@/components/art-clock/art-clock";
+import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
 import { useEffect, useRef } from "react";
 
@@ -17,6 +18,9 @@ export function Lissajous() {
   const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
   const { hours, minutes, period } = formatTime(now);
   const dateStr = formatDate(now);
+  const { background, foregroundAlpha } = useClockColors();
+  const colorsRef = useRef({ background, foregroundAlpha });
+  colorsRef.current = { background, foregroundAlpha };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -30,7 +34,7 @@ export function Lissajous() {
       canvas.style.width = `${window.innerWidth}px`;
       canvas.style.height = `${window.innerHeight}px`;
       ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
-      ctx.fillStyle = "black";
+      ctx.fillStyle = colorsRef.current.background;
       ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
     };
     resize();
@@ -41,11 +45,14 @@ export function Lissajous() {
       const h = window.innerHeight;
       const dpr = window.devicePixelRatio;
       const elapsed = (Date.now() - startTimeRef.current) * DRIFT_SPEED;
+      const { background: bg, foregroundAlpha: fgAlpha } = colorsRef.current;
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      ctx.fillStyle = `rgba(0,0,0,${FADE_ALPHA})`;
+      ctx.fillStyle = bg;
+      ctx.globalAlpha = FADE_ALPHA;
       ctx.fillRect(0, 0, w, h);
+      ctx.globalAlpha = 1;
 
       const cx = w / 2;
       const cy = h / 2;
@@ -57,7 +64,7 @@ export function Lissajous() {
       const delta = phaseRef.current;
 
       ctx.beginPath();
-      ctx.strokeStyle = "rgba(255,255,255,0.18)";
+      ctx.strokeStyle = fgAlpha(0.18);
       ctx.lineWidth = 0.6;
 
       const step = (2 * Math.PI) / POINTS_PER_FRAME;
@@ -84,11 +91,11 @@ export function Lissajous() {
   }, []);
 
   return (
-    <div className="absolute inset-0 bg-black">
+    <div className="absolute inset-0 bg-background">
       <canvas ref={canvasRef} data-testid="lissajous-canvas" className="absolute inset-0" />
       <div
         data-testid="lissajous-time-overlay"
-        className="absolute inset-0 flex flex-col items-center justify-center text-white"
+        className="absolute inset-0 flex flex-col items-center justify-center text-foreground"
         style={{ pointerEvents: "none" }}
       >
         <div className="flex items-baseline gap-1" style={{ fontWeight: 100 }}>

@@ -10,20 +10,11 @@ vi.mock("@/components/art-clock/art-clock", () => ({
 vi.mock("@/components/art-clock/states/constellation-map", () => ({
   ConstellationMap: () => <div data-testid="state-constellation-map" />,
 }));
-vi.mock("@/components/art-clock/states/pendulum", () => ({
-  Pendulum: () => <div data-testid="state-pendulum" />,
-}));
 vi.mock("@/components/art-clock/states/waveform-pulse", () => ({
   WaveformPulse: () => <div data-testid="state-waveform-pulse" />,
 }));
 vi.mock("@/components/art-clock/states/particle-drift", () => ({
   ParticleDrift: () => <div data-testid="state-particle-drift" />,
-}));
-vi.mock("@/components/art-clock/states/black-hole", () => ({
-  BlackHole: () => <div data-testid="state-black-hole" />,
-}));
-vi.mock("@/components/art-clock/states/radar", () => ({
-  Radar: () => <div data-testid="state-radar" />,
 }));
 vi.mock("@/components/art-clock/states/solar-system", () => ({
   SolarSystem: () => <div data-testid="state-solar-system" />,
@@ -80,10 +71,10 @@ describe("ClockStateCarousel", () => {
     expect(screen.getByTestId("state-constellation-map")).toBeInTheDocument();
   });
 
-  it("renders state-radar when clockStateIndex is 6", () => {
-    useNavigationStore.setState({ clockStateIndex: 6 });
+  it("renders state-solar-system when clockStateIndex is 4", () => {
+    useNavigationStore.setState({ clockStateIndex: 4 });
     render(<ClockStateCarousel />);
-    expect(screen.getByTestId("state-radar")).toBeInTheDocument();
+    expect(screen.getByTestId("state-solar-system")).toBeInTheDocument();
   });
 
   it("renders StateIndicatorDots with matching activeIndex", () => {
@@ -94,9 +85,9 @@ describe("ClockStateCarousel", () => {
     expect(indicator).toHaveStyle({ opacity: "1" });
   });
 
-  it("renders 13 indicator dots", () => {
+  it("renders 9 indicator dots", () => {
     render(<ClockStateCarousel />);
     const dots = screen.getAllByTestId(/^state-dot-/);
-    expect(dots).toHaveLength(12);
+    expect(dots).toHaveLength(9);
   });
 });

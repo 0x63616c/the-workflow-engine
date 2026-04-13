@@ -1,4 +1,5 @@
 import { formatDate, formatTime } from "@/components/art-clock/art-clock";
+import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
 import { useEffect, useRef } from "react";
 
@@ -41,6 +42,9 @@ export function FlowField() {
   const now = useCurrentTime(CLOCK_UPDATE_INTERVAL_MS);
   const { hours, minutes, period } = formatTime(now);
   const dateStr = formatDate(now);
+  const { background, foregroundAlpha } = useClockColors();
+  const colorsRef = useRef({ background, foregroundAlpha });
+  colorsRef.current = { background, foregroundAlpha };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -65,11 +69,14 @@ export function FlowField() {
       const h = window.innerHeight;
       const dpr = window.devicePixelRatio;
       const t = (Date.now() - startTimeRef.current) * FIELD_SPEED;
+      const { background: bg, foregroundAlpha: fgAlpha } = colorsRef.current;
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      ctx.fillStyle = `rgba(0,0,0,${TRAIL_ALPHA})`;
+      ctx.fillStyle = bg;
+      ctx.globalAlpha = TRAIL_ALPHA;
       ctx.fillRect(0, 0, w, h);
+      ctx.globalAlpha = 1;
 
       ctx.lineWidth = 0.7;
 
@@ -91,7 +98,7 @@ export function FlowField() {
               : 0.6;
 
         ctx.beginPath();
-        ctx.strokeStyle = `rgba(255,255,255,${opacity})`;
+        ctx.strokeStyle = fgAlpha(opacity);
         ctx.moveTo(prevX, prevY);
         ctx.lineTo(p.x, p.y);
         ctx.stroke();
@@ -117,11 +124,11 @@ export function FlowField() {
   }, []);
 
   return (
-    <div className="absolute inset-0 bg-black">
+    <div className="absolute inset-0 bg-background">
       <canvas ref={canvasRef} data-testid="flow-field-canvas" className="absolute inset-0" />
       <div
         data-testid="flow-field-time-overlay"
-        className="absolute inset-0 flex flex-col items-center justify-center text-white"
+        className="absolute inset-0 flex flex-col items-center justify-center text-foreground"
         style={{ pointerEvents: "none" }}
       >
         <div className="flex items-baseline gap-1" style={{ fontWeight: 100 }}>
