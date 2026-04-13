@@ -24,6 +24,7 @@ vi.mock("@/hooks/use-current-time", () => ({
 
 vi.mock("@/components/art-clock/art-clock", () => ({
   formatTime: () => ({ hours: "02", minutes: "30", period: "PM" }),
+  formatDate: () => "SATURDAY 11 APR 26",
 }));
 
 vi.mock("qrcode", () => ({
