@@ -85,9 +85,9 @@ describe("ClockStateCarousel", () => {
     expect(indicator).toHaveStyle({ opacity: "1" });
   });
 
-  it("renders 10 indicator dots", () => {
+  it("renders 11 indicator dots", () => {
     render(<ClockStateCarousel />);
     const dots = screen.getAllByTestId(/^state-dot-/);
-    expect(dots).toHaveLength(10);
+    expect(dots).toHaveLength(11);
   });
 });

@@ -64,9 +64,9 @@ describe("clockStateIndex", () => {
     expect(useNavigationStore.getState().clockStateIndex).toBe(0);
   });
 
-  it("setClockStateIndex clamps above 9 to 9", () => {
-    useNavigationStore.getState().setClockStateIndex(10);
-    expect(useNavigationStore.getState().clockStateIndex).toBe(9);
+  it("setClockStateIndex clamps above 10 to 10", () => {
+    useNavigationStore.getState().setClockStateIndex(11);
+    expect(useNavigationStore.getState().clockStateIndex).toBe(10);
   });
 
   it("setClockStateIndex clamps NaN to 0", () => {
@@ -85,7 +85,7 @@ describe("clockStateIndex", () => {
     expect(useNavigationStore.getState().clockStateIndex).toBe(3);
   });
 
-  it("CLOCK_STATE_COUNT is 10", () => {
-    expect(CLOCK_STATE_COUNT).toBe(10);
+  it("CLOCK_STATE_COUNT is 11", () => {
+    expect(CLOCK_STATE_COUNT).toBe(11);
   });
 });
