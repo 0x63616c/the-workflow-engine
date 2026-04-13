@@ -309,6 +309,7 @@ export function SettingsCardExpanded() {
   if (pinSetupMode === "setup-enter") {
     return (
       <PinPadOverlay
+        key="setup-enter"
         mode="setup-enter"
         onSuccess={handleSetupEnterSuccess}
         onDismiss={() => setPinSetupMode("idle")}
@@ -319,6 +320,7 @@ export function SettingsCardExpanded() {
   if (pinSetupMode === "setup-confirm") {
     return (
       <PinPadOverlay
+        key="setup-confirm"
         mode="setup-confirm"
         onSuccess={handleSetupConfirmSuccess}
         onDismiss={() => {
@@ -332,6 +334,7 @@ export function SettingsCardExpanded() {
   if (pinSetupMode === "change-verify") {
     return (
       <PinPadOverlay
+        key="change-verify"
         mode="unlock"
         onSuccess={handleChangePinVerifySuccess}
         onDismiss={() => setPinSetupMode("idle")}

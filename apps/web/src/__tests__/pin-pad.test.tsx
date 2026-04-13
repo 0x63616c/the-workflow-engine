@@ -185,7 +185,7 @@ describe("PinPadOverlay: cancel / dismiss", () => {
 });
 
 describe("PinPadOverlay: setup mode", () => {
-  it("in setup-enter mode, calls onSuccess with the PIN after 4 digits", async () => {
+  it("in setup-enter mode, calls onSuccess with the PIN after 4 digits without saving hash", async () => {
     renderOverlay("setup-enter");
 
     for (const digit of ["5", "6", "7", "8"]) {
@@ -195,6 +195,7 @@ describe("PinPadOverlay: setup mode", () => {
     await waitFor(() => {
       expect(mockOnSuccess).toHaveBeenCalledTimes(1);
     });
-    expect(usePinStore.getState().pinHash).not.toBeNull();
+    expect(mockOnSuccess).toHaveBeenCalledWith("5678");
+    expect(usePinStore.getState().pinHash).toBeNull();
   });
 });
