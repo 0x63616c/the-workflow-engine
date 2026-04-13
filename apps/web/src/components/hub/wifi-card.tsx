@@ -88,12 +88,12 @@ export function WifiCard() {
           >
             <div className="flex flex-col justify-between h-full">
               <div>
-                <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm text-muted-foreground">WiFi</span>
                   <div className="relative">
-                    <Wifi size={16} className="text-card-green-accent" />
+                    <Wifi size={14} className="text-card-green-accent" />
                     <div className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   </div>
-                  <span className="text-xl text-muted-foreground">WiFi</span>
                 </div>
                 <div className="text-4xl font-semibold text-foreground tracking-tight">
                   {WIFI_SSID}
