@@ -2,7 +2,7 @@
 # Save Home Assistant long-lived access token to 1Password and GitHub secrets
 
 echo "Paste your Home Assistant long-lived access token:"
-read -s HA_TOKEN
+read -rs HA_TOKEN
 
 if [ -z "$HA_TOKEN" ]; then
   echo "No token entered. Aborting."

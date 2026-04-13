@@ -20,7 +20,7 @@ launchctl bootout system/homebrew.mxcl.socket_vmnet 2>/dev/null || true
 sleep 1
 
 echo "[3/6] Writing bridged mode plist..."
-cat > "$PLIST" << 'PLIST_EOF'
+cat >"$PLIST" <<'PLIST_EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -48,7 +48,7 @@ echo "[4/6] Loading socket_vmnet into launchd..."
 launchctl bootstrap system "$PLIST"
 sleep 3
 
-if ps aux | grep -v grep | grep -q "vmnet-mode=bridged"; then
+if pgrep -f "vmnet-mode=bridged" >/dev/null; then
   echo "  OK: socket_vmnet running in bridged mode"
 else
   echo "  WARN: check logs:"
@@ -76,7 +76,7 @@ done
 echo ""
 echo ""
 echo "=== HA not responding after 60s ==="
-echo "  socket_vmnet: $(ps aux | grep -v grep | grep socket_vmnet | awk '{print $NF}')"
+echo "  socket_vmnet: $(pgrep -fa socket_vmnet | awk '{print $NF}')"
 echo "  ARP: $(arp -a | grep 192.168.0.38 || echo 'not found')"
-echo "  VM PID: $(cat $HAOS_DIR/haos.pid 2>/dev/null || echo 'not found')"
+echo "  VM PID: $(cat "$HAOS_DIR"/haos.pid 2>/dev/null || echo 'not found')"
 echo "Try: curl http://192.168.0.38:8123/api/"

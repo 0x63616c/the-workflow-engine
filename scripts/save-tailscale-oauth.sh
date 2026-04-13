@@ -20,12 +20,12 @@ op item create \
   --generate-password=false \
   "client-id=$CLIENT_ID" \
   "client-secret[password]=$CLIENT_SECRET" \
-  2>/dev/null && echo "Created new item" || \
-op item edit "$ITEM" \
-  --vault "$VAULT" \
-  "client-id=$CLIENT_ID" \
-  "client-secret[password]=$CLIENT_SECRET" \
-  2>/dev/null && echo "Updated existing item"
+  2>/dev/null && echo "Created new item" ||
+  op item edit "$ITEM" \
+    --vault "$VAULT" \
+    "client-id=$CLIENT_ID" \
+    "client-secret[password]=$CLIENT_SECRET" \
+    2>/dev/null && echo "Updated existing item"
 
 echo "Setting GitHub secrets..."
 gh secret set TS_OAUTH_CLIENT_ID --repo "$REPO" --body "$CLIENT_ID"
