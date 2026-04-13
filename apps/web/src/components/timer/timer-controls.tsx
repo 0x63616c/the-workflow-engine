@@ -26,7 +26,7 @@ export function TimerControls({
           aria-label="Start timer"
           disabled={startDisabled}
           onClick={onStart}
-          className="px-8 py-3 rounded-full bg-white text-black text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-transform"
+          className="px-8 py-3 rounded-full bg-foreground text-background text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-transform"
         >
           Start
         </button>
@@ -38,7 +38,7 @@ export function TimerControls({
             type="button"
             aria-label="Pause timer"
             onClick={onPause}
-            className="px-8 py-3 rounded-full bg-white/10 text-white text-sm font-medium active:scale-95 transition-transform"
+            className="px-8 py-3 rounded-full bg-foreground/10 text-foreground text-sm font-medium active:scale-95 transition-transform"
           >
             Pause
           </button>
@@ -46,7 +46,7 @@ export function TimerControls({
             type="button"
             aria-label="Reset timer"
             onClick={onReset}
-            className="px-6 py-3 rounded-full text-white/40 text-sm active:scale-95 transition-transform"
+            className="px-6 py-3 rounded-full text-foreground/40 text-sm active:scale-95 transition-transform"
           >
             Reset
           </button>
@@ -59,7 +59,7 @@ export function TimerControls({
             type="button"
             aria-label="Resume timer"
             onClick={onResume}
-            className="px-8 py-3 rounded-full bg-white/10 text-white text-sm font-medium active:scale-95 transition-transform"
+            className="px-8 py-3 rounded-full bg-foreground/10 text-foreground text-sm font-medium active:scale-95 transition-transform"
           >
             Resume
           </button>
@@ -67,7 +67,7 @@ export function TimerControls({
             type="button"
             aria-label="Reset timer"
             onClick={onReset}
-            className="px-6 py-3 rounded-full text-white/40 text-sm active:scale-95 transition-transform"
+            className="px-6 py-3 rounded-full text-foreground/40 text-sm active:scale-95 transition-transform"
           >
             Reset
           </button>
@@ -79,7 +79,7 @@ export function TimerControls({
           type="button"
           aria-label="Reset timer"
           onClick={onReset}
-          className="px-8 py-3 rounded-full bg-white/10 text-white text-sm font-medium active:scale-95 transition-transform"
+          className="px-8 py-3 rounded-full bg-foreground/10 text-foreground text-sm font-medium active:scale-95 transition-transform"
         >
           Reset
         </button>

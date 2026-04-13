@@ -48,13 +48,13 @@ export function SonosProgressBar({
 
   return (
     <div className="w-full">
-      <div className="relative w-full h-1 bg-white/10 rounded-full overflow-hidden">
+      <div className="relative w-full h-1 bg-foreground/10 rounded-full overflow-hidden">
         <div
-          className="absolute inset-y-0 left-0 bg-white/60 rounded-full"
+          className="absolute inset-y-0 left-0 bg-foreground/60 rounded-full"
           style={{ width: `${progress * 100}%` }}
         />
       </div>
-      <div className="flex justify-between mt-1 text-xs text-white/30">
+      <div className="flex justify-between mt-1 text-xs text-foreground/30">
         <span>{formatTime(position)}</span>
         <span>{formatTime(duration)}</span>
       </div>

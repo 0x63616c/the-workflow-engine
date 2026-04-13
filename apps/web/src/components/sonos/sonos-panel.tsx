@@ -26,7 +26,7 @@ export function SonosPanel() {
           type="button"
           aria-label="Back"
           onClick={() => setView("hub")}
-          className="text-white/60 active:text-white"
+          className="text-foreground/60 active:text-foreground"
         >
           <ChevronLeft size={24} />
         </button>
@@ -47,11 +47,11 @@ export function SonosPanel() {
 
           {/* Track Info */}
           <div className="text-center mb-6">
-            <div className="text-xl font-medium text-white truncate">
+            <div className="text-xl font-medium text-foreground truncate">
               {activeSpeaker.attributes.mediaTitle ?? "Unknown"}
             </div>
             {activeSpeaker.attributes.mediaArtist && (
-              <div className="text-sm text-white/50 mt-1 truncate">
+              <div className="text-sm text-muted-foreground mt-1 truncate">
                 {activeSpeaker.attributes.mediaArtist}
               </div>
             )}
@@ -79,7 +79,7 @@ export function SonosPanel() {
           </div>
 
           {/* Speaker List */}
-          <div className="border-t border-white/5 pt-6">
+          <div className="border-t border-border pt-6">
             <SonosSpeakerList players={players} setVolume={setVolume} />
           </div>
         </>

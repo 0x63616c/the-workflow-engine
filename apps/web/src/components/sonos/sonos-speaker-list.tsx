@@ -23,16 +23,16 @@ function SpeakerRow({
 
   return (
     <div className="flex items-center gap-4">
-      <span className="text-sm text-white/70 w-28 truncate">{player.friendlyName}</span>
+      <span className="text-sm text-foreground/70 w-28 truncate">{player.friendlyName}</span>
       <input
         type="range"
         min="0"
         max="100"
         defaultValue={player.attributes.volume}
         onChange={(e) => debouncedSetVolume(Number(e.target.value))}
-        className="flex-1 accent-white/60"
+        className="flex-1 accent-foreground/60"
       />
-      <span className="text-xs text-white/30 w-8 text-right">{player.attributes.volume}%</span>
+      <span className="text-xs text-foreground/30 w-8 text-right">{player.attributes.volume}%</span>
     </div>
   );
 }

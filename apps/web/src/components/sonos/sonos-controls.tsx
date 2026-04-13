@@ -16,7 +16,7 @@ export function SonosControls({
   sendCommand,
 }: SonosControlsProps) {
   const activeClass = "text-accent";
-  const inactiveClass = "text-white/40";
+  const inactiveClass = "text-foreground/40";
 
   return (
     <div className="flex items-center justify-center gap-8">
@@ -32,7 +32,7 @@ export function SonosControls({
         type="button"
         aria-label="Previous"
         onClick={() => sendCommand(entityId, "previous")}
-        className="p-2 rounded-full text-white/80"
+        className="p-2 rounded-full text-foreground/80"
       >
         <SkipBack size={22} />
       </button>
@@ -40,7 +40,7 @@ export function SonosControls({
         type="button"
         aria-label={isPlaying ? "Pause" : "Play"}
         onClick={() => sendCommand(entityId, isPlaying ? "pause" : "play")}
-        className="p-2 rounded-full text-white"
+        className="p-2 rounded-full text-foreground"
       >
         {isPlaying ? <Pause size={28} /> : <Play size={28} />}
       </button>
@@ -48,7 +48,7 @@ export function SonosControls({
         type="button"
         aria-label="Next"
         onClick={() => sendCommand(entityId, "next")}
-        className="p-2 rounded-full text-white/80"
+        className="p-2 rounded-full text-foreground/80"
       >
         <SkipForward size={22} />
       </button>
