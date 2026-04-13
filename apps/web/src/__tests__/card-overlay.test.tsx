@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("qrcode", () => ({
   default: {
     toString: vi.fn().mockResolvedValue("<svg>mock-qr</svg>"),
+    toDataURL: vi.fn().mockResolvedValue("data:image/png;base64,mock"),
   },
 }));
 

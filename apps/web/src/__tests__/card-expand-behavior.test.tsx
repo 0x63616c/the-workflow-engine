@@ -27,7 +27,10 @@ vi.mock("@/components/art-clock/art-clock", () => ({
 }));
 
 vi.mock("qrcode", () => ({
-  default: { toString: vi.fn().mockResolvedValue("<svg></svg>") },
+  default: {
+    toString: vi.fn().mockResolvedValue("<svg></svg>"),
+    toDataURL: vi.fn().mockResolvedValue("data:image/png;base64,mock"),
+  },
 }));
 
 vi.mock("@/hooks/use-sonos", () => ({
@@ -70,7 +73,7 @@ describe("Card expansion behavior", () => {
 
   it("WifiCard does NOT set expandedCardId (no expanded view)", () => {
     render(<WifiCard />);
-    fireEvent.click(screen.getByTestId("widget-card-wifi-front"));
+    fireEvent.click(screen.getByTestId("widget-card-wifi"));
     expect(useCardExpansionStore.getState().expandedCardId).toBeNull();
   });
 
