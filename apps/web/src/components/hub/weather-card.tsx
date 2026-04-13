@@ -39,6 +39,9 @@ export function WeatherCard({ temp, condition, high, low }: WeatherCardProps) {
       onClick={() => expandCard("weather")}
       className={`bg-gradient-to-br ${gradient} relative overflow-hidden`}
     >
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm text-muted-foreground">Temperature</span>
+      </div>
       <div className="flex items-start justify-between">
         <div>
           <span className="text-6xl font-light text-foreground tracking-tight">{temp}°</span>
