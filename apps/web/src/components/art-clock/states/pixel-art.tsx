@@ -1,4 +1,8 @@
 import { formatDate, formatTime } from "@/components/art-clock/art-clock";
+import {
+  canvasLogicalSize,
+  resizeCanvasToParent,
+} from "@/components/art-clock/states/canvas-utils";
 import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
 import { useEffect, useRef } from "react";
@@ -452,13 +456,7 @@ export function PixelArt() {
     if (!ctx) return;
 
     const resize = () => {
-      canvas.width = window.innerWidth * window.devicePixelRatio;
-      canvas.height = window.innerHeight * window.devicePixelRatio;
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
-
-      const w = window.innerWidth;
-      const h = window.innerHeight;
+      const { width: w, height: h } = resizeCanvasToParent(canvas);
       const gw = Math.ceil(w / GRID);
       const gh = Math.ceil(h / GRID);
       const bgMaxH = gh * 0.4 * GRID;
@@ -472,8 +470,7 @@ export function PixelArt() {
     window.addEventListener("resize", resize);
 
     const draw = () => {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
+      const { width: w, height: h } = canvasLogicalSize(canvas);
       const dpr = window.devicePixelRatio;
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
       const { foreground: fg, background: bg } = colorsRef.current;

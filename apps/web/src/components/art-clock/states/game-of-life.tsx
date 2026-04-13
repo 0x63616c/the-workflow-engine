@@ -1,4 +1,8 @@
 import { formatDate, formatTime } from "@/components/art-clock/art-clock";
+import {
+  canvasLogicalSize,
+  resizeCanvasToParent,
+} from "@/components/art-clock/states/canvas-utils";
 import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
 import { useEffect, useRef } from "react";
@@ -83,20 +87,16 @@ export function GameOfLife() {
     };
 
     const resize = () => {
-      canvas.width = window.innerWidth * window.devicePixelRatio;
-      canvas.height = window.innerHeight * window.devicePixelRatio;
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
-      colsRef.current = Math.ceil(window.innerWidth / CELL_SIZE_PX);
-      rowsRef.current = Math.ceil(window.innerHeight / CELL_SIZE_PX);
+      const { width, height } = resizeCanvasToParent(canvas);
+      colsRef.current = Math.ceil(width / CELL_SIZE_PX);
+      rowsRef.current = Math.ceil(height / CELL_SIZE_PX);
       seed();
     };
     resize();
     window.addEventListener("resize", resize);
 
     const draw = (timestamp: number) => {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
+      const { width: w, height: h } = canvasLogicalSize(canvas);
       const dpr = window.devicePixelRatio;
       const cols = colsRef.current;
       const rows = rowsRef.current;

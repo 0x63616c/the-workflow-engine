@@ -137,7 +137,7 @@ export function CardOverlay() {
           <motion.div
             key="clock-overlay"
             data-testid="card-overlay"
-            className="fixed inset-0 z-50 bg-background"
+            className="absolute inset-0 z-50 bg-background"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -169,7 +169,7 @@ export function CardOverlay() {
           <motion.div
             key="card-overlay"
             data-testid="card-overlay"
-            className="fixed inset-0 z-50"
+            className="absolute inset-0 z-50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
