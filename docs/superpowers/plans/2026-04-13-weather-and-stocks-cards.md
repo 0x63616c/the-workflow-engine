@@ -191,9 +191,9 @@ Expected: FAIL with "Cannot find module" or similar.
 ```typescript
 // apps/api/src/services/weather-service.ts
 
-// Kurve Wilshire, Los Angeles, CA
-const LATITUDE = 34.0617;
-const LONGITUDE = -118.2836;
+// TODO: Update coordinates to Calum's actual home location
+const LATITUDE = 28.0836;
+const LONGITUDE = -80.6081;
 
 const WEATHER_CODES: Record<number, string> = {
   0: "Clear sky",
@@ -1605,4 +1605,4 @@ Save screenshots to `docs/screenshots/` for both compact grid view and expanded 
 
 3. **Type consistency:** `WeatherData`, `StockQuote`, `CryptoQuote` types used consistently across service -> router -> hook -> component.
 
-4. **Coordinates:** Weather service uses Kurve Wilshire, Los Angeles (34.0617, -118.2836).
+4. **Open question:** The weather service hardcodes placeholder coordinates. Calum needs to confirm lat/long for his home location, or this can be made configurable via app-config.
