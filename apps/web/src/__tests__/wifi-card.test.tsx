@@ -28,6 +28,7 @@ describe("WifiCard", () => {
         expect.any(String),
         expect.objectContaining({
           color: { dark: "#ffffffFF", light: "#00000000" },
+          width: 400,
         }),
       );
     });
@@ -41,32 +42,55 @@ describe("WifiCard", () => {
         expect.any(String),
         expect.objectContaining({
           color: { dark: "#000000FF", light: "#ffffff00" },
+          width: 400,
         }),
       );
     });
   });
 
-  it("renders front face with SSID and tap prompt", () => {
+  it("shows QR code blurred by default", async () => {
     render(<WifiCard />);
-    expect(screen.getByTestId("widget-card-wifi-front")).toBeInTheDocument();
-    expect(screen.getByText("tap to share")).toBeInTheDocument();
+    await waitFor(() => screen.getByTestId("qr-container"));
+    const qrContainer = screen.getByTestId("qr-container");
+    expect(qrContainer.style.filter).toBe("blur(12px)");
   });
 
-  it("flips to back on click, shows QR and password", async () => {
+  it("unblurs QR on tap", async () => {
     render(<WifiCard />);
-    const front = screen.getByTestId("widget-card-wifi-front");
-    act(() => front.click());
-    await waitFor(() => {
-      const img = screen.getByAltText("WiFi QR code for HomeNet");
-      expect(img).toBeInTheDocument();
-    });
+    await waitFor(() => screen.getByTestId("qr-container"));
+    const card = screen.getByTestId("widget-card-wifi");
+    act(() => card.click());
+    const qrContainer = screen.getByTestId("qr-container");
+    expect(qrContainer.style.filter).toBe("blur(0px)");
   });
 
-  it("reveals password on eye button click after flip", async () => {
+  it("reblurs QR on second tap", async () => {
     render(<WifiCard />);
-    act(() => screen.getByTestId("widget-card-wifi-front").click());
+    await waitFor(() => screen.getByTestId("qr-container"));
+    const card = screen.getByTestId("widget-card-wifi");
+    act(() => card.click());
+    act(() => card.click());
+    const qrContainer = screen.getByTestId("qr-container");
+    expect(qrContainer.style.filter).toBe("blur(12px)");
+  });
+
+  it("shows SSID in header", () => {
+    render(<WifiCard />);
+    expect(screen.getByText("HomeNet")).toBeInTheDocument();
+  });
+
+  it("reveals password on eye button click", async () => {
+    render(<WifiCard />);
     const toggleBtn = screen.getByLabelText("Show password");
     act(() => toggleBtn.click());
     expect(screen.getByText("welcome2024")).toBeInTheDocument();
+  });
+
+  it("renders QR image with correct size class", async () => {
+    render(<WifiCard />);
+    await waitFor(() => screen.getByAltText("WiFi QR code for HomeNet"));
+    const img = screen.getByAltText("WiFi QR code for HomeNet");
+    expect(img.classList.contains("w-64")).toBe(true);
+    expect(img.classList.contains("h-64")).toBe(true);
   });
 });
