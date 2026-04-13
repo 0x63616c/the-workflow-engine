@@ -1,7 +1,7 @@
 import { SettingsCard, SettingsCardExpanded } from "@/components/hub/settings-card";
 import { useAppConfig } from "@/hooks/use-app-config";
 import { trpc } from "@/lib/trpc";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/hooks/use-app-config");
@@ -21,8 +21,23 @@ vi.mock("@/stores/card-expansion-store", () => ({
     selector({ expandCard: vi.fn(), expandedCardId: null }),
   ),
 }));
+vi.mock("@/stores/pin-store", () => ({
+  usePinStore: vi.fn(() => ({
+    enabled: false,
+    isUnlocked: true,
+    pinHash: null,
+    enable: vi.fn(),
+    disable: vi.fn(),
+    setPin: vi.fn(),
+    lock: vi.fn(),
+  })),
+}));
+
+const mockSetActivePalette = vi.fn();
 vi.mock("@/stores/theme-store", () => ({
-  useThemeStore: vi.fn((selector) => selector({ activePaletteId: "midnight" })),
+  useThemeStore: vi.fn((selector) =>
+    selector({ activePaletteId: "midnight", setActivePalette: mockSetActivePalette }),
+  ),
 }));
 
 const mockUseAppConfig = vi.mocked(useAppConfig);
@@ -43,6 +58,23 @@ function setupAppConfig({
   return setFn;
 }
 
+function setupHealthQueries() {
+  vi.mocked(trpc.health.ping.useQuery).mockReturnValue({
+    data: { status: "ok", timestamp: Date.now() },
+    isLoading: false,
+    isError: false,
+  } as never);
+  vi.mocked(trpc.health.buildHash.useQuery).mockReturnValue({
+    data: { hash: "abc123", deployedAt: "2026-04-12" },
+    isLoading: false,
+  } as never);
+  vi.mocked(trpc.devices.lights.useQuery).mockReturnValue({
+    data: undefined,
+    isLoading: false,
+    isError: false,
+  } as never);
+}
+
 describe("SettingsCard", () => {
   it("renders the gear icon and Settings label", () => {
     setupAppConfig();
@@ -53,44 +85,37 @@ describe("SettingsCard", () => {
 });
 
 describe("SettingsCardExpanded", () => {
-  it("renders Appearance section with theme placeholder", () => {
+  it("renders Appearance section with Dark and Light buttons", () => {
     setupAppConfig();
-    vi.mocked(trpc.health.ping.useQuery).mockReturnValue({
-      data: { status: "ok", timestamp: Date.now() },
-      isLoading: false,
-      isError: false,
-    } as never);
-    vi.mocked(trpc.health.buildHash.useQuery).mockReturnValue({
-      data: { hash: "abc123", deployedAt: "2026-04-12" },
-      isLoading: false,
-    } as never);
-    vi.mocked(trpc.devices.lights.useQuery).mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      isError: false,
-    } as never);
+    setupHealthQueries();
 
     render(<SettingsCardExpanded />);
     expect(screen.getByText("Appearance")).toBeDefined();
-    expect(screen.getByText(/theme/i)).toBeDefined();
+    expect(screen.getByRole("button", { name: /dark/i })).toBeDefined();
+    expect(screen.getByRole("button", { name: /light/i })).toBeDefined();
+  });
+
+  it("calls setActivePalette with midnight when Dark is clicked", () => {
+    setupAppConfig();
+    setupHealthQueries();
+
+    render(<SettingsCardExpanded />);
+    fireEvent.click(screen.getByRole("button", { name: /dark/i }));
+    expect(mockSetActivePalette).toHaveBeenCalledWith("midnight");
+  });
+
+  it("calls setActivePalette with daylight when Light is clicked", () => {
+    setupAppConfig();
+    setupHealthQueries();
+
+    render(<SettingsCardExpanded />);
+    fireEvent.click(screen.getByRole("button", { name: /light/i }));
+    expect(mockSetActivePalette).toHaveBeenCalledWith("daylight");
   });
 
   it("renders Display section with idle timeout", () => {
     setupAppConfig({ idleTimeout: 45000 });
-    vi.mocked(trpc.health.ping.useQuery).mockReturnValue({
-      data: { status: "ok", timestamp: Date.now() },
-      isLoading: false,
-      isError: false,
-    } as never);
-    vi.mocked(trpc.health.buildHash.useQuery).mockReturnValue({
-      data: { hash: "abc123", deployedAt: "2026-04-12" },
-      isLoading: false,
-    } as never);
-    vi.mocked(trpc.devices.lights.useQuery).mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      isError: false,
-    } as never);
+    setupHealthQueries();
 
     render(<SettingsCardExpanded />);
     expect(screen.getByText("Display")).toBeDefined();
@@ -121,20 +146,7 @@ describe("SettingsCardExpanded", () => {
 
   it("renders System section with API status", () => {
     setupAppConfig();
-    vi.mocked(trpc.health.ping.useQuery).mockReturnValue({
-      data: { status: "ok", timestamp: Date.now() },
-      isLoading: false,
-      isError: false,
-    } as never);
-    vi.mocked(trpc.health.buildHash.useQuery).mockReturnValue({
-      data: { hash: "abc123", deployedAt: "2026-04-12" },
-      isLoading: false,
-    } as never);
-    vi.mocked(trpc.devices.lights.useQuery).mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      isError: false,
-    } as never);
+    setupHealthQueries();
 
     render(<SettingsCardExpanded />);
     expect(screen.getByText(/api/i)).toBeDefined();
