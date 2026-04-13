@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { env } from "../../env";
 
-const OPENROUTER_BASE_URL = "https://api.openrouter.ai/api/v1";
+const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 const MODEL = "openrouter/auto";
 
 const client = new OpenAI({
