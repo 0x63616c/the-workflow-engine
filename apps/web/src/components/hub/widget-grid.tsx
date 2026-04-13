@@ -97,7 +97,7 @@ export function WidgetGrid() {
           return <Component key={card.id} />;
         })}
       </div>
-      <span className="fixed bottom-2 left-3 font-mono text-xs tabular-nums text-muted-foreground/30">
+      <span className="absolute bottom-2 right-16 font-mono text-xs tabular-nums text-muted-foreground/30">
         {remainingSeconds}
       </span>
     </div>

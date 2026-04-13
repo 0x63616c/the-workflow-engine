@@ -21,7 +21,7 @@ function Logo() {
     <img
       src="/logo.png"
       alt="The Workflow Engine"
-      className="fixed bottom-2 left-12 size-6 rounded-lg opacity-30"
+      className="absolute bottom-2 left-12 size-6 rounded-lg opacity-30"
     />
   );
 }
@@ -68,7 +68,7 @@ function DeployLabel() {
     <button
       type="button"
       onClick={() => setExpanded((prev) => !prev)}
-      className="fixed bottom-2 right-3 font-mono text-xs text-muted-foreground/50 hover:text-muted-foreground/70 transition-colors"
+      className="absolute bottom-2 right-3 font-mono text-xs text-muted-foreground/50 hover:text-muted-foreground/70 transition-colors"
     >
       {expanded && deployedAt ? (
         <span>

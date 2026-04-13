@@ -1,4 +1,8 @@
 import { formatDate, formatTime } from "@/components/art-clock/art-clock";
+import {
+  canvasLogicalSize,
+  resizeCanvasToParent,
+} from "@/components/art-clock/states/canvas-utils";
 import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
 import { useEffect, useRef } from "react";
@@ -44,18 +48,14 @@ export function ParticleDrift() {
     if (!ctx) return;
 
     const resize = () => {
-      canvas.width = window.innerWidth * window.devicePixelRatio;
-      canvas.height = window.innerHeight * window.devicePixelRatio;
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
-      particlesRef.current = initParticles(window.innerWidth, window.innerHeight);
+      const { width, height } = resizeCanvasToParent(canvas);
+      particlesRef.current = initParticles(width, height);
     };
     resize();
     window.addEventListener("resize", resize);
 
     const draw = () => {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
+      const { width: w, height: h } = canvasLogicalSize(canvas);
       const dpr = window.devicePixelRatio;
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
       const speedMul = 0.3 + 0.9 * 0.5 * (1 + Math.sin((elapsed / SPEED_CYCLE_S) * 2 * Math.PI));

@@ -102,7 +102,7 @@ export function PinPadOverlay({ mode, onSuccess, onDismiss }: PinPadOverlayProps
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-background">
+    <div className="absolute inset-0 z-[60] flex flex-col items-center justify-center bg-background">
       <button
         type="button"
         data-testid="pin-btn-dismiss"

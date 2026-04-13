@@ -1,4 +1,8 @@
 import { formatDate, formatTime } from "@/components/art-clock/art-clock";
+import {
+  canvasLogicalSize,
+  resizeCanvasToParent,
+} from "@/components/art-clock/states/canvas-utils";
 import { useClockColors } from "@/hooks/use-clock-colors";
 import { useCurrentTime } from "@/hooks/use-current-time";
 import { useEffect, useRef } from "react";
@@ -41,19 +45,15 @@ export function Radar() {
     if (!ctx) return;
 
     const resize = () => {
-      canvas.width = window.innerWidth * window.devicePixelRatio;
-      canvas.height = window.innerHeight * window.devicePixelRatio;
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
-      const maxR = Math.min(window.innerWidth, window.innerHeight) * 0.42;
+      const { width, height } = resizeCanvasToParent(canvas);
+      const maxR = Math.min(width, height) * 0.42;
       blipsRef.current = Array.from({ length: BLIP_COUNT }, () => randomBlip(maxR));
     };
     resize();
     window.addEventListener("resize", resize);
 
     const draw = () => {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
+      const { width: w, height: h } = canvasLogicalSize(canvas);
       const dpr = window.devicePixelRatio;
       const elapsed = Date.now() - startTimeRef.current;
       const sweepAngle = (elapsed * SWEEP_SPEED_RAD_PER_MS - Math.PI / 2) % (2 * Math.PI);
