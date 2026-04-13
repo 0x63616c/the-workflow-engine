@@ -10,9 +10,6 @@ vi.mock("@/components/art-clock/art-clock", () => ({
 vi.mock("@/components/art-clock/states/constellation-map", () => ({
   ConstellationMap: () => <div data-testid="state-constellation-map" />,
 }));
-vi.mock("@/components/art-clock/states/topographic-contours", () => ({
-  TopographicContours: () => <div data-testid="state-topographic-contours" />,
-}));
 vi.mock("@/components/art-clock/states/pendulum", () => ({
   Pendulum: () => <div data-testid="state-pendulum" />,
 }));
