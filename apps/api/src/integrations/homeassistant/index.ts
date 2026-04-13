@@ -8,10 +8,12 @@ export class HomeAssistantIntegration implements Integration {
 
   private baseUrl = "";
   private token = "";
+  private initialized = false;
 
   async init(): Promise<void> {
     this.baseUrl = env.HA_URL;
     this.token = env.HA_TOKEN;
+    this.initialized = true;
   }
 
   async getState(): Promise<Record<string, unknown>> {
@@ -30,6 +32,9 @@ export class HomeAssistantIntegration implements Integration {
   }
 
   private async request<T>(url: string, init?: RequestInit): Promise<T> {
+    if (!this.initialized) {
+      throw new HaError(0, "HomeAssistant integration not initialized — call init() first");
+    }
     let res: Response;
     try {
       res = await fetch(url, {

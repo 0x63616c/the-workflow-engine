@@ -41,10 +41,13 @@ export interface ClimateState {
 }
 
 export async function getClimateState(): Promise<ClimateState | null> {
-  const entities = await ha.getEntities("climate");
-  if (entities.length === 0) return null;
+  const [climateEntities, fanEntities] = await Promise.all([
+    ha.getEntities("climate"),
+    ha.getEntities("fan"),
+  ]);
+  if (climateEntities.length === 0) return null;
 
-  const entity = entities.sort((a, b) => a.entity_id.localeCompare(b.entity_id))[0];
+  const entity = climateEntities.sort((a, b) => a.entity_id.localeCompare(b.entity_id))[0];
 
   const attrs = entity.attributes;
   const hvacMode = entity.state;
@@ -52,7 +55,6 @@ export async function getClimateState(): Promise<ClimateState | null> {
   const fanOn = hvacMode === "fan_only" || (hvacMode !== "off" && hvacAction === "fan");
 
   const climateName = entity.entity_id.replace("climate.", "");
-  const fanEntities = await ha.getEntities("fan");
   const matchingFan = fanEntities.find((e) => e.entity_id.replace("fan.", "") === climateName);
 
   return {
