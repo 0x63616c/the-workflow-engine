@@ -104,6 +104,11 @@ Wall-mounted iPad Pro smart home panel. Living art, controls home.
 ### Slack Bot (Evee)
 
 - **Evee** is the project's Slack bot in the World Wide Webb workspace (worldwidewebbco.slack.com)
+- **Runtime**: Slack Bolt (Socket Mode), Vercel AI SDK (`ai` + `@openrouter/ai-sdk-provider`)
+- **Model**: `google/gemma-4-31b-it` via OpenRouter
+- **Code**: `apps/api/src/integrations/slack/` (modular: handler, thread, llm, format, tools)
+- **Capabilities**: thread context via `conversations.replies`, image support, tool calling (getCurrentDateTime, rollDice)
+- **Agentic loop**: `generateText()` with up to 50 tool-calling steps, 2-minute timeout
 - Posts deploy pipeline notifications (start, checks, deploy status) to Slack
 - Credentials stored in 1Password (`op://Homelab/...`)
 - App manifest: `infra/evee/slack-manifest.yml`
