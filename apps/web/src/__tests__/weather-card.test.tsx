@@ -63,4 +63,11 @@ describe("WeatherCard", () => {
     const dashes = screen.getAllByText("--");
     expect(dashes.length).toBeGreaterThan(0);
   });
+
+  it("shows error state", () => {
+    setupHook({ isError: true });
+    render(<WeatherCard />);
+    const naElements = screen.getAllByText("N/A");
+    expect(naElements.length).toBeGreaterThan(0);
+  });
 });

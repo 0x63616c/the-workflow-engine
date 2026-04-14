@@ -1,16 +1,6 @@
 import { useStocks } from "@/hooks/use-stocks";
+import { formatPercent, formatPrice } from "@/lib/stock-formatters";
 import { TrendingDown, TrendingUp } from "lucide-react";
-
-function formatPrice(price: number): string {
-  if (price >= 1000) return `$${price.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
-  if (price >= 1) return `$${price.toFixed(2)}`;
-  return `$${price.toFixed(4)}`;
-}
-
-function formatPercent(pct: number): string {
-  const sign = pct >= 0 ? "+" : "";
-  return `${sign}${pct.toFixed(2)}%`;
-}
 
 function QuoteRow({
   symbol,

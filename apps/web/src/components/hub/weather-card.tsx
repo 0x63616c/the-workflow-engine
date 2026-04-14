@@ -2,19 +2,8 @@ import { BentoCard } from "@/components/hub/bento-card";
 import { getCardConfig } from "@/components/hub/card-registry";
 import { displayValue } from "@/components/hub/display-value";
 import { useWeather } from "@/hooks/use-weather";
+import { getWeatherIcon } from "@/lib/weather-icons";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
-import { Cloud, CloudFog, CloudLightning, CloudRain, CloudSnow, CloudSun, Sun } from "lucide-react";
-
-function getWeatherIcon(code: number | null) {
-  if (code === null) return Cloud;
-  if (code === 0) return Sun;
-  if (code <= 3) return CloudSun;
-  if (code <= 48) return CloudFog;
-  if (code <= 67 || (code >= 80 && code <= 82)) return CloudRain;
-  if (code <= 77 || (code >= 85 && code <= 86)) return CloudSnow;
-  if (code >= 95) return CloudLightning;
-  return Cloud;
-}
 
 export function WeatherCard() {
   const config = getCardConfig("weather");

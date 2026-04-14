@@ -1,19 +1,9 @@
 import { BentoCard } from "@/components/hub/bento-card";
 import { getCardConfig } from "@/components/hub/card-registry";
 import { useStocks } from "@/hooks/use-stocks";
+import { formatPercent, formatPrice } from "@/lib/stock-formatters";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { TrendingUp } from "lucide-react";
-
-function formatPrice(price: number): string {
-  if (price >= 1000) return `$${price.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
-  if (price >= 1) return `$${price.toFixed(2)}`;
-  return `$${price.toFixed(3)}`;
-}
-
-function formatPercent(pct: number): string {
-  const sign = pct >= 0 ? "+" : "";
-  return `${sign}${pct.toFixed(2)}%`;
-}
 
 function ChangeText({ percent }: { percent: number }) {
   const colorClass = percent >= 0 ? "text-green-400" : "text-red-400";
@@ -40,7 +30,7 @@ export function StockTickerCard() {
     );
   }
 
-  const allQuotes = [...stocks.map((s) => ({ ...s, changePercent: s.changePercent })), ...crypto];
+  const allQuotes = [...stocks, ...crypto];
 
   return (
     <BentoCard

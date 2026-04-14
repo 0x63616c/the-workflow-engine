@@ -5,6 +5,7 @@ const POLL_INTERVAL_MS = 900_000; // 15 minutes
 export function useWeather() {
   const weather = trpc.weather.current.useQuery(undefined, {
     refetchInterval: POLL_INTERVAL_MS,
+    staleTime: POLL_INTERVAL_MS,
     retry: 2,
   });
 

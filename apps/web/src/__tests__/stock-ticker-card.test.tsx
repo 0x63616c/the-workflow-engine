@@ -110,4 +110,10 @@ describe("StockTickerCard", () => {
     render(<StockTickerCard />);
     expect(screen.getByText("--")).toBeInTheDocument();
   });
+
+  it("shows error state", () => {
+    setupHook({ isError: true, isLoading: false, stocks: [], crypto: [] });
+    render(<StockTickerCard />);
+    expect(screen.getByText("N/A")).toBeInTheDocument();
+  });
 });

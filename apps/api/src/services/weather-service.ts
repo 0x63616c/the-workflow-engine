@@ -65,8 +65,8 @@ export async function getCurrentWeather(): Promise<WeatherData> {
     temperature: data.current.temperature_2m,
     condition: WEATHER_CODES[data.current.weather_code] ?? "Unknown",
     conditionCode: data.current.weather_code,
-    highTemp: data.daily.temperature_2m_max[0],
-    lowTemp: data.daily.temperature_2m_min[0],
+    highTemp: data.daily.temperature_2m_max[0] ?? 0,
+    lowTemp: data.daily.temperature_2m_min[0] ?? 0,
     uvIndex: data.current.uv_index,
   };
 }
