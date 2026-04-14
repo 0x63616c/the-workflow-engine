@@ -48,6 +48,28 @@ const MOCK_DATA: Record<string, unknown> = {
     targetTemp: 70,
   },
 
+  "weather.current": {
+    temperature: 78,
+    condition: "Partly Cloudy",
+    conditionCode: "partly-cloudy",
+    highTemp: 84,
+    lowTemp: 65,
+    uvIndex: 6,
+  },
+
+  "stocks.quotes": {
+    stocks: [
+      { symbol: "AAPL", name: "Apple Inc.", price: 198.52, change: 2.34, changePercent: 1.19 },
+      { symbol: "GOOGL", name: "Alphabet Inc.", price: 174.21, change: -0.87, changePercent: -0.5 },
+      { symbol: "MSFT", name: "Microsoft Corp.", price: 428.15, change: 5.12, changePercent: 1.21 },
+      { symbol: "AMZN", name: "Amazon.com", price: 185.67, change: -1.23, changePercent: -0.66 },
+    ],
+    crypto: [
+      { symbol: "BTC", name: "Bitcoin", price: 68425.0, change: 1250.0, changePercent: 1.86 },
+      { symbol: "ETH", name: "Ethereum", price: 3842.5, change: -45.3, changePercent: -1.16 },
+    ],
+  },
+
   "appConfig.getAll": [],
 };
 

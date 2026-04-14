@@ -80,6 +80,18 @@ jobs:
       - name: Build Docker image
         run: docker build --build-arg BUILD_HASH=${{ github.sha }} -t the-workflow-engine:ci .
 
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Install Playwright Chromium
+        run: bunx playwright install --with-deps chromium
+      - name: Run E2E tests
+        run: bun run test:e2e
+
   shell:
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
