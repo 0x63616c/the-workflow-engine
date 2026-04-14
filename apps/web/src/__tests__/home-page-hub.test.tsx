@@ -70,6 +70,28 @@ vi.mock("@/hooks/use-app-config", () => ({
   }),
 }));
 
+vi.mock("@/hooks/use-weather", () => ({
+  useWeather: () => ({
+    temperature: 72,
+    condition: "Clear sky",
+    conditionCode: 0,
+    highTemp: 80,
+    lowTemp: 65,
+    uvIndex: 4,
+    isLoading: false,
+    isError: false,
+  }),
+}));
+
+vi.mock("@/hooks/use-stocks", () => ({
+  useStocks: () => ({
+    stocks: [],
+    crypto: [],
+    isLoading: false,
+    isError: false,
+  }),
+}));
+
 describe("HomePage hub integration", () => {
   beforeEach(() => {
     vi.useFakeTimers();

@@ -1,6 +1,8 @@
 import { ClockStateCarousel } from "@/components/art-clock/clock-state-carousel";
 import { getCardConfig } from "@/components/hub/card-registry";
 import { CountdownCardExpanded } from "@/components/hub/countdown-card";
+import { ExpandedStocks } from "@/components/hub/expanded-stocks";
+import { ExpandedWeather } from "@/components/hub/expanded-weather";
 import { SettingsCardExpanded } from "@/components/hub/settings-card";
 import { SonosAlbumArt } from "@/components/sonos/sonos-album-art";
 import { SonosControls } from "@/components/sonos/sonos-controls";
@@ -109,6 +111,8 @@ const EXPANDED_VIEWS: Record<string, () => React.JSX.Element> = {
   lights: ExpandedLights,
   music: ExpandedMusic,
   settings: SettingsCardExpanded,
+  weather: ExpandedWeather,
+  stocks: ExpandedStocks,
 };
 
 export function CardOverlay() {
