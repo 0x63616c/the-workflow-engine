@@ -1,3 +1,4 @@
+import { faro } from "@grafana/faro-web-sdk";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
 interface ErrorBoundaryProps {
@@ -28,6 +29,14 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error("[ErrorBoundary] React crash:", error, info.componentStack);
+    const faroApi = faro.api;
+    if (faroApi) {
+      faroApi.pushError(error, {
+        context: {
+          componentStack: info.componentStack ?? "unknown",
+        },
+      });
+    }
     this.scheduleAutoRetry();
   }
 
