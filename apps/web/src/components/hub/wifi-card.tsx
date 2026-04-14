@@ -74,7 +74,7 @@ export function WifiCard() {
       testId="widget-card-wifi"
       onClick={handleToggle}
       paletteColor={config?.colorScheme.color}
-      className="relative h-full overflow-hidden"
+      className="relative h-full"
       gridColumn={config?.gridColumn}
       gridRow={config?.gridRow}
     >
