@@ -8,11 +8,14 @@
     "lint": "bunx biome check .",
     "lint:fix": "bunx biome check --write .",
     "typecheck": "bun run --filter '*' typecheck",
-    "check:boundaries": "bun run scripts/check-boundaries.ts"
+    "check:boundaries": "bun run scripts/check-boundaries.ts",
+    "screenshots": "bunx playwright test --project='iPad Pro 12.9'"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
+    "@playwright/test": "^1.59.1",
     "lefthook": "^1.11.0",
+    "msw": "^2.13.2",
     "typescript": "^5.8.0"
   },
   "trustedDependencies": ["@biomejs/biome", "esbuild", "lefthook", "protobufjs"]

@@ -303,6 +303,20 @@ Pre-push: blocks direct push to `main`.
 - API tests: hit real endpoints (SQLite in-memory for test DB).
 - Frontend tests: Vitest + Testing Library for units, browser automation for flows.
 
+### PR Screenshots (Playwright)
+
+CI automatically takes screenshots on PRs that touch `apps/web/**`. Screenshots are committed to the PR branch and embedded in a PR comment.
+
+- **Config**: `playwright.config.ts` (root), tests in `e2e/`
+- **Mock data**: `e2e/mock-trpc.ts` intercepts tRPC calls with realistic data
+- **Run locally**: `bun run screenshots`
+- **What it captures**: Dashboard grid, clock expanded, settings expanded (iPad Pro 12.9" @ 2x)
+
+**When creating PRs that change frontend code:**
+1. Run `bun run screenshots` locally to verify screenshots look correct
+2. If adding new cards or routes, add corresponding screenshot tests in `e2e/screenshots.spec.ts`
+3. If adding new tRPC queries, add mock responses in `e2e/mock-trpc.ts`
+
 ## Core Systems
 
 1. **Notification System** - Central bus, plugins push notifications, persisted to SQLite
