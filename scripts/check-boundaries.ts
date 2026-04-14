@@ -41,6 +41,7 @@ const rules: Rule[] = [
       /^drizzle-orm/, // query operators (asc, desc, gte, lt, sql, eq)
       /\.\.\/db\//,
       /\.\.\/integrations\/types/,
+      /^yahoo-finance2$/, // stock quote fetching
     ],
   },
   {
