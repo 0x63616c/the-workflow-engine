@@ -578,7 +578,7 @@ export function PixelArt() {
       const dateCellSize = CELL;
       const dateW = measureText(ds, dateCellSize);
       const dateX = Math.round((w - dateW) / 2 / GRID) * GRID;
-      const dateY = timeY + 7 * timeCellSize + dateCellSize * 2;
+      const dateY = timeY + 7 * timeCellSize + dateCellSize * 2 + 5;
       drawText(ctx, ds, dateX, dateY, dateCellSize);
     },
   });
