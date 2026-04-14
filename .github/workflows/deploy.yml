@@ -80,10 +80,21 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: ${{ matrix.command }}
 
+  kamal-config:
+    name: Kamal Config
+    runs-on: ubuntu-latest
+    needs: notify-start
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Kamal
+        run: sudo gem install kamal
+      - name: Validate deploy config
+        run: kamal config
+
   notify-checks:
     name: Notify Checks Result
     runs-on: ubuntu-latest
-    needs: [notify-start, check]
+    needs: [notify-start, check, kamal-config]
     if: always()
     steps:
       - uses: actions/checkout@v6
@@ -103,17 +114,17 @@ jobs:
           fi
 
       - name: Checks passed
-        if: needs.check.result == 'success'
+        if: needs.check.result == 'success' && needs.kamal-config.result == 'success'
         uses: ./.github/actions/slack-notify-thread
         with:
           channel: ${{ env.SLACK_CHANNEL }}
           thread_ts: ${{ needs.notify-start.outputs.thread_ts }}
-          message: 'Checks passed — lint, typecheck, tests, boundaries (${{ steps.duration.outputs.text }})'
+          message: 'Checks passed — lint, typecheck, tests, boundaries, kamal config (${{ steps.duration.outputs.text }})'
           emoji: ':white_check_mark:'
           slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
 
       - name: Checks failed
-        if: needs.check.result == 'failure'
+        if: needs.check.result == 'failure' || needs.kamal-config.result == 'failure'
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         run: |
@@ -207,8 +218,8 @@ jobs:
   deploy:
     name: Deploy to Homelab
     runs-on: ubuntu-latest
-    needs: [notify-start, check, build-logging-images]
-    if: always() && needs.check.result == 'success' && (needs.build-logging-images.result == 'success' || needs.build-logging-images.result == 'skipped')
+    needs: [notify-start, check, kamal-config, build-logging-images]
+    if: always() && needs.check.result == 'success' && needs.kamal-config.result == 'success' && (needs.build-logging-images.result == 'success' || needs.build-logging-images.result == 'skipped')
     outputs:
       deploy_duration: ${{ steps.deploy-duration.outputs.text }}
     steps:

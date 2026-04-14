@@ -92,6 +92,16 @@ jobs:
       - name: Run E2E tests
         run: bun run test:e2e
 
+  kamal-config:
+    name: Kamal Config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Kamal
+        run: sudo gem install kamal
+      - name: Validate deploy config
+        run: kamal config
+
   shell:
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
