@@ -19,16 +19,18 @@ function RootLayout() {
   useAutoReload();
 
   return (
-    <ErrorBoundary>
-      <AppShell>
-        <Outlet />
-      </AppShell>
-      <Header />
-      <Footer />
-      <CardOverlay />
-      <ConnectionStatus />
+    <>
       <ToastProvider />
-    </ErrorBoundary>
+      <ErrorBoundary>
+        <AppShell>
+          <Outlet />
+        </AppShell>
+        <Header />
+        <Footer />
+        <CardOverlay />
+        <ConnectionStatus />
+      </ErrorBoundary>
+    </>
   );
 }
 

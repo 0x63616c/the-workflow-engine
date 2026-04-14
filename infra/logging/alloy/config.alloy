@@ -34,8 +34,8 @@ loki.source.docker "default" {
 loki.process "faro" {
   forward_to = [loki.write.local.receiver]
 
-  stage.logfmt {
-    mapping = { "kind" = "", "app" = "" }
+  stage.json {
+    expressions = { "kind" = "", "app" = "" }
   }
 
   stage.labels {
@@ -49,6 +49,7 @@ faro.receiver "frontend" {
     listen_address = "0.0.0.0"
     listen_port    = 12346
 
+    // Alloy is not exposed externally; all traffic proxied through API /api/collect
     cors_allowed_origins = ["*"]
 
     max_allowed_payload_size = "5MiB"

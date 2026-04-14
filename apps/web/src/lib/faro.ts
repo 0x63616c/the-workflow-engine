@@ -10,12 +10,20 @@ const DESCRIPTION_MAX_LENGTH = 120;
 
 export const _recentErrors = new Map<string, number>();
 
+const MAX_DEDUP_ENTRIES = 100;
+
 export function _isDuplicate(key: string): boolean {
+  const now = Date.now();
   const lastSeen = _recentErrors.get(key);
-  if (lastSeen !== undefined && Date.now() - lastSeen < DEDUP_WINDOW_MS) {
+  if (lastSeen !== undefined && now - lastSeen < DEDUP_WINDOW_MS) {
     return true;
   }
-  _recentErrors.set(key, Date.now());
+  _recentErrors.set(key, now);
+  if (_recentErrors.size > MAX_DEDUP_ENTRIES) {
+    for (const [k, v] of _recentErrors) {
+      if (now - v >= DEDUP_WINDOW_MS) _recentErrors.delete(k);
+    }
+  }
   return false;
 }
 
