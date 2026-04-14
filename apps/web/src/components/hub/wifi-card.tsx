@@ -1,9 +1,9 @@
 import { BentoCard } from "@/components/hub/bento-card";
 import { getCardConfig } from "@/components/hub/card-registry";
 import { useThemeStore } from "@/stores/theme-store";
-import { Check, Copy, Eye, EyeOff, Wifi } from "lucide-react";
+import { Eye, EyeOff, Wifi } from "lucide-react";
 import QRCode from "qrcode";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 const WIFI_SSID = import.meta.env.VITE_WIFI_SSID || "HomeNet";
 const WIFI_PASSWORD = import.meta.env.VITE_WIFI_PASSWORD || "welcome2024";
@@ -18,7 +18,6 @@ export function WifiCard() {
   const config = getCardConfig("wifi");
   const [unblurred, setUnblurred] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [countdown, setCountdown] = useState(0);
   const isDark = useThemeStore((s) => s.activePaletteId === "midnight");
@@ -34,13 +33,6 @@ export function WifiCard() {
       errorCorrectionLevel: "M",
     }).then(setQrDataUrl);
   }, [isDark]);
-
-  const handleCopy = useCallback(async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    await navigator.clipboard.writeText(WIFI_PASSWORD);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, []);
 
   useEffect(() => {
     if (unblurred) {
@@ -124,21 +116,9 @@ export function WifiCard() {
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? (
-              <EyeOff size={14} className="text-muted-foreground" />
+              <EyeOff size={20} className="text-muted-foreground" />
             ) : (
-              <Eye size={14} className="text-muted-foreground" />
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="p-1.5 rounded-lg hover:bg-card-green-accent/10 transition-colors"
-            aria-label={copied ? "Copied" : "Copy password"}
-          >
-            {copied ? (
-              <Check size={14} className="text-emerald-500" />
-            ) : (
-              <Copy size={14} className="text-muted-foreground" />
+              <Eye size={20} className="text-muted-foreground" />
             )}
           </button>
         </div>
