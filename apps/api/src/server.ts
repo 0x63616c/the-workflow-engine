@@ -39,7 +39,8 @@ const server = Bun.serve({
       const skip =
         url.pathname.startsWith("/assets/") ||
         url.pathname === "/up" ||
-        url.pathname === "/favicon.ico";
+        url.pathname === "/favicon.ico" ||
+        url.pathname === "/api/collect";
       if (!skip) {
         const entry = { method: req.method, path: url.pathname, status, duration_ms: duration };
         if (status >= 500) {
@@ -75,6 +76,23 @@ const server = Bun.serve({
 
     if (url.pathname.startsWith("/api/inngest")) {
       return respond(await inngestHandler(req));
+    }
+
+    // Faro telemetry proxy -> Alloy faro.receiver
+    if (url.pathname === "/api/collect") {
+      try {
+        const body = await req.text();
+        const upstream = await fetch(`${env.ALLOY_URL}/collect`, {
+          method: req.method,
+          headers: {
+            "Content-Type": req.headers.get("Content-Type") ?? "application/json",
+          },
+          body: req.method !== "GET" ? body : undefined,
+        });
+        return respond(new Response(upstream.body, { status: upstream.status }));
+      } catch {
+        return respond(new Response("Bad Gateway", { status: 502 }));
+      }
     }
 
     // In production, serve built web assets from public/

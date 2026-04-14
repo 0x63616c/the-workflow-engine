@@ -34,6 +34,8 @@ builder:
     BUILD_HASH: <%= `git rev-parse --short HEAD`.strip %>
     VITE_WIFI_SSID: <%= ENV["VITE_WIFI_SSID"] %>
     VITE_WIFI_PASSWORD: <%= ENV["VITE_WIFI_PASSWORD"] %>
+    VITE_FARO_URL: "/api/collect"
+    VITE_BUILD_HASH: <%= `git rev-parse --short HEAD`.strip %>
 
 env:
   clear:
@@ -42,6 +44,7 @@ env:
     PORT_OFFSET: "0"
     INNGEST_DEV: "0"
     HA_URL: "http://host.docker.internal:8123"
+    ALLOY_URL: "http://workflow-engine-alloy:12346"
   secret:
     - INNGEST_EVENT_KEY
     - INNGEST_SIGNING_KEY
@@ -85,7 +88,9 @@ accessories:
   alloy:
     image: ghcr.io/0x63616c/workflow-engine-alloy:latest
     host: homelab
-    port: "12345:12345"
+    port:
+      - "12345:12345"
+      - "12346:12346"
     cmd: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
     options:
       volume:

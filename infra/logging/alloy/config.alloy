@@ -30,6 +30,49 @@ loki.source.docker "default" {
   refresh_interval = "5s"
 }
 
+// Process Faro frontend logs: extract kind and app labels
+loki.process "faro" {
+  forward_to = [loki.write.local.receiver]
+
+  stage.json {
+    expressions = { "kind" = "", "app" = "" }
+  }
+
+  stage.labels {
+    values = { "kind" = "kind", "app" = "app" }
+  }
+}
+
+// Receive frontend telemetry from Faro SDK (proxied via API /api/collect)
+faro.receiver "frontend" {
+  server {
+    listen_address = "0.0.0.0"
+    listen_port    = 12346
+
+    // Alloy is not exposed externally; all traffic proxied through API /api/collect
+    cors_allowed_origins = ["*"]
+
+    max_allowed_payload_size = "5MiB"
+
+    rate_limiting {
+      rate = 50
+    }
+  }
+
+  extra_log_labels = {
+    "source" = "faro",
+    "app"    = "workflow-engine-web",
+  }
+
+  log_format = "json"
+
+  sourcemaps {}
+
+  output {
+    logs = [loki.process.faro.receiver]
+  }
+}
+
 loki.write "local" {
   endpoint {
     url = "http://workflow-engine-loki:3100/loki/api/v1/push"

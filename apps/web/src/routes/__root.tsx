@@ -4,22 +4,33 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { CardOverlay } from "@/components/hub/card-overlay";
+import { ToastProvider } from "@/components/toast-provider";
 import { useAutoReload } from "@/hooks/use-auto-reload";
+import { initFaro } from "@/lib/faro";
 import { Outlet, createRootRoute } from "@tanstack/react-router";
+
+initFaro(
+  import.meta.env.VITE_FARO_URL ?? "",
+  "workflow-engine-web",
+  import.meta.env.VITE_BUILD_HASH ?? "dev",
+);
 
 function RootLayout() {
   useAutoReload();
 
   return (
-    <ErrorBoundary>
-      <AppShell>
-        <Outlet />
-      </AppShell>
-      <Header />
-      <Footer />
-      <CardOverlay />
-      <ConnectionStatus />
-    </ErrorBoundary>
+    <>
+      <ToastProvider />
+      <ErrorBoundary>
+        <AppShell>
+          <Outlet />
+        </AppShell>
+        <Header />
+        <Footer />
+        <CardOverlay />
+        <ConnectionStatus />
+      </ErrorBoundary>
+    </>
   );
 }
 
