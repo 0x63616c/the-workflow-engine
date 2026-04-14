@@ -29,41 +29,37 @@ export function WeatherCard() {
     >
       <div className="flex flex-col justify-between h-full">
         <div className="flex items-center justify-between">
-          <span className="text-lg text-muted-foreground">Weather</span>
-          <Icon size={24} className="text-muted-foreground/60" />
+          <span className="text-2xl text-muted-foreground">Weather</span>
+          <Icon size={32} className="text-muted-foreground/40" />
         </div>
-        <div className="flex items-end justify-between">
-          <div>
-            <div className="flex items-baseline gap-0.5">
-              <span className="text-4xl font-light text-foreground tabular-nums">
-                {tempDisplay}
-              </span>
-              {!isLoading && !isError && temperature !== null && (
-                <span className="text-lg text-muted-foreground/50">{"\u00b0F"}</span>
-              )}
-            </div>
-            <div className="text-xs text-muted-foreground/60 mt-0.5">
-              {displayValue({ isLoading, isError, value: condition })}
-            </div>
+        <div>
+          <div className="flex items-baseline gap-1">
+            <span className="text-5xl font-light text-foreground tabular-nums">{tempDisplay}</span>
+            {!isLoading && !isError && temperature !== null && (
+              <span className="text-xl text-muted-foreground/50">{"\u00b0F"}</span>
+            )}
           </div>
-          <div className="text-right text-xs text-muted-foreground/50 space-y-0.5">
-            <div>
-              H:{" "}
+          <div className="text-sm text-muted-foreground/50 mt-1">
+            {displayValue({ isLoading, isError, value: condition })}
+          </div>
+          <div className="flex gap-3 mt-1 text-sm text-muted-foreground/50">
+            <span>
               {displayValue({
                 isLoading,
                 isError,
                 value: highTemp,
-                formatter: (v) => `${Math.round(v as number)}\u00b0`,
+                formatter: (v) => `H ${Math.round(v as number)}\u00b0`,
               })}
-              {"  "}L:{" "}
+            </span>
+            <span>
               {displayValue({
                 isLoading,
                 isError,
                 value: lowTemp,
-                formatter: (v) => `${Math.round(v as number)}\u00b0`,
+                formatter: (v) => `L ${Math.round(v as number)}\u00b0`,
               })}
-            </div>
-            <div>
+            </span>
+            <span>
               UV{" "}
               {displayValue({
                 isLoading,
@@ -71,7 +67,7 @@ export function WeatherCard() {
                 value: uvIndex,
                 formatter: (v) => String(Math.round((v as number) * 10) / 10),
               })}
-            </div>
+            </span>
           </div>
         </div>
       </div>

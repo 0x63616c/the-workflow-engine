@@ -5,9 +5,21 @@ import { formatPercent, formatPrice } from "@/lib/stock-formatters";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { TrendingUp } from "lucide-react";
 
-function ChangeText({ percent }: { percent: number }) {
+function TickerItem({
+  symbol,
+  price,
+  percent,
+}: { symbol: string; price: number; percent: number }) {
   const colorClass = percent >= 0 ? "text-green-400" : "text-red-400";
-  return <span className={`text-xs tabular-nums ${colorClass}`}>{formatPercent(percent)}</span>;
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm font-medium text-foreground/80">{symbol}</span>
+      <div className="flex items-center gap-2">
+        <span className="text-sm tabular-nums text-foreground">{formatPrice(price)}</span>
+        <span className={`text-sm tabular-nums ${colorClass}`}>{formatPercent(percent)}</span>
+      </div>
+    </div>
+  );
 }
 
 export function StockTickerCard() {
@@ -24,13 +36,11 @@ export function StockTickerCard() {
         paletteColor={config?.colorScheme.color}
       >
         <div className="flex items-center justify-center h-full">
-          <span className="text-muted-foreground/50">{isLoading ? "--" : "N/A"}</span>
+          <span className="text-2xl text-muted-foreground/50">{isLoading ? "--" : "N/A"}</span>
         </div>
       </BentoCard>
     );
   }
-
-  const allQuotes = [...stocks, ...crypto];
 
   return (
     <BentoCard
@@ -40,21 +50,20 @@ export function StockTickerCard() {
       paletteColor={config?.colorScheme.color}
       onClick={() => expandCard("stocks")}
     >
-      <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-lg text-muted-foreground">Markets</span>
-          <TrendingUp size={20} className="text-muted-foreground/40" />
+      <div className="flex flex-col justify-between h-full">
+        <div className="flex items-center justify-between">
+          <span className="text-2xl text-muted-foreground">Markets</span>
+          <TrendingUp size={32} className="text-muted-foreground/40" />
         </div>
-        <div className="flex-1 flex items-center">
-          <div className="grid grid-cols-6 gap-x-4 gap-y-1 w-full">
-            {allQuotes.map((q) => (
-              <div key={q.symbol} className="flex flex-col items-center">
-                <span className="text-xs font-medium text-foreground/80">{q.symbol}</span>
-                <span className="text-sm tabular-nums text-foreground">{formatPrice(q.price)}</span>
-                <ChangeText percent={q.changePercent} />
-              </div>
-            ))}
-          </div>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-1">
+          {[...stocks, ...crypto].map((q) => (
+            <TickerItem
+              key={q.symbol}
+              symbol={q.symbol}
+              price={q.price}
+              percent={q.changePercent}
+            />
+          ))}
         </div>
       </div>
     </BentoCard>
