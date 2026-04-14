@@ -181,11 +181,34 @@ the-workflow-engine/
 
 Workspace packages: `@repo/web`, `@repo/api`, `@repo/shared`.
 
+## Data Flow
+
+```
+Browser
+  |
+  |  HTTP (queries/mutations)
+  |  POST /api/collect (Faro telemetry)
+  v
+API Server (port 4301)
+  |
+  +---> /trpc/* -> tRPC Routers -> Services
+  |       |
+  |       +---> Drizzle ORM ---> PostgreSQL (port 5432)
+  |       +---> Inngest Client ---> Inngest Server (port 8288)
+  |       +---> Integration Plugins (Home Assistant, Slack)
+  |
+  +---> /api/collect -> Alloy faro.receiver (port 12346)
+                          |
+                          v
+                        Loki (port 3100) -> Grafana (port 3000)
+```
+
+
 ## API Layers
 
 The API enforces a layered architecture with strict import boundaries:
 
-1. **db/**: Database schema and Drizzle client. Only imports `drizzle-orm`, `@repo/shared`.
+1. **db/**: Database schema and Drizzle client. Only imports `drizzle-orm`, `pg`, `@repo/shared`.
 2. **services/**: Business logic. Imports `db/`, `integrations/types`, `@repo/shared`.
 3. **trpc/routers/**: HTTP endpoint definitions. Imports `services/`, `@trpc/*`, `zod`, tRPC init/context.
 4. **inngest/functions/**: Background jobs. Imports `services/`, `inngest`, `@repo/shared`.

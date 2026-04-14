@@ -58,6 +58,56 @@ Alloy tags every log line with:
 - `container_id` - Docker container ID
 - `image` - Docker image name
 
+## Frontend Observability (Faro)
+
+Frontend errors, exceptions, and web vitals are captured by the [Grafana Faro Web SDK](https://grafana.com/oss/faro/) running in the browser.
+
+### Data Flow
+
+```
+Browser (Faro SDK)
+    |
+    v (POST /api/collect)
+API server (proxy)
+    |
+    v (HTTP forward)
+Alloy (faro.receiver, port 12346)
+    |
+    v (loki.process -> loki.write)
+Loki
+    |
+    v (query)
+Grafana ("Frontend Observability" dashboard)
+```
+
+### What's Captured
+
+- **JS errors**: uncaught exceptions, unhandled promise rejections
+- **React crashes**: ErrorBoundary componentDidCatch with component stack
+- **tRPC request failures**: path, type, error code
+- **Web vitals**: LCP, FID, CLS (automatic via Faro)
+
+### Querying Frontend Logs
+
+```logql
+# All frontend events
+{source="faro", app="workflow-engine-web"} | json
+
+# Errors only
+{source="faro", app="workflow-engine-web"} | json | kind="error"
+
+# tRPC request errors
+{source="faro", app="workflow-engine-web"} | json | kind="error" |~ "tRPC"
+```
+
+### Dashboard
+
+Open Grafana at `http://homelab:3000`, navigate to Dashboards, select **Frontend Observability**.
+
+### Toast Notifications
+
+Errors also trigger toast notifications in the UI via [sonner](https://sonner.emilkowal.ski/). Toasts auto-dismiss after 5 seconds and are deduped (same error won't toast more than once per 60 seconds).
+
 ## Configuration
 
 Config files are baked into custom Docker images (GitOps, no manual host setup).

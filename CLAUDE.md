@@ -121,6 +121,10 @@ Wall-mounted iPad Pro smart home panel. Living art, controls home.
 | api (tRPC)     | 4201         |
 | Inngest dev    | 8288         |
 | Home Assistant | 8123         |
+| Alloy debug  | 12345        |
+| Alloy faro   | 12346        |
+| Grafana      | 3000         |
+| Loki         | 3100         |
 
 Port isolation for parallel agents: set `PORT_OFFSET` env var. Tiltfile adds offset to all ports. API reads `PORT_OFFSET` from env and adds to base port via `EFFECTIVE_PORT`.
 
