@@ -1,14 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { mockTrpcRoutes } from "./mock-trpc";
-
-const ANIMATION_DELAY_MS = 500;
+import { setupDashboard } from "./helpers";
 
 test.describe("Lights card", () => {
   test.beforeEach(async ({ page }) => {
-    await mockTrpcRoutes(page);
-    await page.goto("/");
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(500);
+    await setupDashboard(page);
   });
 
   test("shows light state from mock data (3 of 7, majority OFF)", async ({ page }) => {
@@ -18,14 +13,9 @@ test.describe("Lights card", () => {
     expect(text).toContain("OFF");
   });
 
-  test("expanded view shows All On and All Off buttons", async ({ page }) => {
-    // Lights card doesn't have expandedView in registry but does in EXPANDED_VIEWS
+  test("clicking toggles (card stays visible, no expand)", async ({ page }) => {
     const lightsCard = page.getByTestId("widget-card-lights");
     await lightsCard.click();
-    await page.waitForTimeout(ANIMATION_DELAY_MS);
-
-    // Lights card toggles directly, no expand. Check it registered the click
-    // by verifying the card is still visible (toggle doesn't expand)
     await expect(lightsCard).toBeVisible();
   });
 });

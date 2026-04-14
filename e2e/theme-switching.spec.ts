@@ -1,34 +1,27 @@
 import { expect, test } from "@playwright/test";
-import { mockTrpcRoutes } from "./mock-trpc";
-
-const ANIMATION_DELAY_MS = 500;
+import { expandCard, setupDashboard } from "./helpers";
 
 test.describe("Theme switching", () => {
   test.beforeEach(async ({ page }) => {
-    await mockTrpcRoutes(page);
-    await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await setupDashboard(page);
   });
 
   test("default theme is midnight (dark) in localStorage", async ({ page }) => {
     const themeMode = await page.evaluate(() => localStorage.getItem("theme-mode"));
-    // Either null (first load defaults to midnight) or explicitly midnight
     expect(themeMode === null || themeMode === "midnight").toBe(true);
   });
 
   test("switching to light theme updates localStorage and background", async ({ page }) => {
-    await page.getByTestId("widget-card-settings").click();
-    await page.waitForTimeout(ANIMATION_DELAY_MS);
+    await expandCard(page, "settings");
 
     const overlay = page.getByTestId("card-overlay-content");
     await overlay.getByRole("button", { name: "Light", exact: true }).click();
-    await page.waitForTimeout(ANIMATION_DELAY_MS);
 
-    // Verify localStorage was set
-    const themeMode = await page.evaluate(() => localStorage.getItem("theme-mode"));
-    expect(themeMode).toBe("daylight");
+    await expect(async () => {
+      const mode = await page.evaluate(() => localStorage.getItem("theme-mode"));
+      expect(mode).toBe("daylight");
+    }).toPass({ timeout: 3_000 });
 
-    // Verify the hub container background changed (uses bg-background CSS var)
     const hubBg = await page
       .getByTestId("hub-container")
       .evaluate((el) => getComputedStyle(el).backgroundColor);
@@ -39,30 +32,32 @@ test.describe("Theme switching", () => {
   });
 
   test("switching back to dark theme restores dark background", async ({ page }) => {
-    await page.getByTestId("widget-card-settings").click();
-    await page.waitForTimeout(ANIMATION_DELAY_MS);
+    await expandCard(page, "settings");
 
     const overlay = page.getByTestId("card-overlay-content");
 
     await overlay.getByRole("button", { name: "Light", exact: true }).click();
-    await page.waitForTimeout(ANIMATION_DELAY_MS);
+    await expect(async () => {
+      const mode = await page.evaluate(() => localStorage.getItem("theme-mode"));
+      expect(mode).toBe("daylight");
+    }).toPass({ timeout: 3_000 });
 
     await overlay.getByRole("button", { name: "Dark", exact: true }).click();
-    await page.waitForTimeout(ANIMATION_DELAY_MS);
-
-    const themeMode = await page.evaluate(() => localStorage.getItem("theme-mode"));
-    expect(themeMode).toBe("midnight");
+    await expect(async () => {
+      const mode = await page.evaluate(() => localStorage.getItem("theme-mode"));
+      expect(mode).toBe("midnight");
+    }).toPass({ timeout: 3_000 });
   });
 
   test("theme persists in localStorage", async ({ page }) => {
-    await page.getByTestId("widget-card-settings").click();
-    await page.waitForTimeout(ANIMATION_DELAY_MS);
+    await expandCard(page, "settings");
 
     const overlay = page.getByTestId("card-overlay-content");
     await overlay.getByRole("button", { name: "Light", exact: true }).click();
-    await page.waitForTimeout(ANIMATION_DELAY_MS);
 
-    const themeMode = await page.evaluate(() => localStorage.getItem("theme-mode"));
-    expect(themeMode).toBe("daylight");
+    await expect(async () => {
+      const mode = await page.evaluate(() => localStorage.getItem("theme-mode"));
+      expect(mode).toBe("daylight");
+    }).toPass({ timeout: 3_000 });
   });
 });

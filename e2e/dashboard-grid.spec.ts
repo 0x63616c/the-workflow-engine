@@ -1,12 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { mockTrpcRoutes } from "./mock-trpc";
+import { setupDashboard } from "./helpers";
 
 test.describe("Dashboard grid renders all cards", () => {
   test.beforeEach(async ({ page }) => {
-    await mockTrpcRoutes(page);
-    await page.goto("/");
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(500);
+    await setupDashboard(page);
   });
 
   const EXPECTED_CARDS = [
@@ -24,61 +21,49 @@ test.describe("Dashboard grid renders all cards", () => {
 
   for (const cardId of EXPECTED_CARDS) {
     test(`${cardId} card is visible`, async ({ page }) => {
-      const card = page.getByTestId(`widget-card-${cardId}`);
-      await expect(card).toBeVisible();
+      await expect(page.getByTestId(`widget-card-${cardId}`)).toBeVisible();
     });
   }
 
   test("grid has correct 6-column layout", async ({ page }) => {
     const grid = page.getByTestId("widget-grid");
-    await expect(grid).toBeVisible();
-
     const style = await grid.getAttribute("style");
     expect(style).toContain("repeat(6, 1fr)");
   });
 
   test("clock card shows current time", async ({ page }) => {
-    const clockCard = page.getByTestId("widget-card-clock");
-    const text = await clockCard.textContent();
-    // Should contain AM or PM
+    const text = await page.getByTestId("widget-card-clock").textContent();
     expect(text).toMatch(/AM|PM/i);
   });
 
   test("countdown card shows mock events", async ({ page }) => {
-    const countdownCard = page.getByTestId("widget-card-countdown");
-    const text = await countdownCard.textContent();
+    const text = await page.getByTestId("widget-card-countdown").textContent();
     expect(text).toContain("Zero's Birthday");
     expect(text).toContain("Apartment Renewal");
   });
 
   test("lights card shows state from mock data", async ({ page }) => {
-    const lightsCard = page.getByTestId("widget-card-lights");
-    const text = await lightsCard.textContent();
-    // 3 of 7 on, majority OFF
+    const text = await page.getByTestId("widget-card-lights").textContent();
     expect(text).toContain("OFF");
   });
 
   test("climate card shows temperature from mock data", async ({ page }) => {
-    const climateCard = page.getByTestId("widget-card-climate");
-    const text = await climateCard.textContent();
+    const text = await page.getByTestId("widget-card-climate").textContent();
     expect(text).toContain("72");
   });
 
   test("music card shows track from mock data", async ({ page }) => {
-    const musicCard = page.getByTestId("widget-card-music");
-    const text = await musicCard.textContent();
+    const text = await page.getByTestId("widget-card-music").textContent();
     expect(text).toContain("Midnight City");
   });
 
   test("weather card shows temperature from mock data", async ({ page }) => {
-    const weatherCard = page.getByTestId("widget-card-weather");
-    const text = await weatherCard.textContent();
+    const text = await page.getByTestId("widget-card-weather").textContent();
     expect(text).toContain("78");
   });
 
   test("stocks card shows ticker data from mock data", async ({ page }) => {
-    const stocksCard = page.getByTestId("widget-card-stocks");
-    const text = await stocksCard.textContent();
+    const text = await page.getByTestId("widget-card-stocks").textContent();
     expect(text).toContain("AAPL");
   });
 });
