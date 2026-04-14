@@ -1,34 +1,34 @@
 import { BentoCard } from "@/components/hub/bento-card";
 import { getCardConfig } from "@/components/hub/card-registry";
+import { displayValue } from "@/components/hub/display-value";
+import { useWeather } from "@/hooks/use-weather";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
-import { CloudSun } from "lucide-react";
+import { Cloud, CloudFog, CloudLightning, CloudRain, CloudSnow, CloudSun, Sun } from "lucide-react";
 
-interface WeatherCardProps {
-  temp: number;
-  condition: string;
-  high: number;
-  low: number;
+function getWeatherIcon(code: number | null) {
+  if (code === null) return Cloud;
+  if (code === 0) return Sun;
+  if (code <= 3) return CloudSun;
+  if (code <= 48) return CloudFog;
+  if (code <= 67 || (code >= 80 && code <= 82)) return CloudRain;
+  if (code <= 77 || (code >= 85 && code <= 86)) return CloudSnow;
+  if (code >= 95) return CloudLightning;
+  return Cloud;
 }
 
-const CONDITION_GRADIENTS: Record<string, string> = {
-  sunny: "from-amber-500/20 to-orange-400/10",
-  cloudy: "from-slate-400/20 to-blue-300/10",
-  rainy: "from-blue-500/20 to-indigo-400/10",
-  default: "from-sky-400/20 to-blue-300/10",
-};
-
-function getGradient(condition: string): string {
-  const key = condition.toLowerCase();
-  for (const [k, v] of Object.entries(CONDITION_GRADIENTS)) {
-    if (key.includes(k)) return v;
-  }
-  return CONDITION_GRADIENTS.default;
-}
-
-export function WeatherCard({ temp, condition, high, low }: WeatherCardProps) {
-  const expandCard = useCardExpansionStore((s) => s.expandCard);
+export function WeatherCard() {
   const config = getCardConfig("weather");
-  const gradient = getGradient(condition);
+  const expandCard = useCardExpansionStore((s) => s.expandCard);
+  const { temperature, condition, conditionCode, highTemp, lowTemp, uvIndex, isLoading, isError } =
+    useWeather();
+
+  const Icon = getWeatherIcon(conditionCode);
+  const tempDisplay = displayValue({
+    isLoading,
+    isError,
+    value: temperature,
+    formatter: (v) => `${Math.round(v as number)}`,
+  });
 
   return (
     <BentoCard
@@ -37,22 +37,53 @@ export function WeatherCard({ temp, condition, high, low }: WeatherCardProps) {
       gridRow={config?.gridRow}
       paletteColor={config?.colorScheme.color}
       onClick={() => expandCard("weather")}
-      className={`bg-gradient-to-br ${gradient} relative overflow-hidden`}
     >
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm text-muted-foreground">Temperature</span>
-      </div>
-      <div className="flex items-start justify-between">
-        <div>
-          <span className="text-6xl font-light text-foreground tracking-tight">{temp}°</span>
-          <div className="mt-1 flex items-center gap-2">
-            <CloudSun size={18} className="text-muted-foreground" />
-            <span className="text-2xl text-muted-foreground">{condition}</span>
-          </div>
+      <div className="flex flex-col justify-between h-full">
+        <div className="flex items-center justify-between">
+          <span className="text-lg text-muted-foreground">Weather</span>
+          <Icon size={24} className="text-muted-foreground/60" />
         </div>
-        <div className="text-right text-2xl text-muted-foreground mt-2">
-          <div>H: {high}°</div>
-          <div>L: {low}°</div>
+        <div className="flex items-end justify-between">
+          <div>
+            <div className="flex items-baseline gap-0.5">
+              <span className="text-4xl font-light text-foreground tabular-nums">
+                {tempDisplay}
+              </span>
+              {!isLoading && !isError && temperature !== null && (
+                <span className="text-lg text-muted-foreground/50">{"\u00b0F"}</span>
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground/60 mt-0.5">
+              {displayValue({ isLoading, isError, value: condition })}
+            </div>
+          </div>
+          <div className="text-right text-xs text-muted-foreground/50 space-y-0.5">
+            <div>
+              H:{" "}
+              {displayValue({
+                isLoading,
+                isError,
+                value: highTemp,
+                formatter: (v) => `${Math.round(v as number)}\u00b0`,
+              })}
+              {"  "}L:{" "}
+              {displayValue({
+                isLoading,
+                isError,
+                value: lowTemp,
+                formatter: (v) => `${Math.round(v as number)}\u00b0`,
+              })}
+            </div>
+            <div>
+              UV{" "}
+              {displayValue({
+                isLoading,
+                isError,
+                value: uvIndex,
+                formatter: (v) => String(Math.round((v as number) * 10) / 10),
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </BentoCard>
