@@ -61,7 +61,7 @@ describe("WifiCard", () => {
     const card = screen.getByTestId("widget-card-wifi");
     act(() => card.click());
     const qrContainer = screen.getByTestId("qr-container");
-    expect(qrContainer.style.filter).toBe("blur(0px)");
+    expect(qrContainer.style.filter).toBe("none");
   });
 
   it("reblurs QR on second tap", async () => {

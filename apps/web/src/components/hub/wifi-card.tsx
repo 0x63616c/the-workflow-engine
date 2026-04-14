@@ -93,8 +93,8 @@ export function WifiCard() {
           {qrDataUrl && (
             <div
               data-testid="qr-container"
-              className="rounded-xl overflow-hidden transition-[filter] duration-500"
-              style={{ filter: unblurred ? "blur(0px)" : "blur(12px)" }}
+              className="rounded-xl transition-[filter] duration-500"
+              style={{ filter: unblurred ? "none" : "blur(12px)" }}
             >
               <img
                 src={qrDataUrl}
