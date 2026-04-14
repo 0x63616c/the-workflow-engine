@@ -29,7 +29,7 @@ export function WeatherCard() {
     >
       <div className="flex flex-col justify-between h-full">
         <div className="flex items-center justify-between">
-          <span className="text-2xl text-muted-foreground">Weather</span>
+          <span className="text-2xl text-muted-foreground">Temp</span>
           <Icon size={32} className="text-muted-foreground/40" />
         </div>
         <div>
