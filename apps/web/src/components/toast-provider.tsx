@@ -1,4 +1,8 @@
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
+
+if (import.meta.env.DEV) {
+  (window as unknown as Record<string, unknown>).__toast = toast;
+}
 
 export function ToastProvider() {
   return (
