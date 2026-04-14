@@ -88,11 +88,11 @@ accessories:
   alloy:
     image: ghcr.io/0x63616c/workflow-engine-alloy:latest
     host: homelab
-    port:
-      - "12345:12345"
-      - "12346:12346"
     cmd: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
     options:
+      publish:
+        - "12345:12345"
+        - "12346:12346"
       volume:
         - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
