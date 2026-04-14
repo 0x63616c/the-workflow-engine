@@ -302,24 +302,29 @@ Pre-push: blocks direct push to `main`.
 
 - **TDD always.** Red/green cycle. Write failing test first, implement, refactor.
 - **Vitest** for unit + integration tests (API services, frontend components).
-- **Browser automation** (agent-browser CLI or equivalent) for E2E and manual visual verification after every UI task.
+- **Playwright E2E** for real-browser testing of user flows at iPad resolution.
+- **Browser automation** (agent-browser CLI or equivalent) for manual visual verification after every UI task.
 - No task is "done" until tests pass AND browser automation confirms visually.
 - API tests: hit real endpoints (SQLite in-memory for test DB).
-- Frontend tests: Vitest + Testing Library for units, browser automation for flows.
+- Frontend tests: Vitest + Testing Library for units, Playwright for E2E flows.
 
-### PR Screenshots (Playwright)
+### Playwright E2E Tests (MANDATORY for frontend changes)
 
-CI automatically takes screenshots on PRs that touch `apps/web/**`. Screenshots are committed to the PR branch and embedded in a PR comment.
+**E2E tests MUST be written alongside frontend code, not as an afterthought.** When adding a new card, interaction, or expanded view, write the E2E test in the same PR.
 
 - **Config**: `playwright.config.ts` (root), tests in `e2e/`
 - **Mock data**: `e2e/mock-trpc.ts` intercepts tRPC calls with realistic data
-- **Run locally**: `bun run screenshots`
-- **What it captures**: Dashboard grid, clock expanded, settings expanded (iPad Pro 12.9" @ 2x)
+- **Run locally**: `bun run test:e2e` (full suite), `bun run screenshots` (screenshot-only)
+- **CI**: E2E tests run on every PR. Screenshots run on PRs touching `apps/web/**`.
+- **No `waitForTimeout` for sleeps.** Use `waitForLoadState`, `expect(locator).toBeVisible()`, or `toPass()` polling. The only acceptable use of `waitForTimeout` is waiting for CSS animations (and use the smallest delay possible).
 
 **When creating PRs that change frontend code:**
-1. Run `bun run screenshots` locally to verify screenshots look correct
-2. If adding new cards or routes, add corresponding screenshot tests in `e2e/screenshots.spec.ts`
-3. If adding new tRPC queries, add mock responses in `e2e/mock-trpc.ts`
+1. Run `bun run test:e2e` locally to verify all E2E tests pass
+2. Run `bun run screenshots` to verify screenshots look correct
+3. If adding new cards: add card visibility test in `e2e/dashboard-grid.spec.ts`, expand test in `e2e/card-expand-collapse.spec.ts`, and card-specific test file
+4. If adding new tRPC queries: add mock responses in `e2e/mock-trpc.ts`
+5. If adding new interactions: add edge case tests in `e2e/edge-cases.spec.ts`
+6. If adding new expanded views: add content verification tests
 
 ## Core Systems
 
