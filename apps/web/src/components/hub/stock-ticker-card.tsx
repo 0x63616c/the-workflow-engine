@@ -56,6 +56,9 @@ export function StockTickerCard() {
           <TrendingUp size={32} className="text-muted-foreground/40" />
         </div>
         <div className="grid grid-cols-2 gap-x-8 gap-y-1">
+          <div className="flex justify-end col-span-2">
+            <span className="text-xs text-muted-foreground/30">1d</span>
+          </div>
           {[...stocks, ...crypto].map((q) => (
             <TickerItem
               key={q.symbol}
