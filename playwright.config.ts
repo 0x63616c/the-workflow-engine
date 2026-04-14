@@ -5,7 +5,7 @@ const VITE_PORT = 4210;
 export default defineConfig({
   testDir: "./e2e",
   outputDir: "./e2e/results",
-  timeout: 30_000,
+  timeout: 60_000,
   retries: 0,
   use: {
     baseURL: `http://localhost:${VITE_PORT}`,

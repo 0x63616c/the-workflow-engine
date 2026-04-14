@@ -9,7 +9,8 @@
     "lint:fix": "bunx biome check --write .",
     "typecheck": "bun run --filter '*' typecheck",
     "check:boundaries": "bun run scripts/check-boundaries.ts",
-    "screenshots": "bunx playwright test --project='iPad Pro 12.9'"
+    "screenshots": "bunx playwright test e2e/screenshots.spec.ts --project='iPad Pro 12.9'",
+    "test:e2e": "bunx playwright test --project='iPad Pro 12.9'"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
