@@ -93,7 +93,7 @@ registerCard({
 
 registerCard({
   id: "stocks",
-  gridColumn: "1 / 4",
+  gridColumn: "1 / 3",
   gridRow: "4 / 5",
   colorScheme: { color: "crimson" },
   component: StockTickerCard,

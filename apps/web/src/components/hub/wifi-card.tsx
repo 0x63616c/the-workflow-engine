@@ -80,12 +80,15 @@ export function WifiCard() {
     >
       <div className="flex flex-col justify-between h-full">
         {/* Header */}
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Wifi size={14} className="text-card-green-accent" />
-            <div className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-500" />
+        <div className="flex items-start justify-between">
+          <div>
+            <span className="text-2xl text-muted-foreground">Wi-Fi</span>
+            <div className="text-2xl text-muted-foreground/50">{WIFI_SSID}</div>
           </div>
-          <span className="text-sm font-medium text-foreground">{WIFI_SSID}</span>
+          <div className="relative">
+            <Wifi size={32} className="text-card-green-accent" />
+            <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500" />
+          </div>
         </div>
 
         {/* QR Code */}
