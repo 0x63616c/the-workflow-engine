@@ -73,17 +73,29 @@ export const useCounterStore = create<CounterStore>((set) => ({
 
 ## Testing
 
-- Test files in `src/__tests__/`.
-- Vitest + `@testing-library/react`.
-- jsdom environment (configured in `vitest.config.ts`).
-- Run: `bun run test` from `apps/web/`.
+- **Vitest** unit tests in `src/__tests__/`. Run: `bun run test` from `apps/web/`.
+- **Playwright E2E** tests in `e2e/` (repo root). Run: `bun run test:e2e` from repo root.
+- jsdom environment for Vitest (configured in `vitest.config.ts`).
+
+### E2E Tests (MANDATORY for frontend changes)
+
+Every frontend PR MUST include Playwright E2E tests. Write them in the same PR as the feature code.
+
+- **New card?** Add to `e2e/dashboard-grid.spec.ts` (visibility), `e2e/card-expand-collapse.spec.ts` (expand), and a card-specific spec file.
+- **New tRPC query?** Add mock response to `e2e/mock-trpc.ts`.
+- **New interaction?** Add edge case tests to `e2e/edge-cases.spec.ts`.
+- **New expanded view?** Add content verification tests.
+- Run `bun run test:e2e` before pushing. Run `bun run screenshots` for visual verification.
+- No `waitForTimeout` for arbitrary delays. Use `expect(locator).toBeVisible()`, `waitForLoadState`, or `toPass()` polling.
 
 ## Commands
 
 ```bash
 bun run dev        # Vite dev server on port 4200
 bun run build      # Type-check + production build
-bun run test       # Vitest
+bun run test       # Vitest unit tests
+bun run test:e2e   # Playwright E2E tests (from repo root)
+bun run screenshots # PR screenshots (from repo root)
 bun run typecheck  # tsc --noEmit
 bun run lint:fix   # Biome
 ```
