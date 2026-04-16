@@ -16,6 +16,7 @@ export const envSchema = z
     LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error", "fatal"]).default("info"),
     INNGEST_EVENT_KEY: z.string().default(INNGEST_DEV_EVENT_KEY),
     INNGEST_SIGNING_KEY: z.string().default(INNGEST_DEV_SIGNING_KEY),
+    INNGEST_BASE_URL: z.string().url().optional(),
     INNGEST_DEV: z.coerce.number().int().default(1),
     HA_URL: z.string().url().default("http://homeassistant.local:8123"),
     HA_TOKEN: z.string().min(1),

@@ -43,6 +43,7 @@ env:
     PORT: "4301"
     PORT_OFFSET: "0"
     INNGEST_DEV: "0"
+    INNGEST_BASE_URL: "http://workflow-engine-inngest:8288"
     HA_URL: "http://host.docker.internal:8123"
     ALLOY_URL: "http://workflow-engine-alloy:12346"
   secret:
