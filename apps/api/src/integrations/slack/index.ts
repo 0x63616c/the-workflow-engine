@@ -114,20 +114,29 @@ export async function initSlack(): Promise<void> {
 
     const files = (event as { files?: SlackFile[] }).files ?? [];
 
-    await processMessage({
-      channel: event.channel,
-      threadTs,
-      userId: event.user ?? "unknown",
-      text,
-      files,
-      resolveDisplayName: async () => {
-        if (!event.user) return "Unknown";
-        const info = await client.users.info({ user: event.user });
-        return (
-          info.user?.profile?.display_name || info.user?.real_name || info.user?.name || event.user
-        );
-      },
-    });
+    try {
+      await processMessage({
+        channel: event.channel,
+        threadTs,
+        userId: event.user ?? "unknown",
+        text,
+        files,
+        resolveDisplayName: async () => {
+          if (!event.user) return "Unknown";
+          const info = await client.users.info({ user: event.user });
+          return (
+            info.user?.profile?.display_name || info.user?.real_name || info.user?.name || event.user
+          );
+        },
+      });
+    } catch (err) {
+      log.error({ err, channel: event.channel, threadTs }, "Failed to process Slack message");
+      await client.chat.postMessage({
+        channel: event.channel,
+        thread_ts: threadTs,
+        text: `something went wrong processing that message: ${err instanceof Error ? err.message : "unknown error"}`,
+      });
+    }
   });
 
   app.event("message", async ({ event, client }) => {
