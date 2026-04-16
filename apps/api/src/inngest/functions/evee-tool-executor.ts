@@ -2,10 +2,15 @@ import { executeTool } from "../../integrations/evee/tools";
 import { inngest } from "../client";
 
 export const eveeToolExecutor = inngest.createFunction(
-  { id: "evee-tool-executor" },
-  { event: "evee/tool-call.requested" },
+  { id: "evee-tool-executor", triggers: [{ event: "evee/tool-call.requested" }] },
   async ({ event, step }) => {
-    const { callId, conversationId, toolName, input, llmCallId } = event.data;
+    const { callId, conversationId, toolName, input, llmCallId } = event.data as {
+      callId: string;
+      conversationId: string;
+      toolName: string;
+      input: Record<string, unknown>;
+      llmCallId: string;
+    };
 
     const result = await step.run("execute", async () => {
       const start = Date.now();

@@ -1,6 +1,7 @@
 import type { JSONValue } from "@ai-sdk/provider";
 import type { ModelMessage } from "ai";
 import { asc, eq } from "drizzle-orm";
+import { NonRetriableError } from "inngest";
 import { db } from "../../db/client";
 import { newId } from "../../db/id";
 import { images as imagesTable, llmCalls, messages as messagesTable } from "../../db/schema";
@@ -16,14 +17,17 @@ const MAX_CONSECUTIVE_TIMEOUT_ROUNDS = 2;
 export const eveeConversation = inngest.createFunction(
   {
     id: "evee-conversation",
+    triggers: [{ event: "slack/message.received" }],
     concurrency: {
       limit: 1,
       key: "event.data.conversationId",
     },
   },
-  { event: "slack/message.received" },
   async ({ event, step }) => {
-    const { conversationId, botUserId } = event.data;
+    const { conversationId, botUserId } = event.data as {
+      conversationId: string;
+      botUserId: string;
+    };
 
     // Safe across Inngest replays: arrays rebuild from memoized step.run() return values
     const toolMessages: ModelMessage[] = [];
@@ -105,8 +109,8 @@ export const eveeConversation = inngest.createFunction(
           name: "evee/response.ready",
           data: {
             conversationId,
-            threadId: event.data.threadId,
-            channel: event.data.channel,
+            threadId: (event.data as { threadId: string }).threadId,
+            channel: (event.data as { channel: string }).channel,
             response: result.text || "I'm not sure what to say.",
             llmCalls: allLlmCalls,
           },
@@ -175,5 +179,7 @@ export const eveeConversation = inngest.createFunction(
         });
       }
     }
+
+    throw new NonRetriableError("Max tool rounds exceeded");
   },
 );
