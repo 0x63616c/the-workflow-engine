@@ -1,11 +1,16 @@
 import { Assistant } from "@slack/bolt";
-import { LOADING_MESSAGES } from "./constants";
-import { handleConversation } from "./handler";
+
+// DM handling through the assistant panel is deferred.
+// For now, keep a minimal assistant that greets and directs users
+// to @mention Evee in channels. The full DM pipeline will use
+// the same processMessage flow once the channel path is verified.
 
 export const eveeAssistant = new Assistant({
   threadStarted: async ({ say, setStatus }) => {
     await setStatus("is waking up...");
-    await say("Hey! I'm Evee. What can I help you with?");
+    await say(
+      "Hey! I'm Evee. For the best experience, @mention me in a channel thread so I can see the full context!",
+    );
   },
 
   userMessage: async ({ message, say, setStatus }) => {
@@ -17,19 +22,9 @@ export const eveeAssistant = new Assistant({
       return;
     }
 
-    await handleConversation({
-      messages: [{ role: "user", content: userText }],
-      reply: async (text) => {
-        await say(text);
-      },
-      setStatus: async (status) => {
-        await setStatus({ status, loading_messages: LOADING_MESSAGES });
-      },
-      context: {
-        threadTs: "ts" in message ? (message.ts ?? "dm") : "dm",
-        channel: "channel" in message ? (message.channel ?? "dm") : "dm",
-        userId: "user" in message ? ((message.user as string) ?? "unknown") : "unknown",
-      },
-    });
+    await setStatus("thinking...");
+    await say(
+      "I work best in channel threads right now! @mention me there and I'll have full conversation context :bufo-wave:",
+    );
   },
 });

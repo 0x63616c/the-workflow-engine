@@ -28,6 +28,7 @@ const rules: Rule[] = [
       /^drizzle-orm/,
       /^pg$/,
       /^node:/,
+      /^nanoid/,
       /^@repo\/shared/,
       /^\./, // relative imports within db/
     ],
@@ -64,8 +65,48 @@ const rules: Rule[] = [
       /^\./, // relative imports
       /^@repo\/shared/,
       /^inngest/,
+      /^@ai-sdk\/provider/,
+      /^ai$/,
+      /^@slack\/web-api/,
+      /^drizzle-orm/,
       /\.\.\/client/,
       /\.\.\/\.\.\/services\//,
+      /\.\.\/\.\.\/db\//,
+      /\.\.\/\.\.\/integrations\/evee\//,
+      /\.\.\/\.\.\/integrations\/slack\/format/,
+      /\.\.\/\.\.\/env/,
+    ],
+  },
+  {
+    pattern: `${API_SRC}/integrations/evee/**/*.ts`,
+    label: "integrations/evee/",
+    allowed: [
+      /^\./, // relative imports
+      /^@repo\/shared/,
+      /^@openrouter\//,
+      /^ai$/,
+      /^zod/,
+      /\.\.\/\.\.\/env/,
+      /\.\.\/\.\.\/db\//,
+    ],
+  },
+  {
+    pattern: `${API_SRC}/integrations/slack/**/*.ts`,
+    label: "integrations/slack/",
+    allowed: [
+      /^\./, // relative imports
+      /^@repo\/shared/,
+      /^@slack\//,
+      /^@openrouter\//, // legacy LLM (removed in evee-5)
+      /^ai$/, // legacy LLM (removed in evee-5)
+      /^pino$/, // legacy LLM logger (removed in evee-5)
+      /^zod/, // legacy tool definitions (removed in evee-5)
+      /^slackify-markdown/,
+      /^drizzle-orm/,
+      /\.\.\/\.\.\/env/,
+      /\.\.\/\.\.\/db\//,
+      /\.\.\/\.\.\/inngest\//,
+      /\.\.\/\.\.\/lib\//,
     ],
   },
 ];
