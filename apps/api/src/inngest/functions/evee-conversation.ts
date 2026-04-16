@@ -9,7 +9,9 @@ import { buildMessagesFromRecords } from "../../integrations/evee/messages";
 import { inngest } from "../client";
 
 const MAX_TOOL_ROUNDS = 10;
+// Inngest duration string, not a numeric value
 const TOOL_TIMEOUT = "30s";
+const MAX_CONSECUTIVE_TIMEOUT_ROUNDS = 2;
 
 export const eveeConversation = inngest.createFunction(
   {
@@ -23,6 +25,7 @@ export const eveeConversation = inngest.createFunction(
   async ({ event, step }) => {
     const { conversationId, botUserId } = event.data;
 
+    // Safe across Inngest replays: arrays rebuild from memoized step.run() return values
     const toolMessages: ModelMessage[] = [];
     const allLlmCalls: Array<{
       id: string;
@@ -34,6 +37,7 @@ export const eveeConversation = inngest.createFunction(
     }> = [];
 
     let roundNumber = 0;
+    let consecutiveTimeoutRounds = 0;
 
     while (roundNumber < MAX_TOOL_ROUNDS) {
       roundNumber++;
@@ -126,14 +130,23 @@ export const eveeConversation = inngest.createFunction(
       );
 
       const toolResults = await Promise.all(
-        result.toolCalls.map((tc) =>
-          step.waitForEvent(`await-${tc.toolCallId}`, {
+        result.toolCalls.map((tc) => {
+          const safeCallId = tc.toolCallId.replace(/'/g, "");
+          return step.waitForEvent(`await-${safeCallId}`, {
             event: "evee/tool-call.completed",
             timeout: TOOL_TIMEOUT,
-            if: `event.data.callId == '${tc.toolCallId}'`,
-          }),
-        ),
+            if: `event.data.callId == '${safeCallId}'`,
+          });
+        }),
       );
+
+      const allTimedOut = toolResults.every((tr) => tr === null);
+      if (allTimedOut) {
+        consecutiveTimeoutRounds++;
+        if (consecutiveTimeoutRounds >= MAX_CONSECUTIVE_TIMEOUT_ROUNDS) break;
+      } else {
+        consecutiveTimeoutRounds = 0;
+      }
 
       toolMessages.push({
         role: "assistant",

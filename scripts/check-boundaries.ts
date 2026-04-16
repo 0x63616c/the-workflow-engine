@@ -3,7 +3,7 @@
  * Enforces clean architecture import rules from CLAUDE.md.
  *
  * Rules:
- * - db/        → only drizzle-orm, pg, nanoid, @repo/shared
+ * - db/        → only drizzle-orm, pg, @repo/shared
  * - services/  → db/, integrations/types, @repo/shared
  * - trpc/routers/ → services/, @repo/shared, ../init, ../context
  * - inngest/functions/ → services/, @repo/shared
@@ -30,7 +30,6 @@ const rules: Rule[] = [
       /^node:/,
       /^nanoid/,
       /^@repo\/shared/,
-      /^nanoid$/, // ID generation utility
       /^\./, // relative imports within db/
     ],
   },
