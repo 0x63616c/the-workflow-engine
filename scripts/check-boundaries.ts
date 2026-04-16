@@ -4,9 +4,9 @@
  *
  * Rules:
  * - db/        → only drizzle-orm, pg, @repo/shared
- * - services/  → db/, integrations/types, @repo/shared
+ * - services/  → db/, integrations/evee/, integrations/slack/format, @repo/shared, @slack/web-api, env, lib/
  * - trpc/routers/ → services/, @repo/shared, ../init, ../context
- * - inngest/functions/ → services/, @repo/shared
+ * - inngest/functions/ → services/, inngest, @repo/shared, ../client, env (prefer services/ over direct db/integration imports)
  * - integrations/ (except types.ts) → @repo/shared, own files
  */
 
@@ -40,9 +40,14 @@ const rules: Rule[] = [
       /^\./, // relative imports
       /^@repo\/shared/,
       /^drizzle-orm/, // query operators (asc, desc, gte, lt, sql, eq)
-      /\.\.\/db\//,
-      /\.\.\/integrations\/types/,
+      /^@slack\/web-api/, // for Slack messaging (sendSlackResponse)
       /^yahoo-finance2$/, // stock quote fetching
+      /\.\.\/db\//,
+      /\.\.\/integrations\/types/, // existing integration type boundaries
+      /\.\.\/integrations\/evee\//, // evee LLM, messages, tools, types
+      /\.\.\/integrations\/slack\/format/, // toSlackMrkdwn
+      /\.\.\/lib\//, // logger
+      /\.\.\/env/, // env config
     ],
   },
   {
