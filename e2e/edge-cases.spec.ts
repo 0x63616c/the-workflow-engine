@@ -134,22 +134,16 @@ test.describe("Interaction edge cases", () => {
     expect(text).toContain("Upcoming");
   });
 
-  test("wifi password is masked by default on back side", async ({ page }) => {
-    await page.getByTestId("widget-card-wifi-front").click();
-    await expect(page.getByTestId("qr-container")).toBeVisible();
-
-    const text = await page.getByTestId("widget-card-wifi-back").textContent();
+  test("wifi password is masked by default", async ({ page }) => {
+    const text = await page.getByTestId("widget-card-wifi").textContent();
     expect(text).toContain("\u2022");
     expect(text).not.toContain("welcome2024");
   });
 
   test("wifi show password button reveals password", async ({ page }) => {
-    await page.getByTestId("widget-card-wifi-front").click();
-    await expect(page.getByTestId("qr-container")).toBeVisible();
-
     await page.getByLabel("Show password").click();
 
-    const text = await page.getByTestId("widget-card-wifi-back").textContent();
+    const text = await page.getByTestId("widget-card-wifi").textContent();
     expect(text).toContain("welcome2024");
   });
 
