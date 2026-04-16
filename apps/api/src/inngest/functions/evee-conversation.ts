@@ -1,12 +1,9 @@
 import type { JSONValue } from "@ai-sdk/provider";
 import type { ModelMessage } from "ai";
-import { asc, eq } from "drizzle-orm";
 import { NonRetriableError } from "inngest";
 import { db } from "../../db/client";
-import { newId } from "../../db/id";
-import { images as imagesTable, llmCalls, messages as messagesTable } from "../../db/schema";
-import { EVEE_MODEL, callLlm } from "../../integrations/evee/llm";
-import { buildMessagesFromRecords } from "../../integrations/evee/messages";
+import { EVEE_MODEL } from "../../integrations/evee/llm";
+import * as eveeService from "../../services/evee-service";
 import { inngest } from "../client";
 
 const MAX_TOOL_ROUNDS = 10;
@@ -27,6 +24,8 @@ export const eveeConversation = inngest.createFunction(
     const { conversationId, botUserId } = event.data as {
       conversationId: string;
       botUserId: string;
+      threadId: string;
+      channel: string;
     };
 
     // Safe across Inngest replays: arrays rebuild from memoized step.run() return values
@@ -48,31 +47,20 @@ export const eveeConversation = inngest.createFunction(
       const stepName = `llm-call-${roundNumber}`;
 
       const result = await step.run(stepName, async () => {
-        const messageRecords = await db
-          .select()
-          .from(messagesTable)
-          .where(eq(messagesTable.conversationId, conversationId))
-          .orderBy(asc(messagesTable.createdAt));
+        const context = await eveeService.buildLlmContext(db, conversationId, botUserId);
+        if (!context) {
+          throw new NonRetriableError(`Conversation not found: ${conversationId}`);
+        }
 
-        const imageRecords = await db
-          .select()
-          .from(imagesTable)
-          .where(eq(imagesTable.conversationId, conversationId));
+        const fullMessages: ModelMessage[] = [...context.messages, ...toolMessages];
+        const llmResult = await eveeService.runLlmCall({ ...context, messages: fullMessages });
 
-        const historyMessages = buildMessagesFromRecords(messageRecords, imageRecords);
-        const allMessages: ModelMessage[] = [...historyMessages, ...toolMessages];
-
-        const llmResult = await callLlm(allMessages, botUserId);
-
-        const llmCallId = newId("llmCall");
-        await db.insert(llmCalls).values({
-          id: llmCallId,
+        const llmCallId = await eveeService.persistLlmCall(db, {
           conversationId,
-          stepName,
           model: EVEE_MODEL,
-          inputTokens: llmResult.usage.inputTokens,
-          outputTokens: llmResult.usage.outputTokens,
-          totalTokens: llmResult.usage.totalTokens,
+          promptTokens: llmResult.usage.inputTokens,
+          completionTokens: llmResult.usage.outputTokens,
+          stepName,
           finishReason: llmResult.finishReason,
         });
 
@@ -97,8 +85,7 @@ export const eveeConversation = inngest.createFunction(
       if (result.finishReason !== "tool-calls" || result.toolCalls.length === 0) {
         await step.run("save-response", async () => {
           const responseText = result.text || "I'm not sure what to say.";
-          await db.insert(messagesTable).values({
-            id: newId("message"),
+          await eveeService.persistMessage(db, {
             conversationId,
             role: "assistant",
             content: responseText,

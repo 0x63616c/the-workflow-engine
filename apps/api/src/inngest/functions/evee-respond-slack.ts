@@ -1,6 +1,5 @@
-import { WebClient } from "@slack/web-api";
 import { env } from "../../env";
-import { toSlackMrkdwn } from "../../integrations/slack/format";
+import * as eveeService from "../../services/evee-service";
 import { inngest } from "../client";
 
 export const eveeRespondSlack = inngest.createFunction(
@@ -13,13 +12,12 @@ export const eveeRespondSlack = inngest.createFunction(
     };
 
     await step.run("post", async () => {
-      const slack = new WebClient(env.SLACK_BOT_TOKEN);
-      const formatted = toSlackMrkdwn(data.response);
-      await slack.chat.postMessage({
-        channel: data.channel,
-        thread_ts: data.threadId,
-        text: formatted,
-      });
+      await eveeService.sendSlackResponse(
+        env.SLACK_BOT_TOKEN,
+        data.channel,
+        data.threadId,
+        data.response,
+      );
     });
   },
 );

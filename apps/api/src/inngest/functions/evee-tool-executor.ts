@@ -1,4 +1,4 @@
-import { executeTool } from "../../integrations/evee/tools";
+import * as eveeService from "../../services/evee-service";
 import { inngest } from "../client";
 
 export const eveeToolExecutor = inngest.createFunction(
@@ -13,21 +13,12 @@ export const eveeToolExecutor = inngest.createFunction(
     };
 
     const result = await step.run("execute", async () => {
-      const start = Date.now();
-      try {
-        const output = await executeTool(toolName, input);
-        return {
-          output,
-          error: null,
-          durationMs: Date.now() - start,
-        };
-      } catch (err) {
-        return {
-          output: null,
-          error: err instanceof Error ? err.message : String(err),
-          durationMs: Date.now() - start,
-        };
-      }
+      const toolResult = await eveeService.executeTool(toolName, input);
+      return {
+        output: toolResult.output,
+        error: toolResult.error,
+        durationMs: toolResult.durationMs,
+      };
     });
 
     await step.sendEvent("emit-result", {

@@ -85,7 +85,7 @@ export async function persistMessage(
     content: string;
     userId?: string;
     displayName?: string;
-    images?: Array<{ data: Buffer; mimeType: string }>;
+    images?: Array<{ data: Buffer; mimeType: string; originalUrl?: string }>;
   },
 ): Promise<string> {
   const messageId = newId("message");
@@ -107,6 +107,7 @@ export async function persistMessage(
         mimeType: img.mimeType,
         data: img.data,
         sizeBytes: img.data.byteLength,
+        originalUrl: img.originalUrl,
       });
     }
   }

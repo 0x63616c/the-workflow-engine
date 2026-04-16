@@ -1,6 +1,5 @@
 import { db } from "../../db/client";
-import { newId } from "../../db/id";
-import { toolCalls } from "../../db/schema";
+import * as eveeService from "../../services/evee-service";
 import { inngest } from "../client";
 
 export const eveePersistToolCall = inngest.createFunction(
@@ -18,8 +17,7 @@ export const eveePersistToolCall = inngest.createFunction(
     };
 
     await step.run("save", async () => {
-      await db.insert(toolCalls).values({
-        id: newId("toolCall"),
+      await eveeService.persistToolCall(db, {
         conversationId: data.conversationId,
         llmCallId: data.llmCallId,
         callId: data.callId,
