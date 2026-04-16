@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   customType,
   integer,
@@ -47,6 +48,7 @@ export const conversations = pgTable(
   "conversations",
   {
     id: text().primaryKey(),
+    // Expected values: "slack", "web", "api"
     source: text().notNull(),
     slackThreadId: text("slack_thread_id"),
     slackChannelId: text("slack_channel_id"),
@@ -54,14 +56,18 @@ export const conversations = pgTable(
     startedByName: text("started_by_name"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
-  (table) => [uniqueIndex("uq_slack_thread").on(table.slackThreadId, table.slackChannelId)],
+  (table) => [
+    uniqueIndex("uq_slack_thread")
+      .on(table.slackThreadId, table.slackChannelId)
+      .where(sql`slack_thread_id IS NOT NULL AND slack_channel_id IS NOT NULL`),
+  ],
 );
 
 export const messages = pgTable("messages", {
   id: text().primaryKey(),
   conversationId: text("conversation_id")
     .notNull()
-    .references(() => conversations.id),
+    .references(() => conversations.id, { onDelete: "cascade" }),
   role: text().notNull(),
   content: text().notNull(),
   userId: text("user_id"),
@@ -73,8 +79,8 @@ export const images = pgTable("images", {
   id: text().primaryKey(),
   conversationId: text("conversation_id")
     .notNull()
-    .references(() => conversations.id),
-  messageId: text("message_id").references(() => messages.id),
+    .references(() => conversations.id, { onDelete: "cascade" }),
+  messageId: text("message_id").references(() => messages.id, { onDelete: "cascade" }),
   mimeType: text("mime_type").notNull(),
   data: bytea("data").notNull(),
   sizeBytes: integer("size_bytes").notNull(),
@@ -86,7 +92,7 @@ export const llmCalls = pgTable("llm_calls", {
   id: text().primaryKey(),
   conversationId: text("conversation_id")
     .notNull()
-    .references(() => conversations.id),
+    .references(() => conversations.id, { onDelete: "cascade" }),
   inngestRunId: text("inngest_run_id"),
   stepName: text("step_name").notNull(),
   model: text().notNull(),
@@ -95,7 +101,7 @@ export const llmCalls = pgTable("llm_calls", {
   totalTokens: integer("total_tokens").notNull(),
   finishReason: text("finish_reason").notNull(),
   openrouterGenerationId: text("openrouter_generation_id"),
-  costUsd: numeric("cost_usd"),
+  costUsd: numeric("cost_usd", { precision: 10, scale: 8 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -103,8 +109,8 @@ export const toolCalls = pgTable("tool_calls", {
   id: text().primaryKey(),
   conversationId: text("conversation_id")
     .notNull()
-    .references(() => conversations.id),
-  llmCallId: text("llm_call_id").references(() => llmCalls.id),
+    .references(() => conversations.id, { onDelete: "cascade" }),
+  llmCallId: text("llm_call_id").references(() => llmCalls.id, { onDelete: "cascade" }),
   callId: text("call_id").notNull(),
   toolName: text("tool_name").notNull(),
   input: jsonb().notNull(),

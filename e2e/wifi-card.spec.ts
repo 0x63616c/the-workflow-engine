@@ -11,8 +11,8 @@ test.describe("WiFi card flip interaction", () => {
     expect(text).toContain("tap to share");
   });
 
-  test("tapping flips to show QR code", async ({ page }) => {
-    await page.getByTestId("widget-card-wifi-front").click();
+  test("tapping reveals QR code (unblurs)", async ({ page }) => {
+    await page.getByTestId("widget-card-wifi").click();
     await expect(page.getByTestId("qr-container")).toBeVisible();
   });
 });
