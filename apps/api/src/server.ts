@@ -6,6 +6,7 @@ import { pool } from "./db/client";
 import { runMigrations } from "./db/migrate";
 import { EFFECTIVE_PORT, env } from "./env";
 import { inngest } from "./inngest/client";
+import { inngestFunctions } from "./inngest/functions";
 import { ha } from "./integrations/homeassistant";
 import { haRelay } from "./integrations/homeassistant/ws-relay";
 import { initSlack, stopSlack } from "./integrations/slack";
@@ -20,7 +21,7 @@ await initSlack();
 
 const inngestHandler = serve({
   client: inngest,
-  functions: [],
+  functions: inngestFunctions,
 });
 
 const isProduction = env.NODE_ENV === "production";

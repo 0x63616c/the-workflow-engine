@@ -3,7 +3,7 @@
  * Enforces clean architecture import rules from CLAUDE.md.
  *
  * Rules:
- * - db/        → only drizzle-orm, pg, nanoid, @repo/shared
+ * - db/        → only drizzle-orm, pg, @repo/shared
  * - services/  → db/, integrations/types, @repo/shared
  * - trpc/routers/ → services/, @repo/shared, ../init, ../context
  * - inngest/functions/ → services/, @repo/shared
@@ -28,8 +28,8 @@ const rules: Rule[] = [
       /^drizzle-orm/,
       /^pg$/,
       /^node:/,
+      /^nanoid/,
       /^@repo\/shared/,
-      /^nanoid$/, // ID generation utility
       /^\./, // relative imports within db/
     ],
   },
@@ -65,8 +65,48 @@ const rules: Rule[] = [
       /^\./, // relative imports
       /^@repo\/shared/,
       /^inngest/,
+      /^@ai-sdk\/provider/,
+      /^ai$/,
+      /^@slack\/web-api/,
+      /^drizzle-orm/,
       /\.\.\/client/,
       /\.\.\/\.\.\/services\//,
+      /\.\.\/\.\.\/db\//,
+      /\.\.\/\.\.\/integrations\/evee\//,
+      /\.\.\/\.\.\/integrations\/slack\/format/,
+      /\.\.\/\.\.\/env/,
+    ],
+  },
+  {
+    pattern: `${API_SRC}/integrations/evee/**/*.ts`,
+    label: "integrations/evee/",
+    allowed: [
+      /^\./, // relative imports
+      /^@repo\/shared/,
+      /^@openrouter\//,
+      /^ai$/,
+      /^zod/,
+      /\.\.\/\.\.\/env/,
+      /\.\.\/\.\.\/db\//,
+    ],
+  },
+  {
+    pattern: `${API_SRC}/integrations/slack/**/*.ts`,
+    label: "integrations/slack/",
+    allowed: [
+      /^\./, // relative imports
+      /^@repo\/shared/,
+      /^@slack\//,
+      /^@openrouter\//, // legacy LLM (removed in evee-5)
+      /^ai$/, // legacy LLM (removed in evee-5)
+      /^pino$/, // legacy LLM logger (removed in evee-5)
+      /^zod/, // legacy tool definitions (removed in evee-5)
+      /^slackify-markdown/,
+      /^drizzle-orm/,
+      /\.\.\/\.\.\/env/,
+      /\.\.\/\.\.\/db\//,
+      /\.\.\/\.\.\/inngest\//,
+      /\.\.\/\.\.\/lib\//,
     ],
   },
 ];
