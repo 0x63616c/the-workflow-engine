@@ -40,6 +40,23 @@ describe("registerTool", () => {
   });
 });
 
+describe("getToolDefinitions", () => {
+  it("returns entries with description and inputSchema fields", () => {
+    registerTool({
+      name: "info-tool",
+      description: "A tool for testing definitions",
+      inputSchema: z.object({ query: z.string() }),
+      outputSchema: z.object({ answer: z.string() }),
+      execute: async ({ query }) => ({ answer: query }),
+    });
+
+    const defs = getToolDefinitions();
+    expect(defs["info-tool"]).toBeDefined();
+    expect(defs["info-tool"].description).toBe("A tool for testing definitions");
+    expect(defs["info-tool"].inputSchema).toBeDefined();
+  });
+});
+
 describe("executeTool", () => {
   it("executes a registered tool with validated input", async () => {
     registerTool({

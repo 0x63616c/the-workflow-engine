@@ -11,6 +11,7 @@ export interface ToolDefinition<
   execute: (input: z.infer<TInput>) => Promise<z.infer<TOutput>>;
 }
 
+// Singleton registry - cleared only in tests
 const registry = new Map<string, ToolDefinition>();
 
 export function registerTool<TInput extends z.ZodType, TOutput extends z.ZodType>(
@@ -45,7 +46,13 @@ export async function executeTool(name: string, input: unknown): Promise<unknown
   if (!def) throw new Error(`Unknown tool: ${name}`);
   const parsedInput = def.inputSchema.parse(input);
   const result = await def.execute(parsedInput);
-  return def.outputSchema.parse(result);
+  try {
+    return def.outputSchema.parse(result);
+  } catch (error) {
+    throw new Error(
+      `Tool "${name}" returned invalid output: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }
 
 export function clearRegistry(): void {
