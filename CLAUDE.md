@@ -244,8 +244,9 @@ Checked by `scripts/check-boundaries.ts` in pre-commit and CI:
 | `db/` | drizzle-orm, bun:sqlite, @repo/shared, relative |
 | `services/` | db/, integrations/types, @repo/shared, drizzle-orm |
 | `trpc/routers/` | services/, @trpc/, zod, @repo/shared, ../init, ../context |
-| `inngest/functions/` | services/, inngest, @repo/shared, ../client |
-| `integrations/` | @repo/shared, own files |
+| `inngest/functions/` | services/, db/, integrations/evee/, integrations/slack/format, env, inngest, @repo/shared, ../client, drizzle-orm, @ai-sdk/provider, ai, @slack/web-api |
+| `integrations/evee/` | @repo/shared, @openrouter/, ai, zod, env, db/ |
+| `integrations/slack/` | @repo/shared, @slack/, slackify-markdown, drizzle-orm, env, db/, inngest/, lib/ |
 
 Routers and Inngest functions are **thin wrappers** calling services. Never put business logic in routers.
 
