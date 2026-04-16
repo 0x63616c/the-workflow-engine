@@ -33,34 +33,36 @@ async function processMessage(params: ProcessMessageParams): Promise<void> {
 
   const displayName = await resolveDisplayName();
 
-  const existing = await db
-    .select()
-    .from(conversations)
-    .where(
-      and(eq(conversations.slackThreadId, threadTs), eq(conversations.slackChannelId, channel)),
-    )
-    .limit(1);
-
-  let conversationId: string;
-
-  if (existing.length === 0) {
-    conversationId = newId("conversation");
-    await db.insert(conversations).values({
+  const conversationId = newId("conversation");
+  const [inserted] = await db
+    .insert(conversations)
+    .values({
       id: conversationId,
       source: "slack",
       slackThreadId: threadTs,
       slackChannelId: channel,
       startedBy: userId,
       startedByName: displayName,
-    });
-  } else {
-    conversationId = existing[0].id;
-  }
+    })
+    .onConflictDoNothing()
+    .returning({ id: conversations.id });
+
+  const finalConversationId =
+    inserted?.id ??
+    (
+      await db
+        .select({ id: conversations.id })
+        .from(conversations)
+        .where(
+          and(eq(conversations.slackThreadId, threadTs), eq(conversations.slackChannelId, channel)),
+        )
+        .limit(1)
+    )[0].id;
 
   const messageId = newId("message");
   await db.insert(messages).values({
     id: messageId,
-    conversationId,
+    conversationId: finalConversationId,
     role: "user",
     content: text,
     userId,
@@ -77,13 +79,17 @@ async function processMessage(params: ProcessMessageParams): Promise<void> {
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${env.SLACK_BOT_TOKEN}` },
     });
+    if (!response.ok) {
+      log.warn({ url, status: response.status }, "Failed to download Slack image, skipping");
+      continue;
+    }
     const buffer = Buffer.from(await response.arrayBuffer());
     const mimeType = file.mimetype ?? "image/png";
 
     const imageId = newId("image");
     await db.insert(images).values({
       id: imageId,
-      conversationId,
+      conversationId: finalConversationId,
       messageId,
       mimeType,
       data: buffer,
@@ -96,7 +102,7 @@ async function processMessage(params: ProcessMessageParams): Promise<void> {
   await inngest.send({
     name: "slack/message.received",
     data: {
-      conversationId,
+      conversationId: finalConversationId,
       threadId: threadTs,
       channel,
       userId,
@@ -108,7 +114,13 @@ async function processMessage(params: ProcessMessageParams): Promise<void> {
   });
 
   log.info(
-    { conversationId, messageId, imageCount: imageIds.length, channel, threadTs },
+    {
+      conversationId: finalConversationId,
+      messageId,
+      imageCount: imageIds.length,
+      channel,
+      threadTs,
+    },
     "Slack message processed, Inngest event fired",
   );
 }
@@ -145,12 +157,13 @@ export async function initSlack(): Promise<void> {
     }
 
     const files = (event as { files?: SlackFile[] }).files ?? [];
+    const strippedText = text.replace(/<@[A-Z0-9]+>/g, "").trim();
 
     await processMessage({
       channel: event.channel,
       threadTs,
       userId: event.user ?? "unknown",
-      text,
+      text: strippedText,
       files,
       resolveDisplayName: async () => {
         if (!event.user) return "Unknown";
@@ -165,9 +178,10 @@ export async function initSlack(): Promise<void> {
   app.event("message", async ({ event, client }) => {
     if (!("subtype" in event) || event.subtype !== "message_changed") return;
     const changed = event as {
-      channel: string;
+      channel?: string;
       message?: { user?: string; thread_ts?: string; ts?: string };
     };
+    if (!changed.channel) return;
     const threadTs = changed.message?.thread_ts ?? changed.message?.ts;
     if (!threadTs || !changed.message?.user) return;
 
