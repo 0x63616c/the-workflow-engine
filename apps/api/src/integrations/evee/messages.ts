@@ -34,6 +34,10 @@ export function buildMessagesFromRecords(
   const messages: ModelMessage[] = [];
 
   for (const msg of sorted) {
+    if (msg.role !== "user" && msg.role !== "assistant") {
+      continue;
+    }
+
     if (msg.role === "assistant") {
       messages.push({ role: "assistant", content: msg.content });
       continue;
