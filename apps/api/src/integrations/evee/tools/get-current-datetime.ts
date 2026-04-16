@@ -2,7 +2,7 @@ import { z } from "zod";
 import { registerTool } from "./registry";
 
 registerTool({
-  name: "get-current-date-time",
+  name: "get-current-datetime",
   description: "Get the current date and time in UTC. Convert to the user's timezone if known.",
   inputSchema: z.object({}),
   outputSchema: z.object({

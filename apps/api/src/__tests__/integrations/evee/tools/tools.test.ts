@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { executeTool, getTool } from "../../../../integrations/evee/tools";
 
-describe("get-current-date-time", () => {
+describe("get-current-datetime", () => {
   it("is registered", () => {
-    expect(getTool("get-current-date-time")).toBeDefined();
+    expect(getTool("get-current-datetime")).toBeDefined();
   });
 
   it("returns current date/time info", async () => {
-    const result = (await executeTool("get-current-date-time", {})) as {
+    const result = (await executeTool("get-current-datetime", {})) as {
       iso: string;
       utc: string;
       dayOfWeek: string;
