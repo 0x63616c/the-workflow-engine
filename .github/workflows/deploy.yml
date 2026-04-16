@@ -321,6 +321,13 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: kamal deploy
 
+      - name: Reboot Inngest accessory
+        env:
+          KAMAL_REGISTRY_PASSWORD: ${{ secrets.GHRC_TOKEN }}
+          INNGEST_EVENT_KEY: ${{ secrets.INNGEST_EVENT_KEY }}
+          INNGEST_SIGNING_KEY: ${{ secrets.INNGEST_SIGNING_KEY }}
+        run: kamal accessory reboot inngest --confirmed
+
       - name: Verify deployment health
         id: health-check
         run: |
