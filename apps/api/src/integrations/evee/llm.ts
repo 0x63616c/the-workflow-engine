@@ -4,7 +4,11 @@ import { env } from "../../env";
 import { buildSystemPrompt } from "./prompt";
 import { getToolDefinitions } from "./tools";
 
-const openrouter = createOpenRouter({ apiKey: env.OPENROUTER_API_KEY });
+let _openrouter: ReturnType<typeof createOpenRouter> | null = null;
+function getOpenRouter() {
+  if (!_openrouter) _openrouter = createOpenRouter({ apiKey: env.OPENROUTER_API_KEY });
+  return _openrouter;
+}
 
 export const EVEE_MODEL = "google/gemma-4-31b-it";
 const LLM_TIMEOUT_MS = 120_000;
@@ -34,8 +38,9 @@ export async function callLlm(messages: ModelMessage[], botUserId: string): Prom
     ]),
   );
 
+  // Intentionally no maxSteps - Inngest orchestrator handles the tool-call loop externally
   const result = await generateText({
-    model: openrouter(EVEE_MODEL),
+    model: getOpenRouter()(EVEE_MODEL),
     system: buildSystemPrompt(botUserId),
     messages,
     tools,
