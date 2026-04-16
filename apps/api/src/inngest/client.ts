@@ -1,7 +1,5 @@
-import { EventSchemas, Inngest } from "inngest";
-import type { EveeEvents } from "./events";
+import { Inngest } from "inngest";
 
 export const inngest = new Inngest({
   id: "the-workflow-engine",
-  schemas: new EventSchemas().fromRecord<EveeEvents>(),
 });

@@ -1,11 +1,9 @@
 import type { JSONValue } from "@ai-sdk/provider";
 import type { ModelMessage } from "ai";
-import { asc, eq } from "drizzle-orm";
+import { NonRetriableError } from "inngest";
 import { db } from "../../db/client";
-import { newId } from "../../db/id";
-import { images as imagesTable, llmCalls, messages as messagesTable } from "../../db/schema";
-import { EVEE_MODEL, callLlm } from "../../integrations/evee/llm";
-import { buildMessagesFromRecords } from "../../integrations/evee/messages";
+import { EVEE_MODEL } from "../../integrations/evee/types";
+import * as eveeService from "../../services/evee-service";
 import { inngest } from "../client";
 
 const MAX_TOOL_ROUNDS = 10;
@@ -16,16 +14,23 @@ const MAX_CONSECUTIVE_TIMEOUT_ROUNDS = 2;
 export const eveeConversation = inngest.createFunction(
   {
     id: "evee-conversation",
+    triggers: [{ event: "slack/message.received" }],
     concurrency: {
       limit: 1,
       key: "event.data.conversationId",
     },
   },
-  { event: "slack/message.received" },
   async ({ event, step }) => {
-    const { conversationId, botUserId } = event.data;
+    const { conversationId, botUserId } = event.data as {
+      conversationId: string;
+      botUserId: string;
+      threadId: string;
+      channel: string;
+    };
 
-    // Safe across Inngest replays: arrays rebuild from memoized step.run() return values
+    // toolMessages is rebuilt from memoized step.run() return values on Inngest replay.
+    // Each push happens after a step.run() or step.waitForEvent() that returns deterministic data,
+    // so the array state is consistent across replays.
     const toolMessages: ModelMessage[] = [];
     const allLlmCalls: Array<{
       id: string;
@@ -44,31 +49,20 @@ export const eveeConversation = inngest.createFunction(
       const stepName = `llm-call-${roundNumber}`;
 
       const result = await step.run(stepName, async () => {
-        const messageRecords = await db
-          .select()
-          .from(messagesTable)
-          .where(eq(messagesTable.conversationId, conversationId))
-          .orderBy(asc(messagesTable.createdAt));
+        const context = await eveeService.buildLlmContext(db, conversationId, botUserId);
+        if (!context) {
+          throw new NonRetriableError(`Conversation not found: ${conversationId}`);
+        }
 
-        const imageRecords = await db
-          .select()
-          .from(imagesTable)
-          .where(eq(imagesTable.conversationId, conversationId));
+        const fullMessages: ModelMessage[] = [...context.messages, ...toolMessages];
+        const llmResult = await eveeService.runLlmCall({ ...context, messages: fullMessages });
 
-        const historyMessages = buildMessagesFromRecords(messageRecords, imageRecords);
-        const allMessages: ModelMessage[] = [...historyMessages, ...toolMessages];
-
-        const llmResult = await callLlm(allMessages, botUserId);
-
-        const llmCallId = newId("llmCall");
-        await db.insert(llmCalls).values({
-          id: llmCallId,
+        const llmCallId = await eveeService.persistLlmCall(db, {
           conversationId,
-          stepName,
           model: EVEE_MODEL,
-          inputTokens: llmResult.usage.inputTokens,
-          outputTokens: llmResult.usage.outputTokens,
-          totalTokens: llmResult.usage.totalTokens,
+          promptTokens: llmResult.usage.inputTokens,
+          completionTokens: llmResult.usage.outputTokens,
+          stepName,
           finishReason: llmResult.finishReason,
         });
 
@@ -93,8 +87,7 @@ export const eveeConversation = inngest.createFunction(
       if (result.finishReason !== "tool-calls" || result.toolCalls.length === 0) {
         await step.run("save-response", async () => {
           const responseText = result.text || "I'm not sure what to say.";
-          await db.insert(messagesTable).values({
-            id: newId("message"),
+          await eveeService.persistMessage(db, {
             conversationId,
             role: "assistant",
             content: responseText,
@@ -105,8 +98,8 @@ export const eveeConversation = inngest.createFunction(
           name: "evee/response.ready",
           data: {
             conversationId,
-            threadId: event.data.threadId,
-            channel: event.data.channel,
+            threadId: (event.data as { threadId: string }).threadId,
+            channel: (event.data as { channel: string }).channel,
             response: result.text || "I'm not sure what to say.",
             llmCalls: allLlmCalls,
           },
@@ -175,5 +168,7 @@ export const eveeConversation = inngest.createFunction(
         });
       }
     }
+
+    throw new NonRetriableError("Max tool rounds exceeded");
   },
 );

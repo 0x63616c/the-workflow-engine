@@ -4,10 +4,10 @@
  *
  * Rules:
  * - db/        → only drizzle-orm, pg, @repo/shared
- * - services/  → db/, integrations/types, @repo/shared
+ * - services/  → db/, integrations/evee/, integrations/slack/format, @repo/shared, @slack/web-api, env, lib/
  * - trpc/routers/ → services/, @repo/shared, ../init, ../context
- * - inngest/functions/ → services/, @repo/shared
- * - integrations/ (except types.ts) → @repo/shared, own files
+ * - inngest/functions/ → services/, inngest, @repo/shared, ../client, env (prefer services/ over direct db/integration imports)
+ * - integrations/slack/ → @repo/shared, @slack/, db/, inngest/, lib/, env, services/ (thin adapter pattern)
  */
 
 import { Glob } from "bun";
@@ -40,9 +40,15 @@ const rules: Rule[] = [
       /^\./, // relative imports
       /^@repo\/shared/,
       /^drizzle-orm/, // query operators (asc, desc, gte, lt, sql, eq)
-      /\.\.\/db\//,
-      /\.\.\/integrations\/types/,
+      /^@slack\/web-api/, // for Slack messaging (sendSlackResponse)
+      /^inngest/, // NonRetriableError for permanent Slack errors in sendSlackResponse
       /^yahoo-finance2$/, // stock quote fetching
+      /\.\.\/db\//,
+      /\.\.\/integrations\/types/, // existing integration type boundaries
+      /\.\.\/integrations\/evee\//, // evee LLM, messages, tools, types
+      /\.\.\/integrations\/slack\/format/, // toSlackMrkdwn
+      /\.\.\/lib\//, // logger
+      /\.\.\/env/, // env config
     ],
   },
   {
@@ -97,16 +103,16 @@ const rules: Rule[] = [
       /^\./, // relative imports
       /^@repo\/shared/,
       /^@slack\//,
-      /^@openrouter\//, // legacy LLM (removed in evee-5)
-      /^ai$/, // legacy LLM (removed in evee-5)
-      /^pino$/, // legacy LLM logger (removed in evee-5)
-      /^zod/, // legacy tool definitions (removed in evee-5)
       /^slackify-markdown/,
       /^drizzle-orm/,
       /\.\.\/\.\.\/env/,
       /\.\.\/\.\.\/db\//,
       /\.\.\/\.\.\/inngest\//,
       /\.\.\/\.\.\/lib\//,
+      // Slack handler is a thin adapter that delegates to the service layer.
+      // Importing services/ here is intentional: the handler upserts conversations,
+      // persists messages, and downloads images via evee-service before firing Inngest events.
+      /\.\.\/\.\.\/services\//,
     ],
   },
 ];
