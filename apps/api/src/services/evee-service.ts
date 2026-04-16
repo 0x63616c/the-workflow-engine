@@ -1,6 +1,7 @@
 import { WebClient } from "@slack/web-api";
 import { and, asc, eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import { NonRetriableError } from "inngest";
 import { newId } from "../db/id";
 import { conversations, images, llmCalls, messages, toolCalls } from "../db/schema";
 import { callLlm } from "../integrations/evee/llm";
@@ -181,7 +182,6 @@ export async function executeTool(
   try {
     const output = await registryExecuteTool(name, args);
     return {
-      callId: "",
       toolName: name,
       output,
       error: null,
@@ -189,7 +189,6 @@ export async function executeTool(
     };
   } catch (err) {
     return {
-      callId: "",
       toolName: name,
       output: null,
       error: err instanceof Error ? err.message : String(err),
@@ -261,9 +260,17 @@ export async function sendSlackResponse(
 ): Promise<void> {
   const slack = new WebClient(token);
   const formatted = toSlackMrkdwn(text);
-  await slack.chat.postMessage({
-    channel,
-    thread_ts: threadTs,
-    text: formatted,
-  });
+  try {
+    await slack.chat.postMessage({
+      channel,
+      thread_ts: threadTs,
+      text: formatted,
+    });
+  } catch (error) {
+    const slackError = (error as { data?: { error?: string } })?.data?.error;
+    if (slackError === "channel_not_found" || slackError === "not_in_channel") {
+      throw new NonRetriableError(`Slack error: ${slackError}`);
+    }
+    throw error; // transient errors get retried
+  }
 }

@@ -530,11 +530,11 @@ describe("executeTool()", () => {
     expect(result.error).toBe("string error");
   });
 
-  it("sets callId to empty string (caller is responsible for filling it in)", async () => {
+  it("does not include callId in result (caller tracks call IDs separately)", async () => {
     mockRegistryExecuteTool.mockResolvedValue({});
 
     const result = await executeTool("anyTool", {});
-    expect(result.callId).toBe("");
+    expect(result).not.toHaveProperty("callId");
   });
 });
 

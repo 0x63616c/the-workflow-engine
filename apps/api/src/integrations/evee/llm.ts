@@ -3,6 +3,8 @@ import { type ModelMessage, generateText, tool } from "ai";
 import { env } from "../../env";
 import { buildSystemPrompt } from "./prompt";
 import { getToolDefinitions } from "./tools";
+import type { LlmCallResult } from "./types";
+import { EVEE_MODEL } from "./types";
 
 let _openrouter: ReturnType<typeof createOpenRouter> | null = null;
 function getOpenRouter() {
@@ -10,24 +12,7 @@ function getOpenRouter() {
   return _openrouter;
 }
 
-export const EVEE_MODEL = "google/gemma-4-31b-it";
 const LLM_TIMEOUT_MS = 120_000;
-
-export interface LlmCallResult {
-  text: string;
-  finishReason: string;
-  toolCalls: Array<{
-    toolCallId: string;
-    toolName: string;
-    args: Record<string, unknown>;
-  }>;
-  usage: {
-    inputTokens: number;
-    outputTokens: number;
-    totalTokens: number;
-  };
-  providerMetadata: Record<string, unknown> | undefined;
-}
 
 export async function callLlm(messages: ModelMessage[], botUserId: string): Promise<LlmCallResult> {
   const toolDefs = getToolDefinitions();
@@ -53,6 +38,7 @@ export async function callLlm(messages: ModelMessage[], botUserId: string): Prom
     toolCalls: (result.toolCalls ?? []).map((tc) => ({
       toolCallId: tc.toolCallId,
       toolName: tc.toolName,
+      // AI SDK v6 ToolCallPart uses .input (not .args) - cast needed for type narrowing
       args: (tc as unknown as { input: unknown }).input as Record<string, unknown>,
     })),
     usage: {

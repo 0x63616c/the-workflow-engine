@@ -36,7 +36,6 @@ beforeEach(() => {
 describe("eveeToolExecutor function", () => {
   it("executes tool and emits evee/tool-call.completed with output", async () => {
     mockExecuteTool.mockResolvedValue({
-      callId: "",
       toolName: "rollDice",
       output: { value: 4 },
       error: null,
@@ -76,7 +75,6 @@ describe("eveeToolExecutor function", () => {
 
   it("captures tool error in output event without rethrowing", async () => {
     mockExecuteTool.mockResolvedValue({
-      callId: "",
       toolName: "rollDice",
       output: null,
       error: "Tool exploded",
@@ -161,7 +159,6 @@ describe("eveeToolExecutor function", () => {
   describe("executeStep: execute step", () => {
     it("execute step runs tool and returns output", async () => {
       mockExecuteTool.mockResolvedValue({
-        callId: "",
         toolName: "rollDice",
         output: { value: 6 },
         error: null,

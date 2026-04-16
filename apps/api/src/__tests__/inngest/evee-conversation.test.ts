@@ -395,4 +395,41 @@ describe("eveeConversation function", () => {
       expect(result).toBeDefined();
     });
   });
+
+  describe("max tool rounds exceeded", () => {
+    it("throws NonRetriableError when tool-calls loop exceeds MAX_TOOL_ROUNDS", async () => {
+      const { engine } = makeEngine();
+
+      // Build 10 rounds of tool-calls (the MAX_TOOL_ROUNDS limit), each returning tool-calls,
+      // so the function never exits the loop and hits the NonRetriableError at the end.
+      const steps = [];
+      for (let round = 1; round <= 10; round++) {
+        steps.push({
+          id: `llm-call-${round}`,
+          handler: () => ({
+            llmCallId: `llm_round${round}`,
+            text: "",
+            finishReason: "tool-calls",
+            toolCalls: [
+              { toolCallId: `tc_round${round}`, toolName: "rollDice", args: { sides: 6 } },
+            ],
+            usage: { inputTokens: 10, outputTokens: 5, totalTokens: 15 },
+          }),
+        });
+        steps.push({
+          id: `await-tc_round${round}`,
+          handler: () => ({
+            data: { callId: `tc_round${round}`, output: { value: round } },
+          }),
+        });
+      }
+
+      const { error } = await engine.execute({ events: [BASE_EVENT], steps });
+
+      // The function should fail when the loop is exhausted — InngestTestEngine surfaces
+      // the thrown NonRetriableError as the execution error.
+      expect(error).toBeDefined();
+      expect((error as { message?: string }).message).toContain("Max tool rounds exceeded");
+    });
+  });
 });

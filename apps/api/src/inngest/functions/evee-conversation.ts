@@ -2,7 +2,7 @@ import type { JSONValue } from "@ai-sdk/provider";
 import type { ModelMessage } from "ai";
 import { NonRetriableError } from "inngest";
 import { db } from "../../db/client";
-import { EVEE_MODEL } from "../../integrations/evee/llm";
+import { EVEE_MODEL } from "../../integrations/evee/types";
 import * as eveeService from "../../services/evee-service";
 import { inngest } from "../client";
 
@@ -28,7 +28,9 @@ export const eveeConversation = inngest.createFunction(
       channel: string;
     };
 
-    // Safe across Inngest replays: arrays rebuild from memoized step.run() return values
+    // toolMessages is rebuilt from memoized step.run() return values on Inngest replay.
+    // Each push happens after a step.run() or step.waitForEvent() that returns deterministic data,
+    // so the array state is consistent across replays.
     const toolMessages: ModelMessage[] = [];
     const allLlmCalls: Array<{
       id: string;

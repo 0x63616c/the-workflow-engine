@@ -5,6 +5,9 @@ import type { ModelMessage } from "ai";
  * These types define the contracts between: Slack handler -> Inngest -> LLM -> Tools -> Slack
  */
 
+/** The LLM model used for Evee conversations */
+export const EVEE_MODEL = "google/gemma-4-31b-it";
+
 /** Parsed Slack event data passed to the pipeline */
 export interface SlackEventInput {
   text: string;
@@ -46,7 +49,6 @@ export interface LlmCallResult {
 
 /** Result of executing a single tool call */
 export interface ToolExecutionResult {
-  callId: string;
   toolName: string;
   output: unknown;
   error: string | null;
