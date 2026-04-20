@@ -11,12 +11,6 @@
 sdk-url:
   - http://host.docker.internal/api/inngest
 
-# Durable persistence. Inngest auto-runs its own migrations on first
-# connection. DB is declared in infra/postgres/initdb/02-inngest.sql.
-# $POSTGRES_PASSWORD is env-expanded by Inngest at startup (INNGEST_*
-# env convention).
-postgres-uri: postgres://workflow:${POSTGRES_PASSWORD}@workflow-engine-postgres:5432/inngest
-
 # Executor queue polling interval (ms). Default 150; 50 cuts per-step
 # pickup latency from ~100ms to ~25ms. Safe lower bound; going below
 # 50ms costs Redis/CPU with no user-visible benefit at our volume.

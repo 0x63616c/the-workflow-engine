@@ -17,6 +17,7 @@ export INNGEST_EVENT_KEY=$(op read "op://Homelab/Workflow Engine Inngest/event-k
 export INNGEST_SIGNING_KEY=$(op read "op://Homelab/Workflow Engine Inngest/signing-key")
 export POSTGRES_PASSWORD=$(op read "op://Homelab/Workflow Engine Postgres/password")
 export DATABASE_URL="postgresql://workflow:${POSTGRES_PASSWORD}@localhost:5432/workflow_engine"
+export INNGEST_POSTGRES_URI="postgresql://workflow:${POSTGRES_PASSWORD}@workflow-engine-postgres:5432/inngest"
 
 echo "Deploying..."
 kamal deploy "$@"

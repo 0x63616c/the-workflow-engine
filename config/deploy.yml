@@ -104,8 +104,12 @@ accessories:
       secret:
         - INNGEST_EVENT_KEY
         - INNGEST_SIGNING_KEY
-        # Consumed by ${POSTGRES_PASSWORD} interpolation in config.yaml.
-        - POSTGRES_PASSWORD
+        # Full Postgres URI built at deploy time (CI workflow + scripts/deploy).
+        # Inngest reads this as an env var override of --postgres-uri. We don't
+        # put the password in infra/inngest/config.yaml because Inngest uses
+        # Viper, which doesn't expand ${VAR} in YAML values — the literal
+        # string gets passed to the driver. See PR #340's review.
+        - INNGEST_POSTGRES_URI
 
   loki:
     image: ghcr.io/0x63616c/workflow-engine-loki:latest
