@@ -11,6 +11,7 @@ vi.mock("../../services/evee-service", () => ({
   runLlmCall: vi.fn(),
   persistLlmCall: vi.fn(),
   persistMessage: vi.fn(),
+  sendSlackStatus: vi.fn().mockResolvedValue(undefined),
 }));
 
 import * as eveeService from "../../services/evee-service";
@@ -19,6 +20,7 @@ const mockBuildLlmContext = vi.mocked(eveeService.buildLlmContext);
 const mockRunLlmCall = vi.mocked(eveeService.runLlmCall);
 const mockPersistLlmCall = vi.mocked(eveeService.persistLlmCall);
 const mockPersistMessage = vi.mocked(eveeService.persistMessage);
+const mockSendSlackStatus = vi.mocked(eveeService.sendSlackStatus);
 
 const BASE_EVENT = {
   name: "slack/message.received" as const,
@@ -78,6 +80,7 @@ describe("eveeConversation function", () => {
       const { result } = await engine.execute({
         events: [BASE_EVENT],
         steps: [
+          { id: "set-thinking-status", handler: () => undefined },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -104,6 +107,7 @@ describe("eveeConversation function", () => {
       await engine.execute({
         events: [BASE_EVENT],
         steps: [
+          { id: "set-thinking-status", handler: () => undefined },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -141,6 +145,7 @@ describe("eveeConversation function", () => {
       await engine.execute({
         events: [BASE_EVENT],
         steps: [
+          { id: "set-thinking-status", handler: () => undefined },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -174,6 +179,7 @@ describe("eveeConversation function", () => {
       await engine.execute({
         events: [BASE_EVENT],
         steps: [
+          { id: "set-thinking-status", handler: () => undefined },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -214,6 +220,7 @@ describe("eveeConversation function", () => {
       await engine.execute({
         events: [BASE_EVENT],
         steps: [
+          { id: "set-thinking-status", handler: () => undefined },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -270,6 +277,7 @@ describe("eveeConversation function", () => {
       await engine.execute({
         events: [BASE_EVENT],
         steps: [
+          { id: "set-thinking-status", handler: () => undefined },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -323,6 +331,7 @@ describe("eveeConversation function", () => {
       await engine.execute({
         events: [BASE_EVENT],
         steps: [
+          { id: "set-thinking-status", handler: () => undefined },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -402,7 +411,10 @@ describe("eveeConversation function", () => {
 
       // Build 10 rounds of tool-calls (the MAX_TOOL_ROUNDS limit), each returning tool-calls,
       // so the function never exits the loop and hits the NonRetriableError at the end.
-      const steps = [];
+      // biome-ignore lint/suspicious/noExplicitAny: test step array needs heterogeneous handler return types
+      const steps: Array<{ id: string; handler: () => any }> = [
+        { id: "set-thinking-status", handler: () => undefined },
+      ];
       for (let round = 1; round <= 10; round++) {
         steps.push({
           id: `llm-call-${round}`,
@@ -430,6 +442,42 @@ describe("eveeConversation function", () => {
       // the thrown NonRetriableError as the execution error.
       expect(error).toBeDefined();
       expect((error as { message?: string }).message).toContain("Max tool rounds exceeded");
+    });
+  });
+
+  describe("shimmer status", () => {
+    it("calls sendSlackStatus at the top of the function with LOADING_MESSAGES", async () => {
+      const { engine } = makeEngine();
+
+      const setStatusSpy = vi.fn();
+      await engine.execute({
+        events: [BASE_EVENT],
+        steps: [
+          {
+            id: "set-thinking-status",
+            handler: () => {
+              setStatusSpy();
+              return undefined;
+            },
+          },
+          {
+            id: "llm-call-1",
+            handler: () => ({
+              llmCallId: "llm_abc1234567890123",
+              text: "hi",
+              finishReason: "stop",
+              toolCalls: [],
+              usage: { inputTokens: 5, outputTokens: 2, totalTokens: 7 },
+            }),
+          },
+          {
+            id: "save-response",
+            handler: () => undefined,
+          },
+        ],
+      });
+
+      expect(setStatusSpy).toHaveBeenCalledTimes(1);
     });
   });
 });
