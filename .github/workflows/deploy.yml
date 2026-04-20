@@ -328,7 +328,11 @@ jobs:
           INNGEST_EVENT_KEY: ${{ secrets.INNGEST_EVENT_KEY }}
           INNGEST_SIGNING_KEY: ${{ secrets.INNGEST_SIGNING_KEY }}
           INNGEST_POSTGRES_URI: postgresql://workflow:${{ secrets.POSTGRES_PASSWORD }}@workflow-engine-postgres:5432/inngest
-        run: kamal accessory reboot inngest --confirmed
+        # kamal v2.x's `accessory reboot` has no interactive prompt, so
+        # --confirmed is rejected as an unknown argument. Passing it has
+        # been silently failing this step since PR #339, which is why
+        # Inngest was never actually rebooted with the new --sdk-url.
+        run: kamal accessory reboot inngest
 
       - name: Verify deployment health
         id: health-check
