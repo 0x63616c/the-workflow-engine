@@ -274,3 +274,25 @@ export async function sendSlackResponse(
     throw error; // transient errors get retried
   }
 }
+
+export async function sendSlackStatus(
+  token: string,
+  channel: string,
+  threadTs: string,
+  status: string,
+  loadingMessages: string[],
+): Promise<void> {
+  const slack = new WebClient(token);
+  try {
+    await slack.assistant.threads.setStatus({
+      channel_id: channel,
+      thread_ts: threadTs,
+      status,
+      loading_messages: loadingMessages,
+    });
+  } catch (error) {
+    // setStatus fails on non-Assistant-enabled threads and on transient Slack
+    // outages. Status is decorative — never let it break the main pipeline.
+    log.warn({ error, channel, threadTs }, "sendSlackStatus failed (non-fatal)");
+  }
+}

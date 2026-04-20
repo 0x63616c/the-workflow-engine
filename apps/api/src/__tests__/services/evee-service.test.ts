@@ -46,6 +46,7 @@ import {
   persistToolCall,
   runLlmCall,
   sendSlackResponse,
+  sendSlackStatus,
   stripBotMention,
   upsertConversation,
 } from "../../services/evee-service";
@@ -708,5 +709,48 @@ describe("sendSlackResponse()", () => {
     await sendSlackResponse("xoxb-secret-token", "C1", "ts1", "hi");
 
     expect(MockWebClient).toHaveBeenCalledWith("xoxb-secret-token");
+  });
+});
+
+// ============================================================
+// sendSlackStatus
+// ============================================================
+
+describe("sendSlackStatus()", () => {
+  it("calls assistant.threads.setStatus with channel, thread, status, and loading_messages", async () => {
+    const mockSetStatus = vi.fn().mockResolvedValue({ ok: true });
+    MockWebClient.mockImplementationOnce(
+      () =>
+        ({
+          assistant: { threads: { setStatus: mockSetStatus } },
+        }) as unknown as InstanceType<typeof WebClient>,
+    );
+
+    await sendSlackStatus("xoxb-token", "C1234", "thread_ts_123", "is thinking...", [
+      "thinking...",
+      "bufo'ing...",
+    ]);
+
+    expect(mockSetStatus).toHaveBeenCalledWith({
+      channel_id: "C1234",
+      thread_ts: "thread_ts_123",
+      status: "is thinking...",
+      loading_messages: ["thinking...", "bufo'ing..."],
+    });
+  });
+
+  it("swallows errors so a failing status call can't block the main pipeline", async () => {
+    const mockSetStatus = vi.fn().mockRejectedValue(new Error("slack down"));
+    MockWebClient.mockImplementationOnce(
+      () =>
+        ({
+          assistant: { threads: { setStatus: mockSetStatus } },
+        }) as unknown as InstanceType<typeof WebClient>,
+    );
+
+    // Should not throw
+    await expect(
+      sendSlackStatus("xoxb-token", "C1", "ts1", "is thinking...", ["thinking..."]),
+    ).resolves.toBeUndefined();
   });
 });
