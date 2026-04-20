@@ -202,6 +202,83 @@ pgcli "postgresql://workflow:$(op read 'op://Homelab/Workflow Engine Postgres/pa
 scripts/drizzle-prod
 ```
 
+## Infrastructure & Gitops
+
+**Principle: if it's infrastructure state, it lives in the repo.** Never edit prod by hand. If you feel the urge to `psql` into prod and run a one-off, stop and ask "can this be a checked-in file instead?" The answer is almost always yes.
+
+### Adding a new Postgres database
+
+Declarative. One file change.
+
+1. Create `infra/postgres/initdb/NN-<name>.sql` with:
+   ```sql
+   CREATE DATABASE <name> OWNER workflow;
+   ```
+2. Commit, push, merge.
+3. On next deploy, `.kamal/hooks/post-deploy` extracts the name from the SQL file, checks prod PG, and creates the DB if missing. Idempotent — safe to re-run.
+
+Fresh volumes (disaster recovery, new machine) get all DBs created automatically via the postgres image's `/docker-entrypoint-initdb.d/` mount, declared in `config/deploy.yml`. Existing volumes (current prod) skip the image's initdb hook forever — that's why the post-deploy hook exists.
+
+**Never run `psql -c "CREATE DATABASE ..."` against prod directly.** The hook is the only entry point.
+
+**Escape hatch:** `scripts/setup-databases` does the same work from a laptop (uses `op read` for the password). Use for debugging / verifying state, not as the primary mechanism.
+
+### Changing Inngest runtime config
+
+Edit `infra/inngest/config.yaml`, commit, deploy. CI reboots the Inngest accessory so the new config takes effect. No flag juggling in `config/deploy.yml`, no manual `kamal` invocations. Keys match the output of `inngest start --help` (kebab-case).
+
+### Accessory `files:` pattern
+
+Any accessory config that used to live as CLI flags or env vars can be mounted as a checked-in file using Kamal's `files:` directive. Example in `config/deploy.yml`:
+
+```yaml
+accessories:
+  postgres:
+    files:
+      - infra/postgres/initdb/01-workflow-engine.sql:/docker-entrypoint-initdb.d/01-workflow-engine.sql
+  inngest:
+    files:
+      - infra/inngest/config.yaml:/etc/inngest/config.yaml
+```
+
+Prefer this over stuffing long flags into `deploy.yml` — makes tuning a single-file PR.
+
+### Kamal hooks (in `.kamal/hooks/`)
+
+Currently used:
+- **`post-deploy`** — ensures all databases declared in `infra/postgres/initdb/*.sql` exist on prod PG (the gitops bootstrap described above). Runs after `kamal deploy` succeeds, before CI reboots the Inngest accessory.
+
+Available for future use (all in `.kamal/hooks/<name>`, executable, exit non-zero to abort):
+- `pre-build` — gate the build (e.g., verify no uncommitted changes, confirm CI passed).
+- `pre-deploy` — final pre-flight before any container changes.
+- `pre-app-boot` / `post-app-boot` — bracket the app container start.
+- `pre-proxy-reboot` / `post-proxy-reboot` — bracket kamal-proxy restart.
+- `docker-setup` — runs once when bootstrapping a new host.
+- `pre-connect` — before Kamal establishes SSH to hosts.
+
+All hooks receive `KAMAL_*` env vars (service, version, hosts, command). Failure aborts the operation. Run on the deploy machine (CI runner or laptop), not the remote host — so `ssh` into the host if you need to touch it.
+
+### Schema migrations (app tables)
+
+Drizzle owns migrations inside `workflow_engine` only. On every API container startup, `apps/api/src/db/migrate.ts` applies everything in `apps/api/src/db/migrations/`. New migration:
+
+```bash
+cd apps/api && bun run db:generate  # generates .sql from schema changes
+```
+
+Commit the generated file. On next deploy the app runs it on boot. Never hand-write migration SQL — always generate from `schema.ts`.
+
+**Inngest's own tables live in the `inngest` DB and are managed by Inngest's own migration system internally.** We do not touch them.
+
+### CI deploy sequence (ref only, don't edit without reason)
+
+1. `scripts/ensure-accessories` — boots any missing accessories.
+2. `kamal deploy` — builds, pushes, deploys app container. Runs `pre-deploy` / `post-deploy` hooks.
+3. `kamal accessory reboot inngest` — picks up `infra/inngest/config.yaml` changes.
+4. Health check against the web app.
+
+The post-deploy hook fires in step 2, so step 3's Inngest has the `inngest` DB ready when it starts.
+
 ## Architecture
 
 ### Frontend Data Flow

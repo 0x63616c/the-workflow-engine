@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Declarative DB bootstrap — ensures every database declared in
+# infra/postgres/initdb/*.sql exists on prod PG.
+#
+# Why this hook exists:
+#   The postgres image's /docker-entrypoint-initdb.d/ scripts only run on
+#   a fresh (empty) data directory. Existing volumes — including ours —
+#   skip them forever. This hook bridges the gap, idempotently, every
+#   deploy.
+#
+# Gitops contract:
+#   Adding a new database is a one-line change. Drop a new
+#   CREATE DATABASE ... file into infra/postgres/initdb/ and the next
+#   deploy picks it up automatically. No manual psql, no 1Password
+#   reads from a laptop, no "did someone remember to run the script".
+#
+# Runs on the deploy machine (CI runner or laptop). Uses SSH + docker
+# exec to talk to the postgres container as the superuser — no password
+# wiring required.
+set -euo pipefail
+
+INITDB_DIR="infra/postgres/initdb"
+POSTGRES_CONTAINER="workflow-engine-postgres"
+SSH_TARGET="calum@homelab"
+
+# Extract "CREATE DATABASE <name>" from every declared init file.
+# Matches the exact line shape of our committed SQL files.
+DBS=$(grep -hEo '^CREATE DATABASE [a-zA-Z_][a-zA-Z0-9_]*' "$INITDB_DIR"/*.sql | awk '{print $3}')
+
+if [ -z "$DBS" ]; then
+  echo "post-deploy: no databases declared in $INITDB_DIR/*.sql — nothing to do"
+  exit 0
+fi
+
+for db in $DBS; do
+  exists=$(ssh "$SSH_TARGET" \
+    "docker exec $POSTGRES_CONTAINER psql -U postgres -tAc \"SELECT 1 FROM pg_database WHERE datname='$db'\"")
+  if [ "$exists" = "1" ]; then
+    echo "post-deploy: database '$db' already exists"
+  else
+    echo "post-deploy: creating database '$db'..."
+    ssh "$SSH_TARGET" \
+      "docker exec $POSTGRES_CONTAINER psql -U postgres -c \"CREATE DATABASE $db OWNER workflow\""
+  fi
+done
