@@ -125,7 +125,10 @@ export async function initSlack(): Promise<void> {
           if (!event.user) return "Unknown";
           const info = await client.users.info({ user: event.user });
           return (
-            info.user?.profile?.display_name || info.user?.real_name || info.user?.name || event.user
+            info.user?.profile?.display_name ||
+            info.user?.real_name ||
+            info.user?.name ||
+            event.user
           );
         },
       });
