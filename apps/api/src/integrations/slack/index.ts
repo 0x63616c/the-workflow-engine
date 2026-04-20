@@ -102,16 +102,6 @@ export async function initSlack(): Promise<void> {
     const threadTs = event.thread_ts ?? event.ts;
     const text = event.text ?? "";
 
-    const normalized = eveeService.stripBotMention(text).toLowerCase();
-    if (normalized === "ruok?" || normalized === "status?") {
-      await client.chat.postMessage({
-        channel: event.channel,
-        thread_ts: threadTs,
-        text: "imok",
-      });
-      return;
-    }
-
     const files = (event as { files?: SlackFile[] }).files ?? [];
 
     try {
