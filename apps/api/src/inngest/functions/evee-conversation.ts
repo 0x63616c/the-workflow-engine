@@ -40,6 +40,30 @@ export const eveeConversation = inngest.createFunction(
       ),
     );
 
+    const isHealthCheck = await step.run("ruok-fast-path", async () => {
+      const context = await eveeService.buildLlmContext(db, conversationId, botUserId);
+      if (!context) return false;
+      const latest = context.messages.at(-1);
+      if (!latest || latest.role !== "user") return false;
+      const content = typeof latest.content === "string" ? latest.content : "";
+      const normalized = content.trim().toLowerCase();
+      return normalized === "ruok?" || normalized === "status?";
+    });
+
+    if (isHealthCheck) {
+      await step.sendEvent("emit-response", {
+        name: "evee/response.ready",
+        data: {
+          conversationId,
+          threadId,
+          channel,
+          response: "imok",
+          llmCalls: [],
+        },
+      });
+      return;
+    }
+
     // toolMessages is rebuilt from memoized step.run() return values on Inngest replay.
     // Each push happens after a step.run() or step.waitForEvent() that returns deterministic data,
     // so the array state is consistent across replays.

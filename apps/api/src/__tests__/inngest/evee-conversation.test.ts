@@ -81,6 +81,7 @@ describe("eveeConversation function", () => {
         events: [BASE_EVENT],
         steps: [
           { id: "set-thinking-status", handler: () => undefined },
+          { id: "ruok-fast-path", handler: () => false },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -108,6 +109,7 @@ describe("eveeConversation function", () => {
         events: [BASE_EVENT],
         steps: [
           { id: "set-thinking-status", handler: () => undefined },
+          { id: "ruok-fast-path", handler: () => false },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -146,6 +148,7 @@ describe("eveeConversation function", () => {
         events: [BASE_EVENT],
         steps: [
           { id: "set-thinking-status", handler: () => undefined },
+          { id: "ruok-fast-path", handler: () => false },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -180,6 +183,7 @@ describe("eveeConversation function", () => {
         events: [BASE_EVENT],
         steps: [
           { id: "set-thinking-status", handler: () => undefined },
+          { id: "ruok-fast-path", handler: () => false },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -221,6 +225,7 @@ describe("eveeConversation function", () => {
         events: [BASE_EVENT],
         steps: [
           { id: "set-thinking-status", handler: () => undefined },
+          { id: "ruok-fast-path", handler: () => false },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -278,6 +283,7 @@ describe("eveeConversation function", () => {
         events: [BASE_EVENT],
         steps: [
           { id: "set-thinking-status", handler: () => undefined },
+          { id: "ruok-fast-path", handler: () => false },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -332,6 +338,7 @@ describe("eveeConversation function", () => {
         events: [BASE_EVENT],
         steps: [
           { id: "set-thinking-status", handler: () => undefined },
+          { id: "ruok-fast-path", handler: () => false },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -414,6 +421,7 @@ describe("eveeConversation function", () => {
       // biome-ignore lint/suspicious/noExplicitAny: test step array needs heterogeneous handler return types
       const steps: Array<{ id: string; handler: () => any }> = [
         { id: "set-thinking-status", handler: () => undefined },
+        { id: "ruok-fast-path", handler: () => false },
       ];
       for (let round = 1; round <= 10; round++) {
         steps.push({
@@ -460,6 +468,7 @@ describe("eveeConversation function", () => {
               return undefined;
             },
           },
+          { id: "ruok-fast-path", handler: () => false },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -478,6 +487,65 @@ describe("eveeConversation function", () => {
       });
 
       expect(setStatusSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("health-check fast-path", () => {
+    it("emits response.ready with 'imok' when latest user message is 'ruok?'", async () => {
+      const { engine, sendEvent } = makeEngine();
+
+      await engine.execute({
+        events: [BASE_EVENT],
+        steps: [
+          { id: "set-thinking-status", handler: () => undefined },
+          { id: "ruok-fast-path", handler: () => true },
+        ],
+      });
+
+      expect(sendEvent).toHaveBeenCalledWith(
+        "emit-response",
+        expect.objectContaining({
+          name: "evee/response.ready",
+          data: expect.objectContaining({
+            response: "imok",
+            conversationId: "conv_test1234567890",
+            threadId: "thread_ts_001",
+            channel: "C_CHANNEL001",
+            llmCalls: [],
+          }),
+        }),
+      );
+    });
+
+    it("does NOT short-circuit when the fast-path returns false", async () => {
+      const { engine, sendEvent } = makeEngine();
+
+      await engine.execute({
+        events: [BASE_EVENT],
+        steps: [
+          { id: "set-thinking-status", handler: () => undefined },
+          { id: "ruok-fast-path", handler: () => false },
+          {
+            id: "llm-call-1",
+            handler: () => ({
+              llmCallId: "llm_x",
+              text: "sunny",
+              finishReason: "stop",
+              toolCalls: [],
+              usage: { inputTokens: 5, outputTokens: 2, totalTokens: 7 },
+            }),
+          },
+          { id: "save-response", handler: () => undefined },
+        ],
+      });
+
+      // For non-ruok, the normal emit-response flow runs.
+      expect(sendEvent).toHaveBeenCalledWith(
+        "emit-response",
+        expect.objectContaining({
+          data: expect.objectContaining({ response: "sunny" }),
+        }),
+      );
     });
   });
 });
