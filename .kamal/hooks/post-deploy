@@ -15,12 +15,17 @@
 #   reads from a laptop, no "did someone remember to run the script".
 #
 # Runs on the deploy machine (CI runner or laptop). Uses SSH + docker
-# exec to talk to the postgres container as the superuser — no password
-# wiring required.
+# exec to talk to the postgres container. Connects as the `workflow`
+# superuser over the unix socket, which pg_hba.conf's default `local
+# all all trust` rule accepts without a password. Don't switch to
+# `-U postgres` — our cluster was initialized with POSTGRES_USER=workflow,
+# so there is no `postgres` role (the initial attempt at this hook failed
+# with "role 'postgres' does not exist").
 set -euo pipefail
 
 INITDB_DIR="infra/postgres/initdb"
 POSTGRES_CONTAINER="workflow-engine-postgres"
+POSTGRES_USER="workflow"
 SSH_TARGET="calum@homelab"
 
 # Extract "CREATE DATABASE <name>" from every declared init file.
@@ -34,12 +39,12 @@ fi
 
 for db in $DBS; do
   exists=$(ssh "$SSH_TARGET" \
-    "docker exec $POSTGRES_CONTAINER psql -U postgres -tAc \"SELECT 1 FROM pg_database WHERE datname='$db'\"")
+    "docker exec $POSTGRES_CONTAINER psql -U $POSTGRES_USER -d postgres -tAc \"SELECT 1 FROM pg_database WHERE datname='$db'\"")
   if [ "$exists" = "1" ]; then
     echo "post-deploy: database '$db' already exists"
   else
     echo "post-deploy: creating database '$db'..."
     ssh "$SSH_TARGET" \
-      "docker exec $POSTGRES_CONTAINER psql -U postgres -c \"CREATE DATABASE $db OWNER workflow\""
+      "docker exec $POSTGRES_CONTAINER psql -U $POSTGRES_USER -d postgres -c \"CREATE DATABASE $db OWNER $POSTGRES_USER\""
   fi
 done
