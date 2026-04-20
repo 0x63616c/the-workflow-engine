@@ -1,4 +1,5 @@
 import { WebClient } from "@slack/web-api";
+import type { ModelMessage } from "ai";
 import { and, asc, eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { NonRetriableError } from "inngest";
@@ -141,6 +142,14 @@ export function stripBotMention(text: string): string {
   return text.replace(/<@[A-Z0-9]+>/g, "").trim();
 }
 
+export function isHealthCheckMessage(messages: ModelMessage[]): boolean {
+  const latest = messages.at(-1);
+  if (!latest || latest.role !== "user") return false;
+  const content = typeof latest.content === "string" ? latest.content : "";
+  const normalized = content.trim().toLowerCase();
+  return normalized === "ruok?" || normalized === "status?";
+}
+
 export async function buildLlmContext(
   db: DB,
   conversationId: string,
@@ -272,5 +281,27 @@ export async function sendSlackResponse(
       throw new NonRetriableError(`Slack error: ${slackError}`);
     }
     throw error; // transient errors get retried
+  }
+}
+
+export async function sendSlackStatus(
+  token: string,
+  channel: string,
+  threadTs: string,
+  status: string,
+  loadingMessages: string[],
+): Promise<void> {
+  const slack = new WebClient(token);
+  try {
+    await slack.assistant.threads.setStatus({
+      channel_id: channel,
+      thread_ts: threadTs,
+      status,
+      loading_messages: loadingMessages,
+    });
+  } catch (error) {
+    // setStatus fails on non-Assistant-enabled threads and on transient Slack
+    // outages. Status is decorative — never let it break the main pipeline.
+    log.warn({ error, channel, threadTs }, "sendSlackStatus failed (non-fatal)");
   }
 }

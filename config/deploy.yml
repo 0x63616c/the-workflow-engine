@@ -13,7 +13,20 @@ servers:
       add-host: host.docker.internal:host-gateway
 
 proxy:
-  host: homelab
+  # Two hosts on purpose. Don't "clean this up" to one.
+  #
+  # - homelab              : external traffic (laptop/iPad over Tailscale → homelab:80).
+  # - host.docker.internal : internal loopback from the inngest accessory back
+  #                          into this app for function auto-sync.
+  #
+  # Inngest runs `--sdk-url http://host.docker.internal/api/inngest` to
+  # rediscover our functions on every restart. That request goes through
+  # kamal-proxy with Host: host.docker.internal; kamal-proxy must own that
+  # hostname or it 404s. Without both entries, Evee goes silent after any
+  # inngest accessory reboot. See PR #338/#339 and 2026-04-20's downtime.
+  hosts:
+    - homelab
+    - host.docker.internal
   ssl: false
   app_port: 4301
   healthcheck:
@@ -65,21 +78,38 @@ accessories:
         - POSTGRES_PASSWORD
       clear:
         POSTGRES_USER: workflow
-        POSTGRES_DB: workflow_engine
+        # POSTGRES_DB intentionally omitted. Databases are now declared
+        # in infra/postgres/initdb/*.sql and mounted below, so a fresh
+        # volume creates workflow_engine + inngest automatically via
+        # the postgres image's /docker-entrypoint-initdb.d hook.
+    files:
+      - infra/postgres/initdb/01-workflow-engine.sql:/docker-entrypoint-initdb.d/01-workflow-engine.sql
+      - infra/postgres/initdb/02-inngest.sql:/docker-entrypoint-initdb.d/02-inngest.sql
     directories:
       - postgres-data:/var/lib/postgresql/data
 
   inngest:
+    # Config lives in infra/inngest/config.yaml — mounted below. Keeping
+    # runtime tuning (tick, poll, workers, postgres-uri) out of deploy.yml
+    # so future tweaks are a single-file PR.
     image: inngest/inngest
-    cmd: inngest start --sdk-url http://host.docker.internal/api/inngest
+    cmd: inngest start --config /etc/inngest/config.yaml
     host: homelab
     port: "8388:8288"
     options:
       add-host: host.docker.internal:host-gateway
+    files:
+      - infra/inngest/config.yaml:/etc/inngest/config.yaml
     env:
       secret:
         - INNGEST_EVENT_KEY
         - INNGEST_SIGNING_KEY
+        # Full Postgres URI built at deploy time (CI workflow + scripts/deploy).
+        # Inngest reads this as an env var override of --postgres-uri. We don't
+        # put the password in infra/inngest/config.yaml because Inngest uses
+        # Viper, which doesn't expand ${VAR} in YAML values — the literal
+        # string gets passed to the driver. See PR #340's review.
+        - INNGEST_POSTGRES_URI
 
   loki:
     image: ghcr.io/0x63616c/workflow-engine-loki:latest

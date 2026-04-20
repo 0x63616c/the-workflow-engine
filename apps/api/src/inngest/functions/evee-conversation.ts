@@ -2,7 +2,9 @@ import type { JSONValue } from "@ai-sdk/provider";
 import type { ModelMessage } from "ai";
 import { NonRetriableError } from "inngest";
 import { db } from "../../db/client";
+import { env } from "../../env";
 import { EVEE_MODEL } from "../../integrations/evee/types";
+import { LOADING_MESSAGES } from "../../integrations/slack/constants";
 import * as eveeService from "../../services/evee-service";
 import { inngest } from "../client";
 
@@ -21,12 +23,42 @@ export const eveeConversation = inngest.createFunction(
     },
   },
   async ({ event, step }) => {
-    const { conversationId, botUserId } = event.data as {
+    const { conversationId, botUserId, threadId, channel } = event.data as {
       conversationId: string;
       botUserId: string;
       threadId: string;
       channel: string;
     };
+
+    await step.run("set-thinking-status", () =>
+      eveeService.sendSlackStatus(
+        env.SLACK_BOT_TOKEN,
+        channel,
+        threadId,
+        "is thinking...",
+        LOADING_MESSAGES,
+      ),
+    );
+
+    const isHealthCheck = await step.run("ruok-fast-path", async () => {
+      const context = await eveeService.buildLlmContext(db, conversationId, botUserId);
+      if (!context) return false;
+      return eveeService.isHealthCheckMessage(context.messages);
+    });
+
+    if (isHealthCheck) {
+      await step.sendEvent("emit-response", {
+        name: "evee/response.ready",
+        data: {
+          conversationId,
+          threadId,
+          channel,
+          response: "imok",
+          llmCalls: [],
+        },
+      });
+      return;
+    }
 
     // toolMessages is rebuilt from memoized step.run() return values on Inngest replay.
     // Each push happens after a step.run() or step.waitForEvent() that returns deterministic data,
@@ -98,8 +130,8 @@ export const eveeConversation = inngest.createFunction(
           name: "evee/response.ready",
           data: {
             conversationId,
-            threadId: (event.data as { threadId: string }).threadId,
-            channel: (event.data as { channel: string }).channel,
+            threadId,
+            channel,
             response: result.text || "I'm not sure what to say.",
             llmCalls: allLlmCalls,
           },

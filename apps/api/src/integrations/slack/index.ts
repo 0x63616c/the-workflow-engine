@@ -102,16 +102,6 @@ export async function initSlack(): Promise<void> {
     const threadTs = event.thread_ts ?? event.ts;
     const text = event.text ?? "";
 
-    const normalized = eveeService.stripBotMention(text).toLowerCase();
-    if (normalized === "ruok?" || normalized === "status?") {
-      await client.chat.postMessage({
-        channel: event.channel,
-        thread_ts: threadTs,
-        text: "imok",
-      });
-      return;
-    }
-
     const files = (event as { files?: SlackFile[] }).files ?? [];
 
     try {
@@ -125,7 +115,10 @@ export async function initSlack(): Promise<void> {
           if (!event.user) return "Unknown";
           const info = await client.users.info({ user: event.user });
           return (
-            info.user?.profile?.display_name || info.user?.real_name || info.user?.name || event.user
+            info.user?.profile?.display_name ||
+            info.user?.real_name ||
+            info.user?.name ||
+            event.user
           );
         },
       });

@@ -11,6 +11,8 @@ vi.mock("../../services/evee-service", () => ({
   runLlmCall: vi.fn(),
   persistLlmCall: vi.fn(),
   persistMessage: vi.fn(),
+  sendSlackStatus: vi.fn().mockResolvedValue(undefined),
+  isHealthCheckMessage: vi.fn().mockReturnValue(false),
 }));
 
 import * as eveeService from "../../services/evee-service";
@@ -19,6 +21,7 @@ const mockBuildLlmContext = vi.mocked(eveeService.buildLlmContext);
 const mockRunLlmCall = vi.mocked(eveeService.runLlmCall);
 const mockPersistLlmCall = vi.mocked(eveeService.persistLlmCall);
 const mockPersistMessage = vi.mocked(eveeService.persistMessage);
+const mockSendSlackStatus = vi.mocked(eveeService.sendSlackStatus);
 
 const BASE_EVENT = {
   name: "slack/message.received" as const,
@@ -78,6 +81,8 @@ describe("eveeConversation function", () => {
       const { result } = await engine.execute({
         events: [BASE_EVENT],
         steps: [
+          { id: "set-thinking-status", handler: () => undefined },
+          { id: "ruok-fast-path", handler: () => false },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -104,6 +109,8 @@ describe("eveeConversation function", () => {
       await engine.execute({
         events: [BASE_EVENT],
         steps: [
+          { id: "set-thinking-status", handler: () => undefined },
+          { id: "ruok-fast-path", handler: () => false },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -141,6 +148,8 @@ describe("eveeConversation function", () => {
       await engine.execute({
         events: [BASE_EVENT],
         steps: [
+          { id: "set-thinking-status", handler: () => undefined },
+          { id: "ruok-fast-path", handler: () => false },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -174,6 +183,8 @@ describe("eveeConversation function", () => {
       await engine.execute({
         events: [BASE_EVENT],
         steps: [
+          { id: "set-thinking-status", handler: () => undefined },
+          { id: "ruok-fast-path", handler: () => false },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -214,6 +225,8 @@ describe("eveeConversation function", () => {
       await engine.execute({
         events: [BASE_EVENT],
         steps: [
+          { id: "set-thinking-status", handler: () => undefined },
+          { id: "ruok-fast-path", handler: () => false },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -270,6 +283,8 @@ describe("eveeConversation function", () => {
       await engine.execute({
         events: [BASE_EVENT],
         steps: [
+          { id: "set-thinking-status", handler: () => undefined },
+          { id: "ruok-fast-path", handler: () => false },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -323,6 +338,8 @@ describe("eveeConversation function", () => {
       await engine.execute({
         events: [BASE_EVENT],
         steps: [
+          { id: "set-thinking-status", handler: () => undefined },
+          { id: "ruok-fast-path", handler: () => false },
           {
             id: "llm-call-1",
             handler: () => ({
@@ -402,7 +419,11 @@ describe("eveeConversation function", () => {
 
       // Build 10 rounds of tool-calls (the MAX_TOOL_ROUNDS limit), each returning tool-calls,
       // so the function never exits the loop and hits the NonRetriableError at the end.
-      const steps = [];
+      // biome-ignore lint/suspicious/noExplicitAny: test step array needs heterogeneous handler return types
+      const steps: Array<{ id: string; handler: () => any }> = [
+        { id: "set-thinking-status", handler: () => undefined },
+        { id: "ruok-fast-path", handler: () => false },
+      ];
       for (let round = 1; round <= 10; round++) {
         steps.push({
           id: `llm-call-${round}`,
@@ -430,6 +451,84 @@ describe("eveeConversation function", () => {
       // the thrown NonRetriableError as the execution error.
       expect(error).toBeDefined();
       expect((error as { message?: string }).message).toContain("Max tool rounds exceeded");
+    });
+  });
+
+  describe("shimmer status", () => {
+    it("set-thinking-status step calls sendSlackStatus with token, channel, threadId, status, and LOADING_MESSAGES", async () => {
+      const { engine } = makeEngine();
+
+      await engine.executeStep("set-thinking-status", {
+        events: [BASE_EVENT],
+      });
+
+      expect(mockSendSlackStatus).toHaveBeenCalledTimes(1);
+      expect(mockSendSlackStatus).toHaveBeenCalledWith(
+        expect.any(String), // token — comes from env, not asserted strictly
+        "C_CHANNEL001",
+        "thread_ts_001",
+        "is thinking...",
+        expect.arrayContaining(["thinking...", "bufo'ing..."]),
+      );
+    });
+  });
+
+  describe("health-check fast-path", () => {
+    it("emits response.ready with 'imok' when latest user message is 'ruok?'", async () => {
+      const { engine, sendEvent } = makeEngine();
+
+      await engine.execute({
+        events: [BASE_EVENT],
+        steps: [
+          { id: "set-thinking-status", handler: () => undefined },
+          { id: "ruok-fast-path", handler: () => true },
+        ],
+      });
+
+      expect(sendEvent).toHaveBeenCalledWith(
+        "emit-response",
+        expect.objectContaining({
+          name: "evee/response.ready",
+          data: expect.objectContaining({
+            response: "imok",
+            conversationId: "conv_test1234567890",
+            threadId: "thread_ts_001",
+            channel: "C_CHANNEL001",
+            llmCalls: [],
+          }),
+        }),
+      );
+    });
+
+    it("does NOT short-circuit when the fast-path returns false", async () => {
+      const { engine, sendEvent } = makeEngine();
+
+      await engine.execute({
+        events: [BASE_EVENT],
+        steps: [
+          { id: "set-thinking-status", handler: () => undefined },
+          { id: "ruok-fast-path", handler: () => false },
+          {
+            id: "llm-call-1",
+            handler: () => ({
+              llmCallId: "llm_x",
+              text: "sunny",
+              finishReason: "stop",
+              toolCalls: [],
+              usage: { inputTokens: 5, outputTokens: 2, totalTokens: 7 },
+            }),
+          },
+          { id: "save-response", handler: () => undefined },
+        ],
+      });
+
+      // For non-ruok, the normal emit-response flow runs.
+      expect(sendEvent).toHaveBeenCalledWith(
+        "emit-response",
+        expect.objectContaining({
+          data: expect.objectContaining({ response: "sunny" }),
+        }),
+      );
     });
   });
 });

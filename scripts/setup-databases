@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Ensures all databases declared in infra/postgres/initdb/*.sql exist on prod PG.
+#
+# Why this script exists (vs the post-deploy hook):
+#   The .kamal/hooks/post-deploy hook handles this automatically on every
+#   deploy via ssh + docker exec. This script is an escape hatch for
+#   running the same check from a laptop — useful for debugging or
+#   verifying state without triggering a deploy. Safe to run anytime;
+#   idempotent.
+#
+# Parses DB names from the same init SQL files as the hook, so adding a
+# new database is still a one-file change.
+#
+# Run from the repo root: scripts/setup-databases
+set -euo pipefail
+
+INITDB_DIR="infra/postgres/initdb"
+
+DBS=$(grep -hEo '^CREATE DATABASE [a-zA-Z_][a-zA-Z0-9_]*' "$INITDB_DIR"/*.sql | awk '{print $3}')
+
+if [ -z "$DBS" ]; then
+  echo "no databases declared in $INITDB_DIR/*.sql — nothing to do"
+  exit 0
+fi
+
+PASS=$(op read "op://Homelab/Workflow Engine Postgres/password")
+BASE="postgresql://workflow:${PASS}@homelab:5432/postgres"
+
+for db in $DBS; do
+  if psql "$BASE" -tc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1; then
+    echo "ok: database '$db' already exists"
+  else
+    echo "creating database '$db'..."
+    psql "$BASE" -c "CREATE DATABASE $db OWNER workflow"
+  fi
+done

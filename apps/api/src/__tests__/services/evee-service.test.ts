@@ -41,11 +41,13 @@ import {
   buildLlmContext,
   downloadSlackImage,
   executeTool,
+  isHealthCheckMessage,
   persistLlmCall,
   persistMessage,
   persistToolCall,
   runLlmCall,
   sendSlackResponse,
+  sendSlackStatus,
   stripBotMention,
   upsertConversation,
 } from "../../services/evee-service";
@@ -708,5 +710,108 @@ describe("sendSlackResponse()", () => {
     await sendSlackResponse("xoxb-secret-token", "C1", "ts1", "hi");
 
     expect(MockWebClient).toHaveBeenCalledWith("xoxb-secret-token");
+  });
+});
+
+// ============================================================
+// sendSlackStatus
+// ============================================================
+
+describe("sendSlackStatus()", () => {
+  it("calls assistant.threads.setStatus with channel, thread, status, and loading_messages", async () => {
+    const mockSetStatus = vi.fn().mockResolvedValue({ ok: true });
+    MockWebClient.mockImplementationOnce(
+      () =>
+        ({
+          assistant: { threads: { setStatus: mockSetStatus } },
+        }) as unknown as InstanceType<typeof WebClient>,
+    );
+
+    await sendSlackStatus("xoxb-token", "C1234", "thread_ts_123", "is thinking...", [
+      "thinking...",
+      "bufo'ing...",
+    ]);
+
+    expect(mockSetStatus).toHaveBeenCalledWith({
+      channel_id: "C1234",
+      thread_ts: "thread_ts_123",
+      status: "is thinking...",
+      loading_messages: ["thinking...", "bufo'ing..."],
+    });
+  });
+
+  it("swallows errors so a failing status call can't block the main pipeline", async () => {
+    const mockSetStatus = vi.fn().mockRejectedValue(new Error("slack down"));
+    MockWebClient.mockImplementationOnce(
+      () =>
+        ({
+          assistant: { threads: { setStatus: mockSetStatus } },
+        }) as unknown as InstanceType<typeof WebClient>,
+    );
+
+    // Should not throw
+    await expect(
+      sendSlackStatus("xoxb-token", "C1", "ts1", "is thinking...", ["thinking..."]),
+    ).resolves.toBeUndefined();
+  });
+});
+
+// ============================================================
+// isHealthCheckMessage
+// ============================================================
+
+describe("isHealthCheckMessage()", () => {
+  it("returns true for lowercase 'ruok?'", () => {
+    expect(isHealthCheckMessage([{ role: "user", content: "ruok?" }])).toBe(true);
+  });
+
+  it("returns true for 'status?'", () => {
+    expect(isHealthCheckMessage([{ role: "user", content: "status?" }])).toBe(true);
+  });
+
+  it("returns true for mixed-case 'RUOK?'", () => {
+    expect(isHealthCheckMessage([{ role: "user", content: "RUOK?" }])).toBe(true);
+  });
+
+  it("handles leading/trailing whitespace", () => {
+    expect(isHealthCheckMessage([{ role: "user", content: "  ruok?  " }])).toBe(true);
+  });
+
+  it("returns false for unrelated messages", () => {
+    expect(isHealthCheckMessage([{ role: "user", content: "what's the weather?" }])).toBe(false);
+  });
+
+  it("returns false for empty message list", () => {
+    expect(isHealthCheckMessage([])).toBe(false);
+  });
+
+  it("returns false when latest message is assistant, not user", () => {
+    expect(
+      isHealthCheckMessage([
+        { role: "user", content: "ruok?" },
+        { role: "assistant", content: "imok" },
+      ]),
+    ).toBe(false);
+  });
+
+  it("returns false for non-string content (array/multimodal)", () => {
+    expect(
+      isHealthCheckMessage([
+        {
+          role: "user",
+          content: [{ type: "text", text: "ruok?" }],
+        },
+      ]),
+    ).toBe(false);
+  });
+
+  it("only checks the LATEST message (ignores older ruok)", () => {
+    expect(
+      isHealthCheckMessage([
+        { role: "user", content: "ruok?" },
+        { role: "assistant", content: "imok" },
+        { role: "user", content: "hi" },
+      ]),
+    ).toBe(false);
   });
 });
