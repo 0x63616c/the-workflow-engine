@@ -454,39 +454,21 @@ describe("eveeConversation function", () => {
   });
 
   describe("shimmer status", () => {
-    it("calls sendSlackStatus at the top of the function with LOADING_MESSAGES", async () => {
+    it("set-thinking-status step calls sendSlackStatus with token, channel, threadId, status, and LOADING_MESSAGES", async () => {
       const { engine } = makeEngine();
 
-      const setStatusSpy = vi.fn();
-      await engine.execute({
+      await engine.executeStep("set-thinking-status", {
         events: [BASE_EVENT],
-        steps: [
-          {
-            id: "set-thinking-status",
-            handler: () => {
-              setStatusSpy();
-              return undefined;
-            },
-          },
-          { id: "ruok-fast-path", handler: () => false },
-          {
-            id: "llm-call-1",
-            handler: () => ({
-              llmCallId: "llm_abc1234567890123",
-              text: "hi",
-              finishReason: "stop",
-              toolCalls: [],
-              usage: { inputTokens: 5, outputTokens: 2, totalTokens: 7 },
-            }),
-          },
-          {
-            id: "save-response",
-            handler: () => undefined,
-          },
-        ],
       });
 
-      expect(setStatusSpy).toHaveBeenCalledTimes(1);
+      expect(mockSendSlackStatus).toHaveBeenCalledTimes(1);
+      expect(mockSendSlackStatus).toHaveBeenCalledWith(
+        expect.any(String), // token — comes from env, not asserted strictly
+        "C_CHANNEL001",
+        "thread_ts_001",
+        "is thinking...",
+        expect.arrayContaining(["thinking...", "bufo'ing..."]),
+      );
     });
   });
 
