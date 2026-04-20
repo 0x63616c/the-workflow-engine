@@ -68,7 +68,7 @@ const rules: Rule[] = [
     pattern: `${API_SRC}/inngest/functions/**/*.ts`,
     label: "inngest/functions/",
     allowed: [
-      /^\./, // relative imports
+      /^\.\//, // intra-directory imports (same folder)
       /^@repo\/shared/,
       /^inngest/,
       /^@ai-sdk\/provider/,
@@ -79,6 +79,7 @@ const rules: Rule[] = [
       /\.\.\/\.\.\/services\//,
       /\.\.\/\.\.\/db\//,
       /\.\.\/\.\.\/integrations\/evee\//,
+      /\.\.\/\.\.\/integrations\/slack\/constants/,
       /\.\.\/\.\.\/integrations\/slack\/format/,
       /\.\.\/\.\.\/env/,
     ],
