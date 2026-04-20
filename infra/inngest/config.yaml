@@ -1,0 +1,37 @@
+# Inngest self-hosted server config.
+# Mounted into the accessory container at /etc/inngest/config.yaml
+# via Kamal `files:` in config/deploy.yml.
+#
+# Any key here is a Viper-compatible version of a CLI flag from
+# `inngest start --help`. Env vars also work (INNGEST_*).
+
+# App serve URLs the server polls to re-discover our functions on every
+# tick of --poll-interval. Goes through kamal-proxy; see deploy.yml
+# for the Host-header fix that makes this routable.
+sdk-url:
+  - http://host.docker.internal/api/inngest
+
+# Durable persistence. Inngest auto-runs its own migrations on first
+# connection. DB is declared in infra/postgres/initdb/02-inngest.sql.
+# $POSTGRES_PASSWORD is env-expanded by Inngest at startup (INNGEST_*
+# env convention).
+postgres-uri: postgres://workflow:${POSTGRES_PASSWORD}@workflow-engine-postgres:5432/inngest
+
+# Executor queue polling interval (ms). Default 150; 50 cuts per-step
+# pickup latency from ~100ms to ~25ms. Safe lower bound; going below
+# 50ms costs Redis/CPU with no user-visible benefit at our volume.
+tick: 50
+
+# Re-poll sdk-url every N seconds to rediscover apps. Belt-and-suspenders
+# alongside durable registration.
+poll-interval: 30
+
+# Executor worker count. Default 100 is overkill for a homelab panel.
+queue-workers: 20
+
+# Trim log noise (info → warn). Errors and warnings still emitted.
+log-level: warn
+
+# Postgres pool tuning. Defaults (100 open / 10 idle) are generous;
+# 20 open is plenty alongside the app's pool on the same PG instance.
+postgres-max-open-conns: 20
