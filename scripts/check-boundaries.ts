@@ -43,6 +43,7 @@ const rules: Rule[] = [
       /^@slack\/web-api/, // for Slack messaging (sendSlackResponse)
       /^inngest/, // NonRetriableError for permanent Slack errors in sendSlackResponse
       /^yahoo-finance2$/, // stock quote fetching
+      /^ai$/, // ModelMessage type for isHealthCheckMessage
       /\.\.\/db\//,
       /\.\.\/integrations\/types/, // existing integration type boundaries
       /\.\.\/integrations\/evee\//, // evee LLM, messages, tools, types

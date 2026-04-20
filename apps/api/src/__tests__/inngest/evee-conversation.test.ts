@@ -12,6 +12,7 @@ vi.mock("../../services/evee-service", () => ({
   persistLlmCall: vi.fn(),
   persistMessage: vi.fn(),
   sendSlackStatus: vi.fn().mockResolvedValue(undefined),
+  isHealthCheckMessage: vi.fn().mockReturnValue(false),
 }));
 
 import * as eveeService from "../../services/evee-service";

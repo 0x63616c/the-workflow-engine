@@ -1,4 +1,5 @@
 import { WebClient } from "@slack/web-api";
+import type { ModelMessage } from "ai";
 import { and, asc, eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { NonRetriableError } from "inngest";
@@ -139,6 +140,14 @@ export async function downloadSlackImage(
 
 export function stripBotMention(text: string): string {
   return text.replace(/<@[A-Z0-9]+>/g, "").trim();
+}
+
+export function isHealthCheckMessage(messages: ModelMessage[]): boolean {
+  const latest = messages.at(-1);
+  if (!latest || latest.role !== "user") return false;
+  const content = typeof latest.content === "string" ? latest.content : "";
+  const normalized = content.trim().toLowerCase();
+  return normalized === "ruok?" || normalized === "status?";
 }
 
 export async function buildLlmContext(

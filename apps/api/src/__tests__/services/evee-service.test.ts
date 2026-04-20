@@ -41,6 +41,7 @@ import {
   buildLlmContext,
   downloadSlackImage,
   executeTool,
+  isHealthCheckMessage,
   persistLlmCall,
   persistMessage,
   persistToolCall,
@@ -752,5 +753,65 @@ describe("sendSlackStatus()", () => {
     await expect(
       sendSlackStatus("xoxb-token", "C1", "ts1", "is thinking...", ["thinking..."]),
     ).resolves.toBeUndefined();
+  });
+});
+
+// ============================================================
+// isHealthCheckMessage
+// ============================================================
+
+describe("isHealthCheckMessage()", () => {
+  it("returns true for lowercase 'ruok?'", () => {
+    expect(isHealthCheckMessage([{ role: "user", content: "ruok?" }])).toBe(true);
+  });
+
+  it("returns true for 'status?'", () => {
+    expect(isHealthCheckMessage([{ role: "user", content: "status?" }])).toBe(true);
+  });
+
+  it("returns true for mixed-case 'RUOK?'", () => {
+    expect(isHealthCheckMessage([{ role: "user", content: "RUOK?" }])).toBe(true);
+  });
+
+  it("handles leading/trailing whitespace", () => {
+    expect(isHealthCheckMessage([{ role: "user", content: "  ruok?  " }])).toBe(true);
+  });
+
+  it("returns false for unrelated messages", () => {
+    expect(isHealthCheckMessage([{ role: "user", content: "what's the weather?" }])).toBe(false);
+  });
+
+  it("returns false for empty message list", () => {
+    expect(isHealthCheckMessage([])).toBe(false);
+  });
+
+  it("returns false when latest message is assistant, not user", () => {
+    expect(
+      isHealthCheckMessage([
+        { role: "user", content: "ruok?" },
+        { role: "assistant", content: "imok" },
+      ]),
+    ).toBe(false);
+  });
+
+  it("returns false for non-string content (array/multimodal)", () => {
+    expect(
+      isHealthCheckMessage([
+        {
+          role: "user",
+          content: [{ type: "text", text: "ruok?" }],
+        },
+      ]),
+    ).toBe(false);
+  });
+
+  it("only checks the LATEST message (ignores older ruok)", () => {
+    expect(
+      isHealthCheckMessage([
+        { role: "user", content: "ruok?" },
+        { role: "assistant", content: "imok" },
+        { role: "user", content: "hi" },
+      ]),
+    ).toBe(false);
   });
 });
