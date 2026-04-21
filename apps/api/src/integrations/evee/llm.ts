@@ -31,7 +31,11 @@ function getOpenRouter() {
       apiKey: env.OPENROUTER_API_KEY,
       // Attribution for OpenRouter's activity dashboard ("App" column).
       // Without these, requests show as "App: Unknown".
-      appName: "The Workflow Engine — Evee",
+      //
+      // IMPORTANT: appName is sent as the X-OpenRouter-Title HTTP header,
+      // which must be Latin-1. No em-dashes, smart quotes, or other non-ASCII
+      // punctuation, or undici throws `TypeError: Header has invalid value`.
+      appName: "The Workflow Engine - Evee",
       appUrl: "https://github.com/0x63616c/the-workflow-engine",
     });
   }
