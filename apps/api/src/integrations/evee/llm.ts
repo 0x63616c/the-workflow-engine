@@ -46,8 +46,9 @@ function getOpenRouter() {
 //
 // - sort: "throughput" picks the fastest backend. Same model, different
 //   providers can vary 10x on tok/s (we've seen 3.5 vs 30 tps). Pin it.
-// - allow_fallbacks: false makes the sort actually stick — otherwise
-//   OpenRouter may fall through to a slower provider.
+// - allow_fallbacks: true so a 429 / outage on the fastest provider doesn't
+//   kill the request — we'd rather a slower reply than Evee ghosting the
+//   thread. DeepInfra sustained-limited us on 2026-04-21 with fallbacks off.
 // - require_parameters: true only routes to providers that support EVERY
 //   field in our request, including `tools`. Prevents the silent-tool-strip
 //   failure mode where a provider drops tool schemas, the model never sees
@@ -56,7 +57,7 @@ function getOpenRouter() {
 //   config issue).
 const PROVIDER_ROUTING = {
   sort: "throughput",
-  allow_fallbacks: false,
+  allow_fallbacks: true,
   require_parameters: true,
 } as const;
 

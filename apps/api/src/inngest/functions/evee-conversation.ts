@@ -22,6 +22,23 @@ export const eveeConversation = inngest.createFunction(
       limit: 1,
       key: "event.data.conversationId",
     },
+    // Fires after all retries are exhausted. Tells the user in-thread and
+    // dumps full diagnostics into #errors so we're not silently ghosting.
+    onFailure: async ({ event, error, runId }) => {
+      const originalEvent = (event.data as { event: { data: unknown } }).event;
+      const data = originalEvent.data as { channel?: string; threadId?: string };
+      if (!data.channel || !data.threadId) return;
+
+      await eveeService.reportEveeFailure(env.SLACK_BOT_TOKEN, {
+        threadChannel: data.channel,
+        threadTs: data.threadId,
+        errorsChannel: env.SLACK_ERRORS_CHANNEL_ID,
+        errorMessage: error.message,
+        errorStack: error.stack,
+        eventData: originalEvent.data,
+        runUrl: runId ? `https://app.inngest.com/env/production/runs/${runId}` : undefined,
+      });
+    },
   },
   async ({ event, step }) => {
     const { conversationId, botUserId, threadId, channel } = event.data as {
@@ -81,6 +98,17 @@ export const eveeConversation = inngest.createFunction(
       const stepName = `llm-call-${roundNumber}`;
 
       const result = await step.run(stepName, async () => {
+        // Slack auto-clears the assistant status after 2 min of silence. Refresh
+        // at the top of every LLM round (and on every retry of this step) so
+        // the shimmer stays alive through provider backoff.
+        await eveeService.sendSlackStatus(
+          env.SLACK_BOT_TOKEN,
+          channel,
+          threadId,
+          "is thinking...",
+          LOADING_MESSAGES,
+        );
+
         const context = await eveeService.buildLlmContext(db, conversationId, botUserId);
         if (!context) {
           throw new NonRetriableError(`Conversation not found: ${conversationId}`);
