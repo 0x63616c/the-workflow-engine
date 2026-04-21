@@ -6,6 +6,9 @@ vi.mock("@slack/web-api", () => ({
     chat: {
       postMessage: vi.fn().mockResolvedValue({ ok: true }),
     },
+    conversations: {
+      replies: vi.fn().mockResolvedValue({ messages: [] }),
+    },
   })),
 }));
 
@@ -49,6 +52,7 @@ import {
   sendSlackResponse,
   sendSlackStatus,
   stripBotMention,
+  syncSlackThread,
   upsertConversation,
 } from "../../services/evee-service";
 
@@ -783,5 +787,146 @@ describe("isHealthCheckText()", () => {
 
   it("returns false for empty string", () => {
     expect(isHealthCheckText("")).toBe(false);
+  });
+});
+
+// ============================================================
+// syncSlackThread
+// ============================================================
+
+type SyncDb = Parameters<typeof syncSlackThread>[0];
+
+function makeSyncDb(existingRows: unknown[][] = []): SyncDb {
+  let selectCall = 0;
+  const insertValues = vi.fn().mockResolvedValue(undefined);
+  const db = {
+    select: vi.fn().mockImplementation(() => {
+      const rows = existingRows[selectCall++] ?? [];
+      return {
+        from: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue(rows),
+        }),
+      };
+    }),
+    insert: vi.fn().mockReturnValue({ values: insertValues }),
+  } as unknown as SyncDb;
+  return db;
+}
+
+describe("syncSlackThread()", () => {
+  it("upserts each non-bot user message from the Slack thread into the DB", async () => {
+    const mockReplies = vi.fn().mockResolvedValue({
+      messages: [
+        { ts: "ts_1", user: "U_ALICE", text: "hello" },
+        { ts: "ts_2", user: "U_BOB", text: "world" },
+        { ts: "ts_3", user: "U_CAROL", text: "hey" },
+      ],
+    });
+    MockWebClient.mockImplementationOnce(
+      () =>
+        ({ conversations: { replies: mockReplies } }) as unknown as InstanceType<typeof WebClient>,
+    );
+    const slack = new WebClient("xoxb-token");
+
+    // All selects return empty (no existing rows)
+    const db = makeSyncDb([[], [], []]);
+
+    await syncSlackThread(db, slack, {
+      conversationId: "conv_1",
+      channel: "C1",
+      threadTs: "ts_root",
+      botUserId: "UBOT",
+      slackBotToken: "xoxb-token",
+      lookupUser: async (u) => u,
+    });
+
+    expect(db.insert).toHaveBeenCalledTimes(3);
+  });
+
+  it("skips Evee's own messages (user === botUserId)", async () => {
+    const mockReplies = vi.fn().mockResolvedValue({
+      messages: [
+        { ts: "ts_bot", user: "UBOT", text: "imok" },
+        { ts: "ts_user", user: "U_ALICE", text: "ruok?" },
+      ],
+    });
+    MockWebClient.mockImplementationOnce(
+      () =>
+        ({ conversations: { replies: mockReplies } }) as unknown as InstanceType<typeof WebClient>,
+    );
+    const slack = new WebClient("xoxb-token");
+
+    const db = makeSyncDb([[]]);
+
+    await syncSlackThread(db, slack, {
+      conversationId: "conv_1",
+      channel: "C1",
+      threadTs: "ts_root",
+      botUserId: "UBOT",
+      slackBotToken: "xoxb-token",
+      lookupUser: async (u) => u,
+    });
+
+    // Only the user message is persisted
+    expect(db.insert).toHaveBeenCalledTimes(1);
+  });
+
+  it("skips messages with bot_id or subtype", async () => {
+    const mockReplies = vi.fn().mockResolvedValue({
+      messages: [
+        { ts: "ts_bot", user: "U_BOT", bot_id: "B_EXTERNAL", text: "from a bot app" },
+        { ts: "ts_edit", user: "U_ALICE", subtype: "message_changed", text: "edited" },
+        { ts: "ts_ok", user: "U_ALICE", text: "valid message" },
+      ],
+    });
+    MockWebClient.mockImplementationOnce(
+      () =>
+        ({ conversations: { replies: mockReplies } }) as unknown as InstanceType<typeof WebClient>,
+    );
+    const slack = new WebClient("xoxb-token");
+
+    const db = makeSyncDb([[]]);
+
+    await syncSlackThread(db, slack, {
+      conversationId: "conv_1",
+      channel: "C1",
+      threadTs: "ts_root",
+      botUserId: "UBOT",
+      slackBotToken: "xoxb-token",
+      lookupUser: async (u) => u,
+    });
+
+    // Only the valid message is persisted
+    expect(db.insert).toHaveBeenCalledTimes(1);
+  });
+
+  it("dedupes by (conversationId, slackTs) — if existing row found, no insert", async () => {
+    const mockReplies = vi.fn().mockResolvedValue({
+      messages: [
+        { ts: "ts_existing", user: "U_ALICE", text: "already in db" },
+        { ts: "ts_new", user: "U_BOB", text: "new message" },
+      ],
+    });
+    MockWebClient.mockImplementationOnce(
+      () =>
+        ({ conversations: { replies: mockReplies } }) as unknown as InstanceType<typeof WebClient>,
+    );
+    const slack = new WebClient("xoxb-token");
+
+    // First select returns existing row; second returns empty
+    const db = makeSyncDb([[{ id: "msg_existing" }], []]);
+
+    await syncSlackThread(db, slack, {
+      conversationId: "conv_1",
+      channel: "C1",
+      threadTs: "ts_root",
+      botUserId: "UBOT",
+      slackBotToken: "xoxb-token",
+      lookupUser: async (u) => u,
+    });
+
+    // Only the new message is inserted
+    expect(db.insert).toHaveBeenCalledTimes(1);
   });
 });
