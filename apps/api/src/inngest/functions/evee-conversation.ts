@@ -22,21 +22,19 @@ export const eveeConversation = inngest.createFunction(
       limit: 1,
       key: "event.data.conversationId",
     },
-    // Fires after all retries are exhausted. Tells the user in-thread and
-    // dumps full diagnostics into #errors so we're not silently ghosting.
-    onFailure: async ({ event, error, runId }) => {
+    // Fires after all retries are exhausted. Posts an apology in the
+    // user's thread so they aren't left staring at silence. Diagnostics
+    // (stack, event, run URL) go to #errors via Grafana Loki alerting
+    // off the error log line — no duplication.
+    onFailure: async ({ event, error }) => {
       const originalEvent = (event.data as { event: { data: unknown } }).event;
       const data = originalEvent.data as { channel?: string; threadId?: string };
       if (!data.channel || !data.threadId) return;
 
-      await eveeService.reportEveeFailure(env.SLACK_BOT_TOKEN, {
-        threadChannel: data.channel,
+      await eveeService.sendEveeFailureReply(env.SLACK_BOT_TOKEN, {
+        channel: data.channel,
         threadTs: data.threadId,
-        errorsChannel: env.SLACK_ERRORS_CHANNEL_ID,
         errorMessage: error.message,
-        errorStack: error.stack,
-        eventData: originalEvent.data,
-        runUrl: runId ? `${env.INNGEST_UI_URL}/run?runID=${runId}` : undefined,
       });
     },
   },

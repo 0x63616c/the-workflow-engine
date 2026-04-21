@@ -140,3 +140,10 @@ accessories:
         GF_AUTH_ANONYMOUS_ENABLED: "true"
         GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
         GF_SERVER_ROOT_URL: "http://homelab:3000"
+      # Injected by Grafana into /etc/grafana/provisioning/alerting/*.yaml
+      # via its built-in $VAR expansion. Create an incoming webhook in
+      # Slack targeted at #errors (C0AV61FPQ8G), store in 1Password as
+      # `op://Homelab/Grafana Errors Slack Webhook`, then reference
+      # here via .kamal/secrets.
+      secret:
+        - GRAFANA_ERRORS_SLACK_WEBHOOK_URL
