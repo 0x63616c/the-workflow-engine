@@ -19,6 +19,7 @@ oauth_config:
       - chat:write
       - chat:write.public
       - chat:write.customize
+      - incoming-webhook
       - channels:read
       - channels:history
       - channels:manage
@@ -115,3 +116,5 @@ settings:
   org_deploy_enabled: false
   socket_mode_enabled: true
   token_rotation_enabled: false
+  incoming_webhooks:
+    incoming_webhooks_enabled: true

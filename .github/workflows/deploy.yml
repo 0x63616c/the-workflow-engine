@@ -300,6 +300,7 @@ jobs:
           HA_TOKEN: ${{ secrets.HA_TOKEN }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          GRAFANA_ERRORS_SLACK_WEBHOOK_URL: ${{ secrets.GRAFANA_ERRORS_SLACK_WEBHOOK_URL }}
         run: scripts/ensure-accessories
 
       - name: Record deploy start time
@@ -320,6 +321,7 @@ jobs:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_APP_TOKEN: ${{ secrets.SLACK_APP_TOKEN }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GRAFANA_ERRORS_SLACK_WEBHOOK_URL: ${{ secrets.GRAFANA_ERRORS_SLACK_WEBHOOK_URL }}
         run: kamal deploy
 
       - name: Reboot Inngest accessory

@@ -1,0 +1,27 @@
+apiVersion: 1
+
+# Contact points are where alerts get delivered. We route everything to a
+# single Slack incoming webhook posting into #errors (C0AV61FPQ8G).
+#
+# The webhook URL is a secret — create one in Slack
+# (api.slack.com -> Your Apps -> Incoming Webhooks) targeted at #errors,
+# store it in 1Password as `op://Homelab/Grafana Errors Slack Webhook`, and
+# wire it through Kamal's secret: block in config/deploy.yml so it lands
+# here as the GRAFANA_ERRORS_SLACK_WEBHOOK_URL env var.
+contactPoints:
+  - orgId: 1
+    name: slack-errors
+    receivers:
+      - uid: slack-errors
+        type: slack
+        settings:
+          url: $GRAFANA_ERRORS_SLACK_WEBHOOK_URL
+          title: ":rotating_light: {{ .CommonLabels.alertname }}"
+          text: |
+            {{ range .Alerts -}}
+            *status:* {{ .Status }}
+            *summary:* {{ .Annotations.summary }}
+            {{ if .Annotations.description }}*description:* {{ .Annotations.description }}{{ end }}
+            *source:* {{ .Labels.container }}{{ if .Labels.source }} / {{ .Labels.source }}{{ end }}
+            <{{ .GeneratorURL }}|view in Grafana>
+            {{ end }}

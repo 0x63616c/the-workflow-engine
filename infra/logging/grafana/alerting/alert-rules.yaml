@@ -1,0 +1,125 @@
+apiVersion: 1
+
+# Loki-backed error alerts. Two rules so the Slack message distinguishes
+# backend vs frontend without parsing labels client-side:
+#
+#   1. backend-errors  — pino-level 50 (error) or 60 (fatal) on any
+#      container shipped by Alloy's docker discovery.
+#   2. frontend-errors — Faro `kind=error|exception` logs from the browser.
+#
+# Both use `for: 0s` — every error notifies. Notification policy
+# (policies.yaml) batches bursts via group_interval, so we're not
+# spamming the channel for one bad request that emits a storm.
+#
+# Tuning later (raise thresholds, add mute windows for deploys, etc.) is
+# a YAML diff, no Grafana-UI clicking.
+groups:
+  - orgId: 1
+    name: Workflow Engine Errors
+    folder: Errors
+    interval: 30s
+    rules:
+      - uid: workflow-engine-backend-errors
+        title: backend error logs
+        condition: C
+        for: 0s
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: error
+        annotations:
+          summary: "{{ $values.B }} backend error log line(s) in container {{ $labels.container }}"
+          description: "pino level>=50 on container {{ $labels.container }}. Query logs in Grafana to see the details."
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 60
+              to: 0
+            datasourceUid: loki
+            model:
+              datasource:
+                type: loki
+                uid: loki
+              editorMode: code
+              expr: |
+                sum by (container) (count_over_time({container=~".+"} | json | level=~"50|60" [1m]))
+              intervalMs: 1000
+              maxDataPoints: 43200
+              queryType: range
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              type: reduce
+              refId: B
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: B
+              type: threshold
+              conditions:
+                - evaluator:
+                    params: [0]
+                    type: gt
+              refId: C
+
+      - uid: workflow-engine-frontend-errors
+        title: frontend error logs
+        condition: C
+        for: 0s
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: error
+          source: faro
+        annotations:
+          summary: "{{ $values.B }} frontend error event(s) from the browser"
+          description: "Faro-reported browser error/exception. Dashboard: Frontend Observability."
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 60
+              to: 0
+            datasourceUid: loki
+            model:
+              datasource:
+                type: loki
+                uid: loki
+              editorMode: code
+              expr: |
+                sum(count_over_time({source="faro"} | json | kind=~"error|exception" [1m]))
+              intervalMs: 1000
+              maxDataPoints: 43200
+              queryType: range
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              type: reduce
+              refId: B
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: B
+              type: threshold
+              conditions:
+                - evaluator:
+                    params: [0]
+                    type: gt
+              refId: C
