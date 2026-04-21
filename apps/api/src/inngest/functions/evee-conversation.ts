@@ -40,10 +40,9 @@ export const eveeConversation = inngest.createFunction(
       ),
     );
 
-    const isHealthCheck = await step.run("ruok-fast-path", async () => {
-      const context = await eveeService.buildLlmContext(db, conversationId, botUserId);
-      if (!context) return false;
-      return eveeService.isHealthCheckMessage(context.messages);
+    const isHealthCheck = await step.run("ruok-fast-path", () => {
+      const text = (event.data as { text?: string }).text ?? "";
+      return eveeService.isHealthCheckText(text);
     });
 
     if (isHealthCheck) {

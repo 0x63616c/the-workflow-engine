@@ -1,4 +1,5 @@
 import { App, LogLevel } from "@slack/bolt";
+import { WebClient } from "@slack/web-api";
 import { and, eq } from "drizzle-orm";
 import { db } from "../../db/client";
 import { conversations } from "../../db/schema";
@@ -8,14 +9,6 @@ import { log } from "../../lib/logger";
 import * as eveeService from "../../services/evee-service";
 import { eveeAssistant } from "./assistant";
 
-const IMAGE_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/gif", "image/webp"]);
-
-interface SlackFile {
-  name?: string;
-  mimetype?: string;
-  url_private?: string;
-}
-
 let app: App | null = null;
 let botUserId: string | null = null;
 
@@ -24,15 +17,18 @@ interface ProcessMessageParams {
   threadTs: string;
   userId: string;
   text: string;
-  files: SlackFile[];
-  resolveDisplayName: () => Promise<string>;
 }
 
 async function processMessage(params: ProcessMessageParams): Promise<void> {
-  const { channel, threadTs, userId, text, files, resolveDisplayName } = params;
+  const { channel, threadTs, userId, text } = params;
 
-  const displayName = await resolveDisplayName();
   const cleanText = eveeService.stripBotMention(text);
+
+  const slack = new WebClient(env.SLACK_BOT_TOKEN);
+
+  const displayName = await slack.users.info({ user: userId }).then((info) => {
+    return info.user?.profile?.display_name || info.user?.real_name || info.user?.name || userId;
+  });
 
   const conversationId = await eveeService.upsertConversation(db, {
     source: "slack",
@@ -42,26 +38,16 @@ async function processMessage(params: ProcessMessageParams): Promise<void> {
     displayName,
   });
 
-  const imageFiles = files.filter(
-    (f) => f.mimetype && IMAGE_MIME_TYPES.has(f.mimetype) && f.url_private,
-  );
-
-  const downloadedImages: Array<{ data: Buffer; mimeType: string; originalUrl?: string }> = [];
-  for (const file of imageFiles) {
-    const url = file.url_private as string;
-    const img = await eveeService.downloadSlackImage(url, env.SLACK_BOT_TOKEN);
-    if (img) {
-      downloadedImages.push({ ...img, originalUrl: url });
-    }
-  }
-
-  const messageId = await eveeService.persistMessage(db, {
+  await eveeService.syncSlackThread(db, slack, {
     conversationId,
-    role: "user",
-    content: cleanText,
-    userId,
-    displayName,
-    images: downloadedImages.length > 0 ? downloadedImages : undefined,
+    channel,
+    threadTs,
+    botUserId: botUserId ?? "unknown",
+    slackBotToken: env.SLACK_BOT_TOKEN,
+    lookupUser: async (u) => {
+      const info = await slack.users.info({ user: u });
+      return info.user?.profile?.display_name || info.user?.real_name || info.user?.name || u;
+    },
   });
 
   await inngest.send({
@@ -78,10 +64,7 @@ async function processMessage(params: ProcessMessageParams): Promise<void> {
     },
   });
 
-  log.info(
-    { conversationId, messageId, imageCount: downloadedImages.length, channel, threadTs },
-    "Slack message processed, Inngest event fired",
-  );
+  log.info({ conversationId, channel, threadTs }, "Slack thread synced, Inngest event fired");
 }
 
 export async function initSlack(): Promise<void> {
@@ -102,25 +85,12 @@ export async function initSlack(): Promise<void> {
     const threadTs = event.thread_ts ?? event.ts;
     const text = event.text ?? "";
 
-    const files = (event as { files?: SlackFile[] }).files ?? [];
-
     try {
       await processMessage({
         channel: event.channel,
         threadTs,
         userId: event.user ?? "unknown",
         text,
-        files,
-        resolveDisplayName: async () => {
-          if (!event.user) return "Unknown";
-          const info = await client.users.info({ user: event.user });
-          return (
-            info.user?.profile?.display_name ||
-            info.user?.real_name ||
-            info.user?.name ||
-            event.user
-          );
-        },
       });
     } catch (err) {
       log.error({ err, channel: event.channel, threadTs }, "Failed to process Slack message");

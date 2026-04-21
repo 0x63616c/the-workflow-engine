@@ -12,7 +12,7 @@ vi.mock("../../services/evee-service", () => ({
   persistLlmCall: vi.fn(),
   persistMessage: vi.fn(),
   sendSlackStatus: vi.fn().mockResolvedValue(undefined),
-  isHealthCheckMessage: vi.fn().mockReturnValue(false),
+  isHealthCheckText: vi.fn().mockReturnValue(false),
 }));
 
 import * as eveeService from "../../services/evee-service";
@@ -30,6 +30,7 @@ const BASE_EVENT = {
     botUserId: "UBOT123",
     threadId: "thread_ts_001",
     channel: "C_CHANNEL001",
+    text: "",
   },
 };
 

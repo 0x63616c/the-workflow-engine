@@ -1,5 +1,4 @@
 import { WebClient } from "@slack/web-api";
-import type { ModelMessage } from "ai";
 import { and, asc, eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { NonRetriableError } from "inngest";
@@ -87,6 +86,7 @@ export async function persistMessage(
     content: string;
     userId?: string;
     displayName?: string;
+    slackTs?: string;
     images?: Array<{ data: Buffer; mimeType: string; originalUrl?: string }>;
   },
 ): Promise<string> {
@@ -98,6 +98,7 @@ export async function persistMessage(
     content: opts.content,
     userId: opts.userId,
     displayName: opts.displayName,
+    slackTs: opts.slackTs,
   });
 
   if (opts.images && opts.images.length > 0) {
@@ -142,12 +143,75 @@ export function stripBotMention(text: string): string {
   return text.replace(/<@[A-Z0-9]+>/g, "").trim();
 }
 
-export function isHealthCheckMessage(messages: ModelMessage[]): boolean {
-  const latest = messages.at(-1);
-  if (!latest || latest.role !== "user") return false;
-  const content = typeof latest.content === "string" ? latest.content : "";
-  const normalized = content.trim().toLowerCase();
+export function isHealthCheckText(text: string): boolean {
+  const normalized = text.trim().toLowerCase();
   return normalized === "ruok?" || normalized === "status?";
+}
+
+export async function syncSlackThread(
+  db: DB,
+  slack: WebClient,
+  opts: {
+    conversationId: string;
+    channel: string;
+    threadTs: string;
+    botUserId: string;
+    slackBotToken: string;
+    lookupUser: (userId: string) => Promise<string>;
+  },
+): Promise<void> {
+  const result = await slack.conversations.replies({
+    channel: opts.channel,
+    ts: opts.threadTs,
+    limit: 200,
+  });
+
+  const rawMessages = result.messages ?? [];
+
+  for (const msg of rawMessages) {
+    if (msg.user === opts.botUserId) continue;
+    if ("bot_id" in msg && msg.bot_id) continue;
+    if ("subtype" in msg && msg.subtype) continue;
+
+    const slackTs = msg.ts;
+    if (!slackTs) continue;
+    if (!msg.user) continue;
+    const rawText = msg.text ?? "";
+    const cleanText = stripBotMention(rawText);
+
+    const existing = await db
+      .select({ id: messages.id })
+      .from(messages)
+      .where(and(eq(messages.conversationId, opts.conversationId), eq(messages.slackTs, slackTs)))
+      .limit(1);
+    if (existing.length > 0) continue;
+
+    const displayName = await opts.lookupUser(msg.user);
+
+    const files =
+      (msg as { files?: Array<{ mimetype?: string; url_private?: string }> }).files ?? [];
+    const imageFiles = files.filter(
+      (f) =>
+        f.mimetype &&
+        ["image/png", "image/jpeg", "image/gif", "image/webp"].includes(f.mimetype) &&
+        f.url_private,
+    );
+    const downloadedImages: Array<{ data: Buffer; mimeType: string; originalUrl?: string }> = [];
+    for (const file of imageFiles) {
+      const img = await downloadSlackImage(file.url_private as string, opts.slackBotToken);
+      if (img) downloadedImages.push({ ...img, originalUrl: file.url_private });
+    }
+
+    await persistMessage(db, {
+      conversationId: opts.conversationId,
+      role: "user",
+      content: cleanText,
+      userId: msg.user,
+      displayName,
+      slackTs,
+      images: downloadedImages.length > 0 ? downloadedImages : undefined,
+    });
+  }
 }
 
 export async function buildLlmContext(
