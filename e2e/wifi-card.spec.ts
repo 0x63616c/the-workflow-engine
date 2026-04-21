@@ -6,9 +6,10 @@ test.describe("WiFi card flip interaction", () => {
     await setupDashboard(page);
   });
 
-  test("front side shows SSID and tap to share", async ({ page }) => {
+  test("front side shows Wi-Fi label and SSID", async ({ page }) => {
     const text = await page.getByTestId("widget-card-wifi").textContent();
-    expect(text).toContain("tap to share");
+    expect(text).toContain("Wi-Fi");
+    expect(text).toContain("HomeNet");
   });
 
   test("tapping reveals QR code (unblurs)", async ({ page }) => {

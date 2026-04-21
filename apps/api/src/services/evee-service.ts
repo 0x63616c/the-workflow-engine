@@ -369,3 +369,66 @@ export async function sendSlackStatus(
     log.warn({ error, channel, threadTs }, "sendSlackStatus failed (non-fatal)");
   }
 }
+
+export async function reportEveeFailure(
+  token: string,
+  opts: {
+    threadChannel: string;
+    threadTs: string;
+    errorsChannel: string;
+    errorMessage: string;
+    errorStack?: string;
+    eventData: unknown;
+    runUrl?: string;
+  },
+): Promise<void> {
+  const slack = new WebClient(token);
+
+  await slack.chat.postMessage({
+    channel: opts.threadChannel,
+    thread_ts: opts.threadTs,
+    text: `sorry, something broke and i gave up after retries :bufo-ohno: — full details in <#${opts.errorsChannel}>\n> \`${opts.errorMessage}\``,
+  });
+
+  const blocks = [
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `:rotating_light: *evee failed* in <#${opts.threadChannel}> thread ${opts.threadTs}`,
+      },
+    },
+    {
+      type: "section",
+      text: { type: "mrkdwn", text: `*error*\n\`\`\`${opts.errorMessage}\`\`\`` },
+    },
+  ];
+  if (opts.errorStack) {
+    blocks.push({
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `*stack*\n\`\`\`${opts.errorStack.slice(0, 2500)}\`\`\``,
+      },
+    });
+  }
+  blocks.push({
+    type: "section",
+    text: {
+      type: "mrkdwn",
+      text: `*event*\n\`\`\`${JSON.stringify(opts.eventData, null, 2).slice(0, 2500)}\`\`\``,
+    },
+  });
+  if (opts.runUrl) {
+    blocks.push({
+      type: "section",
+      text: { type: "mrkdwn", text: `<${opts.runUrl}|view Inngest run>` },
+    });
+  }
+
+  await slack.chat.postMessage({
+    channel: opts.errorsChannel,
+    text: `evee failed: ${opts.errorMessage}`,
+    blocks,
+  });
+}
