@@ -1,10 +1,28 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { type ModelMessage, generateText, tool } from "ai";
 import { env } from "../../env";
+import { log } from "../../lib/logger";
 import { buildSystemPrompt } from "./prompt";
 import { getToolDefinitions } from "./tools";
 import type { LlmCallResult } from "./types";
 import { EVEE_MODEL } from "./types";
+
+// Redact base64 image data from message content for logging. Images are huge
+// and not useful for debugging prompt/tool-result issues.
+function redactForLog(messages: ModelMessage[]): unknown {
+  return messages.map((m) => {
+    if (typeof m.content === "string") return m;
+    if (!Array.isArray(m.content)) return m;
+    return {
+      ...m,
+      content: m.content.map((part: unknown) => {
+        const p = part as { type?: string; image?: string };
+        if (p.type === "image") return { type: "image", image: "[base64 redacted]" };
+        return part;
+      }),
+    };
+  });
+}
 
 let _openrouter: ReturnType<typeof createOpenRouter> | null = null;
 function getOpenRouter() {
@@ -23,6 +41,15 @@ export async function callLlm(messages: ModelMessage[], botUserId: string): Prom
     ]),
   );
 
+  log.info(
+    {
+      toolNames: Object.keys(tools),
+      messageCount: messages.length,
+      messages: redactForLog(messages),
+    },
+    "evee llm request",
+  );
+
   // Intentionally no maxSteps - Inngest orchestrator handles the tool-call loop externally
   const result = await generateText({
     model: getOpenRouter()(EVEE_MODEL),
@@ -31,6 +58,20 @@ export async function callLlm(messages: ModelMessage[], botUserId: string): Prom
     tools,
     abortSignal: AbortSignal.timeout(LLM_TIMEOUT_MS),
   });
+
+  log.info(
+    {
+      finishReason: result.finishReason,
+      text: result.text,
+      toolCalls: (result.toolCalls ?? []).map((tc) => ({
+        toolCallId: tc.toolCallId,
+        toolName: tc.toolName,
+        args: (tc as unknown as { input: unknown }).input,
+      })),
+      usage: result.usage,
+    },
+    "evee llm response",
+  );
 
   return {
     text: result.text ?? "",
