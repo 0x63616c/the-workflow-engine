@@ -7,6 +7,7 @@ import { EVEE_MODEL } from "../../integrations/evee/types";
 import { LOADING_MESSAGES } from "../../integrations/slack/constants";
 import * as eveeService from "../../services/evee-service";
 import { inngest } from "../client";
+import { eveeToolExecutor } from "./evee-tool-executor";
 
 const MAX_TOOL_ROUNDS = 10;
 // Inngest duration string, not a numeric value
@@ -139,29 +140,20 @@ export const eveeConversation = inngest.createFunction(
         return;
       }
 
-      await step.sendEvent(
-        `request-tools-${roundNumber}`,
-        result.toolCalls.map((tc) => ({
-          name: "evee/tool-call.requested" as const,
-          data: {
-            callId: tc.toolCallId,
-            conversationId,
-            toolName: tc.toolName,
-            input: tc.args,
-            llmCallId: result.llmCallId,
-          },
-        })),
-      );
-
       const toolResults = await Promise.all(
-        result.toolCalls.map((tc) => {
-          const safeCallId = tc.toolCallId.replace(/'/g, "");
-          return step.waitForEvent(`await-${safeCallId}`, {
-            event: "evee/tool-call.completed",
+        result.toolCalls.map((tc) =>
+          step.invoke(`tool-${tc.toolCallId}`, {
+            function: eveeToolExecutor,
+            data: {
+              callId: tc.toolCallId,
+              conversationId,
+              toolName: tc.toolName,
+              input: tc.args,
+              llmCallId: result.llmCallId,
+            },
             timeout: TOOL_TIMEOUT,
-            if: `event.data.callId == '${safeCallId}'`,
-          });
-        }),
+          }),
+        ),
       );
 
       const allTimedOut = toolResults.every((tr) => tr === null);
@@ -185,7 +177,8 @@ export const eveeConversation = inngest.createFunction(
       for (let i = 0; i < result.toolCalls.length; i++) {
         const tc = result.toolCalls[i];
         const tr = toolResults[i];
-        const rawOutput = (tr?.data?.output ?? { error: "Tool call timed out" }) as JSONValue;
+        const rawOutput = (tr?.output ??
+          tr?.error ?? { error: "Tool call timed out" }) as JSONValue;
         toolMessages.push({
           role: "tool",
           content: [

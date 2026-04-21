@@ -15,6 +15,11 @@ vi.mock("../../services/evee-service", () => ({
   isHealthCheckText: vi.fn().mockReturnValue(false),
 }));
 
+// Mock evee-tool-executor so step.invoke has a reference to use
+vi.mock("../../inngest/functions/evee-tool-executor", () => ({
+  eveeToolExecutor: { id: "evee-tool-executor" },
+}));
+
 import * as eveeService from "../../services/evee-service";
 
 const mockBuildLlmContext = vi.mocked(eveeService.buildLlmContext);
@@ -43,7 +48,7 @@ const CONTEXT = {
 // Create a fresh engine per test by using a factory to avoid shared mock cache
 function makeEngine() {
   const sendEvent = vi.fn().mockResolvedValue({ ids: [] });
-  const waitForEvent = vi.fn().mockResolvedValue(null);
+  const invoke = vi.fn().mockResolvedValue(null);
 
   const engine = new InngestTestEngine({
     function: eveeConversation,
@@ -52,12 +57,12 @@ function makeEngine() {
       step: {
         ...ctx.step,
         sendEvent,
-        waitForEvent,
+        invoke,
       },
     }),
   });
 
-  return { engine, sendEvent, waitForEvent };
+  return { engine, sendEvent, invoke };
 }
 
 beforeEach(() => {
@@ -220,8 +225,15 @@ describe("eveeConversation function", () => {
   });
 
   describe("tool call round-trip", () => {
-    it("sends evee/tool-call.requested events when LLM returns tool-calls", async () => {
-      const { engine, sendEvent } = makeEngine();
+    it("invokes eveeToolExecutor via step.invoke when LLM returns tool-calls", async () => {
+      const { engine, invoke } = makeEngine();
+
+      invoke.mockResolvedValueOnce({
+        callId: "tc_roll1234567890",
+        output: { value: 4 },
+        error: null,
+        durationMs: 50,
+      });
 
       await engine.execute({
         events: [BASE_EVENT],
@@ -241,9 +253,12 @@ describe("eveeConversation function", () => {
             }),
           },
           {
-            id: "await-tc_roll1234567890",
+            id: "tool-tc_roll1234567890",
             handler: () => ({
-              data: { callId: "tc_roll1234567890", output: { value: 4 } },
+              callId: "tc_roll1234567890",
+              output: { value: 4 },
+              error: null,
+              durationMs: 50,
             }),
           },
           {
@@ -263,23 +278,21 @@ describe("eveeConversation function", () => {
         ],
       });
 
-      expect(sendEvent).toHaveBeenCalledWith(
-        "request-tools-1",
-        expect.arrayContaining([
-          expect.objectContaining({
-            name: "evee/tool-call.requested",
-            data: expect.objectContaining({
-              toolName: "rollDice",
-              callId: "tc_roll1234567890",
-              input: { sides: 6 },
-            }),
+      expect(invoke).toHaveBeenCalledWith(
+        "tool-tc_roll1234567890",
+        expect.objectContaining({
+          data: expect.objectContaining({
+            toolName: "rollDice",
+            callId: "tc_roll1234567890",
+            input: { sides: 6 },
           }),
-        ]),
+          timeout: "30s",
+        }),
       );
     });
 
-    it("waits for evee/tool-call.completed with callId filter", async () => {
-      const { engine, waitForEvent } = makeEngine();
+    it("feeds tool result back to LLM after step.invoke resolves", async () => {
+      const { engine, sendEvent } = makeEngine();
 
       await engine.execute({
         events: [BASE_EVENT],
@@ -299,9 +312,12 @@ describe("eveeConversation function", () => {
             }),
           },
           {
-            id: "await-tc_wait1234567890",
+            id: "tool-tc_wait1234567890",
             handler: () => ({
-              data: { callId: "tc_wait1234567890", output: { datetime: "2026-04-15T12:00:00Z" } },
+              callId: "tc_wait1234567890",
+              output: { datetime: "2026-04-15T12:00:00Z" },
+              error: null,
+              durationMs: 20,
             }),
           },
           {
@@ -321,20 +337,16 @@ describe("eveeConversation function", () => {
         ],
       });
 
-      expect(waitForEvent).toHaveBeenCalledWith(
-        "await-tc_wait1234567890",
+      expect(sendEvent).toHaveBeenCalledWith(
+        "emit-response",
         expect.objectContaining({
-          event: "evee/tool-call.completed",
-          timeout: "30s",
-          if: expect.stringContaining("tc_wait1234567890"),
+          data: expect.objectContaining({ response: "It is noon." }),
         }),
       );
     });
 
-    it("handles tool timeout gracefully: null waitForEvent result uses error fallback", async () => {
-      const { engine, sendEvent, waitForEvent } = makeEngine();
-      // Return null = tool timed out
-      waitForEvent.mockResolvedValue(null);
+    it("handles tool timeout gracefully: null invoke result uses error fallback", async () => {
+      const { engine, sendEvent } = makeEngine();
 
       await engine.execute({
         events: [BASE_EVENT],
@@ -352,7 +364,7 @@ describe("eveeConversation function", () => {
             }),
           },
           {
-            id: "await-tc_timeout123456",
+            id: "tool-tc_timeout123456",
             handler: () => null,
           },
           {
@@ -439,9 +451,12 @@ describe("eveeConversation function", () => {
           }),
         });
         steps.push({
-          id: `await-tc_round${round}`,
+          id: `tool-tc_round${round}`,
           handler: () => ({
-            data: { callId: `tc_round${round}`, output: { value: round } },
+            callId: `tc_round${round}`,
+            output: { value: round },
+            error: null,
+            durationMs: 10,
           }),
         });
       }
