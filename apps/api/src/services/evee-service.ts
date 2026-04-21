@@ -86,6 +86,7 @@ export async function persistMessage(
     content: string;
     userId?: string;
     displayName?: string;
+    slackTs?: string;
     images?: Array<{ data: Buffer; mimeType: string; originalUrl?: string }>;
   },
 ): Promise<string> {
@@ -97,6 +98,7 @@ export async function persistMessage(
     content: opts.content,
     userId: opts.userId,
     displayName: opts.displayName,
+    slackTs: opts.slackTs,
   });
 
   if (opts.images && opts.images.length > 0) {

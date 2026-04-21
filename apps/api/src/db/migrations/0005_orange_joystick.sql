@@ -1,0 +1,2 @@
+ALTER TABLE "messages" ADD COLUMN IF NOT EXISTS "slack_ts" text;--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_messages_conversation_slack_ts" ON "messages" USING btree ("conversation_id","slack_ts") WHERE "messages"."slack_ts" IS NOT NULL;

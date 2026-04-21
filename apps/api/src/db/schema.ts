@@ -63,17 +63,29 @@ export const conversations = pgTable(
   ],
 );
 
-export const messages = pgTable("messages", {
-  id: text().primaryKey(),
-  conversationId: text("conversation_id")
-    .notNull()
-    .references(() => conversations.id, { onDelete: "cascade" }),
-  role: text().notNull(),
-  content: text().notNull(),
-  userId: text("user_id"),
-  displayName: text("display_name"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+export const messages = pgTable(
+  "messages",
+  {
+    id: text().primaryKey(),
+    conversationId: text("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    role: text().notNull(),
+    content: text().notNull(),
+    userId: text("user_id"),
+    displayName: text("display_name"),
+    slackTs: text("slack_ts"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    // Dedup key for syncing Slack threads: a (conversationId, slackTs) pair
+    // is unique. Null slackTs (e.g., assistant messages persisted before posting)
+    // is not constrained, so multiple nullable rows are allowed per conversation.
+    uniqueIndex("uq_messages_conversation_slack_ts")
+      .on(table.conversationId, table.slackTs)
+      .where(sql`${table.slackTs} IS NOT NULL`),
+  ],
+);
 
 export const images = pgTable("images", {
   id: text().primaryKey(),
