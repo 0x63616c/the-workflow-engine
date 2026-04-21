@@ -41,7 +41,7 @@ import {
   buildLlmContext,
   downloadSlackImage,
   executeTool,
-  isHealthCheckMessage,
+  isHealthCheckText,
   persistLlmCall,
   persistMessage,
   persistToolCall,
@@ -757,61 +757,31 @@ describe("sendSlackStatus()", () => {
 });
 
 // ============================================================
-// isHealthCheckMessage
+// isHealthCheckText
 // ============================================================
 
-describe("isHealthCheckMessage()", () => {
+describe("isHealthCheckText()", () => {
   it("returns true for lowercase 'ruok?'", () => {
-    expect(isHealthCheckMessage([{ role: "user", content: "ruok?" }])).toBe(true);
+    expect(isHealthCheckText("ruok?")).toBe(true);
   });
 
   it("returns true for 'status?'", () => {
-    expect(isHealthCheckMessage([{ role: "user", content: "status?" }])).toBe(true);
+    expect(isHealthCheckText("status?")).toBe(true);
   });
 
   it("returns true for mixed-case 'RUOK?'", () => {
-    expect(isHealthCheckMessage([{ role: "user", content: "RUOK?" }])).toBe(true);
+    expect(isHealthCheckText("RUOK?")).toBe(true);
   });
 
   it("handles leading/trailing whitespace", () => {
-    expect(isHealthCheckMessage([{ role: "user", content: "  ruok?  " }])).toBe(true);
+    expect(isHealthCheckText("  ruok?  ")).toBe(true);
   });
 
   it("returns false for unrelated messages", () => {
-    expect(isHealthCheckMessage([{ role: "user", content: "what's the weather?" }])).toBe(false);
+    expect(isHealthCheckText("what's the weather?")).toBe(false);
   });
 
-  it("returns false for empty message list", () => {
-    expect(isHealthCheckMessage([])).toBe(false);
-  });
-
-  it("returns false when latest message is assistant, not user", () => {
-    expect(
-      isHealthCheckMessage([
-        { role: "user", content: "ruok?" },
-        { role: "assistant", content: "imok" },
-      ]),
-    ).toBe(false);
-  });
-
-  it("returns false for non-string content (array/multimodal)", () => {
-    expect(
-      isHealthCheckMessage([
-        {
-          role: "user",
-          content: [{ type: "text", text: "ruok?" }],
-        },
-      ]),
-    ).toBe(false);
-  });
-
-  it("only checks the LATEST message (ignores older ruok)", () => {
-    expect(
-      isHealthCheckMessage([
-        { role: "user", content: "ruok?" },
-        { role: "assistant", content: "imok" },
-        { role: "user", content: "hi" },
-      ]),
-    ).toBe(false);
+  it("returns false for empty string", () => {
+    expect(isHealthCheckText("")).toBe(false);
   });
 });
