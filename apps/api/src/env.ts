@@ -25,6 +25,9 @@ export const envSchema = z
     OPENROUTER_API_KEY: z.string().min(1),
     ALLOY_URL: z.string().default("http://workflow-engine-alloy:12346"),
     SLACK_ERRORS_CHANNEL_ID: z.string().default("C0AV61FPQ8G"),
+    // Self-hosted Inngest UI — accessory port mapping is 8388:8288 on homelab.
+    // Route pattern is /run?runID=<id> (matches Inngest OSS dev-server UI).
+    INNGEST_UI_URL: z.string().url().default("http://homelab:8388"),
   })
   .refine(
     (data) => data.NODE_ENV !== "production" || data.INNGEST_EVENT_KEY !== INNGEST_DEV_EVENT_KEY,

@@ -36,7 +36,7 @@ export const eveeConversation = inngest.createFunction(
         errorMessage: error.message,
         errorStack: error.stack,
         eventData: originalEvent.data,
-        runUrl: runId ? `https://app.inngest.com/env/production/runs/${runId}` : undefined,
+        runUrl: runId ? `${env.INNGEST_UI_URL}/run?runID=${runId}` : undefined,
       });
     },
   },
