@@ -26,7 +26,18 @@ function redactForLog(messages: ModelMessage[]): unknown {
 
 let _openrouter: ReturnType<typeof createOpenRouter> | null = null;
 function getOpenRouter() {
-  if (!_openrouter) _openrouter = createOpenRouter({ apiKey: env.OPENROUTER_API_KEY });
+  if (!_openrouter) {
+    _openrouter = createOpenRouter({
+      apiKey: env.OPENROUTER_API_KEY,
+      // Attribution for OpenRouter activity dashboard. Without these, requests
+      // show as "App: Unknown". HTTP-Referer renders as a clickable link in
+      // the dashboard; X-Title is the app column.
+      headers: {
+        "HTTP-Referer": "https://github.com/0x63616c/the-workflow-engine",
+        "X-Title": "The Workflow Engine — Evee",
+      },
+    });
+  }
   return _openrouter;
 }
 
