@@ -19,7 +19,7 @@ describe("buildMessagesFromRecords", () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].role).toBe("user");
-    expect(result[0].content).toBe("<U123|Calum>: hello");
+    expect(result[0].content).toBe("Calum: hello");
   });
 
   it("builds assistant message without prefix", () => {
@@ -70,7 +70,7 @@ describe("buildMessagesFromRecords", () => {
     expect(Array.isArray(result[0].content)).toBe(true);
 
     const content = result[0].content as Array<{ type: string }>;
-    expect(content[0]).toEqual({ type: "text", text: "<U123|Calum>: check this out" });
+    expect(content[0]).toEqual({ type: "text", text: "Calum: check this out" });
     expect(content[1]).toMatchObject({ type: "image", mimeType: "image/png" });
   });
 
@@ -233,7 +233,7 @@ describe("buildMessagesFromRecords (additional cases)", () => {
 
     expect(result).toHaveLength(3);
     expect(result[0].role).toBe("user");
-    expect(result[0].content).toBe("<U1|Alice>: question");
+    expect(result[0].content).toBe("Alice: question");
     expect(result[1].role).toBe("assistant");
     expect(result[1].content).toBe("answer");
     expect(result[2].role).toBe("user");

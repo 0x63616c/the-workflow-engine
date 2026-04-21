@@ -43,7 +43,12 @@ export function buildMessagesFromRecords(
       continue;
     }
 
-    const prefix = msg.userId && msg.displayName ? `<${msg.userId}|${msg.displayName}>: ` : "";
+    // Use a plain `name: ` prefix when a display name exists. We used to
+    // use `<userId|displayName>: ` but Gemma mimicked that format in its
+    // own replies (e.g. "<U0ASA4UTDL6|calum> I'm not sure..."). Plain
+    // names don't trigger the same mimicry. No prefix at all when
+    // displayName is missing.
+    const prefix = msg.displayName ? `${msg.displayName}: ` : "";
     const text = `${prefix}${msg.content}`;
     const msgImages = imagesByMessageId.get(msg.id) ?? [];
 
