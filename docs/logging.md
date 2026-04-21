@@ -114,9 +114,9 @@ Config files are baked into custom Docker images (GitOps, no manual host setup).
 
 | Component | Config location | Image |
 |-----------|----------------|-------|
-| Loki | `infra/logging/loki/loki-config.yaml` | `ghcr.io/0x63616c/workflow-engine-loki` |
-| Alloy | `infra/logging/alloy/config.alloy` | `ghcr.io/0x63616c/workflow-engine-alloy` |
-| Grafana | `infra/logging/grafana/datasource.yaml` | `ghcr.io/0x63616c/workflow-engine-grafana` |
+| Loki | `infra/loki/loki-config.yaml` | `ghcr.io/0x63616c/workflow-engine-loki` |
+| Alloy | `infra/alloy/config.alloy` | `ghcr.io/0x63616c/workflow-engine-alloy` |
+| Grafana | `infra/grafana/datasource.yaml` | `ghcr.io/0x63616c/workflow-engine-grafana` |
 
 To change config: edit the file, push to main, CI rebuilds the image, `kamal deploy` picks it up.
 

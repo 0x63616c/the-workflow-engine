@@ -154,7 +154,9 @@ jobs:
         with:
           filters: |
             logging:
-              - 'infra/logging/**'
+              - 'infra/grafana/**'
+              - 'infra/loki/**'
+              - 'infra/alloy/**'
 
   build-logging-images:
     name: Build Logging Images
@@ -177,7 +179,7 @@ jobs:
       - name: Build and push Loki
         uses: docker/build-push-action@v6
         with:
-          context: infra/logging/loki
+          context: infra/loki
           platforms: linux/arm64
           push: true
           tags: ghcr.io/0x63616c/workflow-engine-loki:latest
@@ -187,7 +189,7 @@ jobs:
       - name: Build and push Alloy
         uses: docker/build-push-action@v6
         with:
-          context: infra/logging/alloy
+          context: infra/alloy
           platforms: linux/arm64
           push: true
           tags: ghcr.io/0x63616c/workflow-engine-alloy:latest
@@ -197,7 +199,7 @@ jobs:
       - name: Build and push Grafana
         uses: docker/build-push-action@v6
         with:
-          context: infra/logging/grafana
+          context: infra/grafana
           platforms: linux/arm64
           push: true
           tags: ghcr.io/0x63616c/workflow-engine-grafana:latest
@@ -324,17 +326,43 @@ jobs:
           GRAFANA_ERRORS_SLACK_WEBHOOK_URL: ${{ secrets.GRAFANA_ERRORS_SLACK_WEBHOOK_URL }}
         run: kamal deploy
 
-      - name: Reboot Inngest accessory
+      - name: Reboot accessories whose infra changed
         env:
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GHRC_TOKEN }}
           INNGEST_EVENT_KEY: ${{ secrets.INNGEST_EVENT_KEY }}
           INNGEST_SIGNING_KEY: ${{ secrets.INNGEST_SIGNING_KEY }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           INNGEST_POSTGRES_URI: postgresql://workflow:${{ secrets.POSTGRES_PASSWORD }}@workflow-engine-postgres:5432/inngest
-        # kamal v2.x's `accessory reboot` has no interactive prompt, so
-        # --confirmed is rejected as an unknown argument. Passing it has
-        # been silently failing this step since PR #339, which is why
-        # Inngest was never actually rebooted with the new --sdk-url.
-        run: kamal accessory reboot inngest
+          GRAFANA_ERRORS_SLACK_WEBHOOK_URL: ${{ secrets.GRAFANA_ERRORS_SLACK_WEBHOOK_URL }}
+        # Convention: accessory <name> in config/deploy.yml owns infra/<name>/.
+        # Any commit that touches infra/<name>/ (Dockerfile, provisioning files,
+        # mounted config) pushes a new image via build-logging-images or picks
+        # up a new mounted file, but `kamal deploy` only restarts the main app.
+        # Walk each accessory, diff its infra dir against the previous deploy,
+        # reboot only what changed. No state files, just git + convention.
+        run: |
+          set -euo pipefail
+          BEFORE="${{ github.event.before }}"
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "no previous SHA (first push to branch?) — rebooting all accessories"
+            changed_all=true
+          else
+            changed_files=$(git diff --name-only "$BEFORE"..HEAD || true)
+            changed_all=false
+          fi
+
+          # Parse accessory names from config/deploy.yml (top-level keys under `accessories:`).
+          accessories=$(awk '/^accessories:/{f=1;next} f && /^  [a-zA-Z0-9_-]+:/ {n=$0; sub(/:.*/,"",n); sub(/^  /,"",n); print n} /^[^ ]/ {f=0}' config/deploy.yml)
+
+          for acc in $accessories; do
+            if [ "$changed_all" = "true" ] || echo "$changed_files" | grep -q "^infra/$acc/"; then
+              echo "::group::reboot $acc"
+              kamal accessory reboot "$acc"
+              echo "::endgroup::"
+            else
+              echo "$acc: no infra/$acc/ changes, skipping"
+            fi
+          done
 
       - name: Verify deployment health
         id: health-check

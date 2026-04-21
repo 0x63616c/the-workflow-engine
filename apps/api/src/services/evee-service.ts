@@ -371,9 +371,9 @@ export async function sendSlackStatus(
 }
 
 // In-thread apology when Evee exhausts all retries. Developer-facing
-// diagnostics live in #errors via Grafana Loki alerting (infra/logging/
-// grafana/alerting/), not hand-posted from here — one error path, less
-// code, no duplication.
+// diagnostics live in #errors via Grafana Loki alerting
+// (infra/grafana/alerting/), not hand-posted from here — one error path,
+// less code, no duplication.
 export async function sendEveeFailureReply(
   token: string,
   opts: {
