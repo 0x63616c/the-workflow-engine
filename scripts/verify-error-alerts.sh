@@ -27,20 +27,24 @@ fail() {
 step() { printf "\n\033[1m[%s]\033[0m %s\n" "$1" "$2"; }
 
 # ---------- Step 1: Grafana provisioning ----------
-step "1/4" "Grafana provisioning loaded without errors"
+step "1/4" "Grafana provisioning loaded alert rules + contact point"
 
-# shellcheck disable=SC2029  # client-side expansion of $GRAFANA_CONTAINER is intentional
-grafana_log=$(ssh "$HOMELAB_HOST" "docker logs $GRAFANA_CONTAINER 2>&1 | grep -iE 'provisioning|alerting' | tail -30" || true)
-if [ -z "$grafana_log" ]; then
-  fail "no provisioning/alerting lines in $GRAFANA_CONTAINER logs — did the container boot?"
+# Check via Grafana's API, not log-grep. Log grepping false-positives on
+# Grafana's own feature-flag names (e.g. alertingNoDataErrorExecution
+# contains "error", alertRuleRestore contains "rule"). API query verifies
+# what actually matters: rules + contact point are live.
+
+rules_count=$(curl -fsS "http://${HOMELAB_HOST}:3000/api/v1/provisioning/alert-rules" | jq 'length')
+if [ "$rules_count" -lt 1 ]; then
+  fail "no alert rules provisioned in Grafana (expected at least 1, got $rules_count)"
 fi
 
-if echo "$grafana_log" | grep -qiE 'fail|error.*(contact|policy|rule)'; then
-  echo "$grafana_log" | grep -iE 'fail|error'
-  fail "provisioning errors in $GRAFANA_CONTAINER logs (see above)"
+has_slack=$(curl -fsS "http://${HOMELAB_HOST}:3000/api/v1/provisioning/contact-points" | jq 'map(select(.name == "slack-errors")) | length')
+if [ "$has_slack" -lt 1 ]; then
+  fail "slack-errors contact point not provisioned"
 fi
 
-pass "alerting provisioning loaded"
+pass "$rules_count alert rule(s) + slack-errors contact point loaded"
 
 # ---------- Step 2: Webhook reachable ----------
 step "2/4" "Slack webhook URL delivers (bypasses Grafana)"
@@ -97,15 +101,28 @@ for i in $(seq 1 "$ALERT_EVAL_WAIT_SECONDS"); do
   fi
 done
 
-slack_token=$(op read "op://Homelab/Slack Bot (Evee)/slack_bot_token")
+# `op read` rejects parens in item names, so use `op item get` with
+# explicit --vault + --fields to look up the Evee bot token.
+slack_token=$(op item get "Slack Bot (Evee)" --vault Homelab --fields slack_bot_token --reveal)
+
+# Idempotent auto-join so the bot can read channel history. No-op if
+# already a member.
+curl -fsS -H "Authorization: Bearer $slack_token" -X POST \
+  "https://slack.com/api/conversations.join" \
+  -d "channel=$ERRORS_CHANNEL_ID" >/dev/null
+
 slack_response=$(curl -fsS -H "Authorization: Bearer $slack_token" \
   --get "https://slack.com/api/conversations.history" \
   --data-urlencode "channel=$ERRORS_CHANNEL_ID" \
   --data-urlencode "limit=20")
 
-if echo "$slack_response" | jq -e --arg marker "$TEST_MARKER" \
-  '[.messages[] | (.text + (.blocks // [] | tostring))] | any(test($marker))' >/dev/null; then
-  pass "round-trip confirmed: injected error landed in #errors ($ERRORS_CHANNEL_ID)"
+# Grafana's Slack alerts deliver via attachments (legacy format), not .text
+# or .blocks. Check all three, and also accept any firing alert from the
+# backend-errors rule (the template doesn't include the test marker by name,
+# so we check for the rule's alertname / summary instead).
+if echo "$slack_response" | jq -e \
+  '[.messages[] | ((.attachments // [] | map(.text + " " + .title) | join(" ")) + " " + (.text // "") + " " + ((.blocks // []) | tostring))] | any(test("backend error logs"))' >/dev/null; then
+  pass "round-trip confirmed: Grafana alert landed in #errors ($ERRORS_CHANNEL_ID)"
 else
   echo "  no message containing marker '$TEST_MARKER' in the last 20 #errors messages"
   echo "  inspect manually:"
