@@ -29,17 +29,32 @@ function getOpenRouter() {
   if (!_openrouter) {
     _openrouter = createOpenRouter({
       apiKey: env.OPENROUTER_API_KEY,
-      // Attribution for OpenRouter activity dashboard. Without these, requests
-      // show as "App: Unknown". HTTP-Referer renders as a clickable link in
-      // the dashboard; X-Title is the app column.
-      headers: {
-        "HTTP-Referer": "https://github.com/0x63616c/the-workflow-engine",
-        "X-Title": "The Workflow Engine — Evee",
-      },
+      // Attribution for OpenRouter's activity dashboard ("App" column).
+      // Without these, requests show as "App: Unknown".
+      appName: "The Workflow Engine — Evee",
+      appUrl: "https://github.com/0x63616c/the-workflow-engine",
     });
   }
   return _openrouter;
 }
+
+// Provider routing preferences for Evee's LLM calls.
+//
+// - sort: "throughput" picks the fastest backend. Same model, different
+//   providers can vary 10x on tok/s (we've seen 3.5 vs 30 tps). Pin it.
+// - allow_fallbacks: false makes the sort actually stick — otherwise
+//   OpenRouter may fall through to a slower provider.
+// - require_parameters: true only routes to providers that support EVERY
+//   field in our request, including `tools`. Prevents the silent-tool-strip
+//   failure mode where a provider drops tool schemas, the model never sees
+//   them, and appears to "ignore tool results" (see the 2026-04-20 debugging
+//   thread where we thought Gemma was broken and it was actually a provider
+//   config issue).
+const PROVIDER_ROUTING = {
+  sort: "throughput",
+  allow_fallbacks: false,
+  require_parameters: true,
+} as const;
 
 const LLM_TIMEOUT_MS = 120_000;
 
@@ -63,7 +78,7 @@ export async function callLlm(messages: ModelMessage[], botUserId: string): Prom
 
   // Intentionally no maxSteps - Inngest orchestrator handles the tool-call loop externally
   const result = await generateText({
-    model: getOpenRouter()(EVEE_MODEL),
+    model: getOpenRouter()(EVEE_MODEL, { provider: PROVIDER_ROUTING }),
     system: buildSystemPrompt(botUserId),
     messages,
     tools,
