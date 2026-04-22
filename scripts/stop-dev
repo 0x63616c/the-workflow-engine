@@ -19,7 +19,7 @@ echo "  Tilt port: $TILT_PORT  |  PORT_OFFSET: $PORT_OFFSET"
 
 cd "$REPO_ROOT"
 
-if tilt down --port "$TILT_PORT" 2>/dev/null; then
+if tilt down 2>/dev/null; then
   echo "tilt down completed."
 else
   echo "tilt down failed (tilt may not be running) — falling back to docker compose down."
