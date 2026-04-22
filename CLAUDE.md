@@ -142,12 +142,31 @@ Bun workspaces configured in root `package.json` (`"workspaces": ["apps/*", "lib
 
 ## Local Development
 
+**Never run `tilt up` or `tilt down` directly.** Multiple Claude sessions run in parallel, each in its own worktree — bare tilt commands collide on ports and corrupt each other's state.
+
+Always use the dev scripts instead:
+
 ```bash
-tilt up           # Start Inngest (Docker), API (bun --watch), web (Vite)
-tilt down         # Stop all
+scripts/run-dev    # Auto-picks isolated ports, writes .tilt-session, starts tilt in background
+scripts/stop-dev   # Reads .tilt-session, runs tilt down, removes lockfile
 ```
 
-Tilt starts services in order: docker-compose (Inngest) -> api -> web. Vite proxies `/trpc` to API (configured in `vite.config.ts`).
+When Claude starts the stack, it must call `scripts/run-dev` via the Bash tool with `run_in_background: true`. The script prints all port assignments on startup — use those for any subsequent `tilt trigger` calls:
+
+```bash
+tilt trigger api --port <TILT_PORT from .tilt-session>
+```
+
+Port layout with offset N (auto-selected by `run-dev`):
+
+| Service  | Port        |
+|----------|-------------|
+| Web      | 4200 + N    |
+| API      | 4201 + N    |
+| Postgres | 5432 + N    |
+| Inngest  | 8288 + N    |
+
+Tilt starts services in order: postgres (healthy) -> inngest -> api -> web. Vite proxies `/trpc` to API (configured in `vite.config.ts`).
 
 ## Common Commands
 

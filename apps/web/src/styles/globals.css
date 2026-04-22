@@ -97,6 +97,7 @@
   --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
   --radius-xl: 0.75rem;
+  --radius-2xl: 18px;
 
   /* Fonts */
   --font-sans: "Sora Variable", "Sora", ui-sans-serif, system-ui, sans-serif;
@@ -115,7 +116,7 @@ body {
 
 body {
   font-family: var(--font-active);
-  background-color: #000000;
+  background-color: var(--color-background);
   color: var(--color-foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -132,7 +133,11 @@ body {
   max-width: 1366px;
   max-height: 1024px;
   background-color: var(--color-background);
+  border-radius: 18px;
+  outline: 5px solid var(--color-foreground);
+  outline-offset: 0px;
   overflow: hidden;
+  transition: outline-color 300ms ease;
 }
 
 @keyframes pulse-colon {

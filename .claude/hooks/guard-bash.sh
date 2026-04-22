@@ -6,6 +6,16 @@ set -euo pipefail
 CMD=$(jq -r '.tool_input.command' </dev/stdin)
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown')
 
+# --- Block bare tilt up/down (use scripts/run-dev instead) ---
+case "$CMD" in
+  *'tilt up'* | *'tilt down'*)
+    if [[ "$CMD" != *'scripts/run-dev'* ]]; then
+      echo "BLOCK: Never run tilt directly. Use scripts/run-dev from your worktree root — it auto-selects isolated ports for parallel sessions." >&2
+      exit 2
+    fi
+    ;;
+esac
+
 # --- Block branch creation (use worktrees instead) ---
 case "$CMD" in
   *'git checkout -b '* | *'git switch -c '* | *'git switch --create '*)

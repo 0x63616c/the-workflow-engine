@@ -18,6 +18,7 @@ build/
 
 # Tilt
 .tilt/
+.tilt-session
 
 # Inngest
 .inngest/
