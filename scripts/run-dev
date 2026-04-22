@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# Start the dev stack with auto-selected isolated ports.
+# Always run via Claude's Bash tool with run_in_background:true.
+# Writes .tilt-session lockfile so scripts/stop-dev can cleanly tear down.
+# Safe to call from any worktree — resolves repo root from script location.
+#
+# Usage: scripts/run-dev [extra tilt args]
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SESSION_FILE="$REPO_ROOT/.tilt-session"
+
+port_free() {
+  ! lsof -i :"$1" -sTCP:LISTEN -t &>/dev/null
+}
+
+range_free() {
+  local offset=$1
+  port_free $((4200 + offset)) &&
+  port_free $((4201 + offset)) &&
+  port_free $((5432 + offset)) &&
+  port_free $((8288 + offset))
+}
+
+find_offset() {
+  local start=$(( (RANDOM % 9 + 1) * 10 ))
+  for i in $(seq 0 8); do
+    local offset=$(( ((start / 10 - 1 + i) % 9 + 1) * 10 ))
+    if range_free "$offset"; then
+      echo "$offset"
+      return
+    fi
+  done
+  echo "ERROR: No free port range found (tried offsets 10-90)" >&2
+  exit 1
+}
+
+find_tilt_port() {
+  for port in $(seq 10350 10400); do
+    if port_free "$port"; then
+      echo "$port"
+      return
+    fi
+  done
+  echo "ERROR: No free Tilt port in range 10350-10400" >&2
+  exit 1
+}
+
+if [[ -f "$SESSION_FILE" ]]; then
+  echo "WARNING: .tilt-session already exists — a dev session may already be running."
+  echo "Run scripts/stop-dev to stop it first, or delete $SESSION_FILE manually."
+  exit 1
+fi
+
+OFFSET=$(find_offset)
+TILT_PORT=$(find_tilt_port)
+PORT_WEB=$((4200 + OFFSET))
+PORT_API=$((4201 + OFFSET))
+PORT_PG=$((5432 + OFFSET))
+PORT_INNGEST=$((8288 + OFFSET))
+
+cat > "$SESSION_FILE" <<EOF
+TILT_PORT=$TILT_PORT
+PORT_OFFSET=$OFFSET
+PORT_WEB=$PORT_WEB
+PORT_API=$PORT_API
+PORT_PG=$PORT_PG
+PORT_INNGEST=$PORT_INNGEST
+REPO_ROOT=$REPO_ROOT
+EOF
+
+echo ""
+echo "  Repo:     $REPO_ROOT"
+echo "  Tilt UI:  http://localhost:$TILT_PORT"
+echo "  Web:      http://localhost:$PORT_WEB"
+echo "  API:      http://localhost:$PORT_API"
+echo "  Postgres: localhost:$PORT_PG"
+echo "  Inngest:  http://localhost:$PORT_INNGEST"
+echo ""
+echo "  To stop:  scripts/stop-dev"
+echo ""
+
+cd "$REPO_ROOT"
+exec env \
+  PORT_OFFSET="$OFFSET" \
+  TILT_PORT="$TILT_PORT" \
+  POSTGRES_PORT="$PORT_PG" \
+  tilt up "$@"

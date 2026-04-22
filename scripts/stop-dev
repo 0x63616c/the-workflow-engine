@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Stop the dev stack started by scripts/run-dev.
+# Reads .tilt-session for the TILT_PORT, runs tilt down, removes the lockfile.
+# Falls back to docker compose down if tilt is no longer running.
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SESSION_FILE="$REPO_ROOT/.tilt-session"
+
+if [[ ! -f "$SESSION_FILE" ]]; then
+  echo "No active dev session found ($SESSION_FILE missing)."
+  exit 0
+fi
+
+source "$SESSION_FILE"
+
+echo "Stopping dev session for $REPO_ROOT"
+echo "  Tilt port: $TILT_PORT  |  PORT_OFFSET: $PORT_OFFSET"
+
+cd "$REPO_ROOT"
+
+if tilt down --port "$TILT_PORT" 2>/dev/null; then
+  echo "tilt down completed."
+else
+  echo "tilt down failed (tilt may not be running) — falling back to docker compose down."
+  docker compose down 2>/dev/null || true
+fi
+
+rm -f "$SESSION_FILE"
+echo "Done. .tilt-session removed."
