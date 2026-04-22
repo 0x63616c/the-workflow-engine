@@ -242,9 +242,15 @@ Fresh volumes (disaster recovery, new machine) get all DBs created automatically
 
 **Escape hatch:** `scripts/setup-databases` does the same work from a laptop (uses `op read` for the password). Use for debugging / verifying state, not as the primary mechanism.
 
+### Accessory reboot convention
+
+Each Kamal accessory `<name>` in `config/deploy.yml` owns the directory `infra/<name>/` — Dockerfile, mounted config files, provisioning. After every `kamal deploy`, CI diffs `infra/<name>/` against the previous deploy and reboots only the accessories whose dir changed. No per-accessory CI steps to maintain.
+
+Adding a new accessory? Declare it in `config/deploy.yml`, put its Dockerfile + config under `infra/<name>/`, and it's covered automatically.
+
 ### Changing Inngest runtime config
 
-Edit `infra/inngest/config.yaml`, commit, deploy. CI reboots the Inngest accessory so the new config takes effect. No flag juggling in `config/deploy.yml`, no manual `kamal` invocations. Keys match the output of `inngest start --help` (kebab-case).
+Edit `infra/inngest/config.yaml`, commit, deploy. The reboot convention above picks it up. Keys match the output of `inngest start --help` (kebab-case).
 
 ### Accessory `files:` pattern
 
@@ -293,7 +299,7 @@ Commit the generated file. On next deploy the app runs it on boot. Never hand-wr
 
 1. `scripts/ensure-accessories` — boots any missing accessories.
 2. `kamal deploy` — builds, pushes, deploys app container. Runs `pre-deploy` / `post-deploy` hooks.
-3. `kamal accessory reboot inngest` — picks up `infra/inngest/config.yaml` changes.
+3. Reboot-changed-accessories step — for each accessory in `config/deploy.yml`, if `infra/<name>/` was touched in the deployed commit range, `kamal accessory reboot <name>`.
 4. Health check against the web app.
 
 The post-deploy hook fires in step 2, so step 3's Inngest has the `inngest` DB ready when it starts.
