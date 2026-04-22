@@ -12,13 +12,12 @@ const DEFAULT_IDLE_TIMEOUT_MS = 45_000;
 const DEFAULT_DIM_TIMEOUT_MS = 60_000;
 const DEFAULT_DIM_BRIGHTNESS = 0.2;
 const GRID_COLS = 6;
-const GRID_ROWS = 4;
-const GRID_PADDING_PX = 40; // p-5 = 20px each side
+const GRID_ROWS = 10;
 const GRID_GAP_PX = 12; // gap-3 = 12px
 
-function computeCellSize(containerWidth: number): number {
+function computeCellSize(contentWidth: number): number {
   const totalGaps = (GRID_COLS - 1) * GRID_GAP_PX;
-  return (containerWidth - GRID_PADDING_PX - totalGaps) / GRID_COLS;
+  return (contentWidth - totalGaps) / GRID_COLS;
 }
 
 export function WidgetGrid() {
@@ -61,11 +60,11 @@ export function WidgetGrid() {
   const cards = getRegisteredCards();
 
   return (
-    <div data-testid="hub-container" className="relative min-h-full bg-background">
+    <div data-testid="hub-container" className="relative h-full overflow-y-auto bg-background">
       <div
         ref={gridRef}
         data-testid="widget-grid"
-        className="relative grid gap-3 p-5 min-h-full"
+        className="relative grid gap-3 p-5"
         style={{
           gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`,
           gridAutoRows: cellSize_PX > 0 ? `${cellSize_PX}px` : undefined,
