@@ -14,7 +14,7 @@ import { useSwipe } from "@/hooks/use-swipe";
 import { cardColorVar } from "@/lib/palette";
 import { useCardExpansionStore } from "@/stores/card-expansion-store";
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 const SPRING = { type: "spring", stiffness: 300, damping: 30 } as const;
 const BACKDROP_TRANSITION = { duration: 0.2, ease: "easeOut" } as const;
@@ -126,6 +126,15 @@ export function CardOverlay() {
   const handleDismiss = useCallback(() => {
     contractCard();
   }, [contractCard]);
+
+  useEffect(() => {
+    if (!expandedCardId) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") contractCard();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [expandedCardId, contractCard]);
 
   const isClock = expandedCardId === "clock";
   const cardConfig = expandedCardId ? getCardConfig(expandedCardId) : undefined;

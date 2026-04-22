@@ -97,4 +97,30 @@ describe("CardOverlay", () => {
 
     expect(useCardExpansionStore.getState().expandedCardId).toBeNull();
   });
+
+  it("pressing Escape closes a regular card overlay", () => {
+    useCardExpansionStore.setState({ expandedCardId: "weather" });
+    render(<CardOverlay />);
+
+    fireEvent.keyDown(window, { key: "Escape" });
+
+    expect(useCardExpansionStore.getState().expandedCardId).toBeNull();
+  });
+
+  it("pressing Escape closes the clock overlay", () => {
+    useCardExpansionStore.setState({ expandedCardId: "clock" });
+    render(<CardOverlay />);
+
+    fireEvent.keyDown(window, { key: "Escape" });
+
+    expect(useCardExpansionStore.getState().expandedCardId).toBeNull();
+  });
+
+  it("pressing Escape does nothing when no card is expanded", () => {
+    render(<CardOverlay />);
+
+    fireEvent.keyDown(window, { key: "Escape" });
+
+    expect(useCardExpansionStore.getState().expandedCardId).toBeNull();
+  });
 });
