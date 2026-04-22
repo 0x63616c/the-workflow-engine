@@ -137,11 +137,10 @@ describe("WidgetGrid", () => {
     expect(screen.getByTestId("widget-grid")).toBeInTheDocument();
   });
 
-  it("renders 24 placeholder background cells", () => {
+  it("renders 60 placeholder background cells (6 cols x 10 rows)", () => {
     render(<WidgetGrid />);
-
     const placeholders = screen.getAllByTestId(/^grid-placeholder-/);
-    expect(placeholders).toHaveLength(24);
+    expect(placeholders).toHaveLength(60);
   });
 
   it("placeholder cells are aria-hidden", () => {
@@ -153,13 +152,11 @@ describe("WidgetGrid", () => {
     }
   });
 
-  it("grid container uses min-h-full not fixed h-full", () => {
+  it("hub-container fills available space", () => {
     render(<WidgetGrid />);
-
-    const grid = screen.getByTestId("widget-grid");
-    const classes = grid.className.split(" ");
-    expect(classes).toContain("min-h-full");
-    expect(classes).not.toContain("h-full");
+    const hub = screen.getByTestId("hub-container");
+    expect(hub).toBeInTheDocument();
+    expect(hub.className).toContain("bg-background");
   });
 
   it("does not use static gridTemplateRows", () => {

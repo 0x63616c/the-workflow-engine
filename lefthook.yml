@@ -57,3 +57,11 @@ pre-commit:
             echo "ERROR: $f must not be committed" && exit 1
           fi
         done
+    screenshot-names:
+      glob: "{e2e/screenshots,docs/screenshots}/*.png"
+      run: |
+        for f in {staged_files}; do
+          if ! basename "$f" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9]{2}-'; then
+            echo "ERROR: Screenshot must start with YYYY-MM-DD-HH-MM-: $f" && exit 1
+          fi
+        done

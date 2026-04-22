@@ -66,4 +66,21 @@ test.describe("Dashboard grid renders all cards", () => {
     const text = await page.getByTestId("widget-card-stocks").textContent();
     expect(text).toContain("AAPL");
   });
+
+  test("tiles are square at iPad resolution", async ({ page }) => {
+    await page.setViewportSize({ width: 1366, height: 1024 });
+    const box = await page.getByTestId("widget-card-lights").boundingBox();
+    expect(box).not.toBeNull();
+    if (!box) return;
+    expect(Math.abs(box.width - box.height)).toBeLessThan(2);
+  });
+
+  test("grid scrolls with 10 rows at iPad resolution", async ({ page }) => {
+    await page.setViewportSize({ width: 1366, height: 1024 });
+    const metrics = await page.locator("main").evaluate((el) => ({
+      scrollHeight: el.scrollHeight,
+      clientHeight: el.clientHeight,
+    }));
+    expect(metrics.scrollHeight).toBeGreaterThan(metrics.clientHeight);
+  });
 });
