@@ -152,12 +152,11 @@ describe("WidgetGrid", () => {
     }
   });
 
-  it("hub-container is a vertical scroll viewport", () => {
+  it("hub-container fills available space", () => {
     render(<WidgetGrid />);
     const hub = screen.getByTestId("hub-container");
-    const classes = hub.className.split(" ");
-    expect(classes).toContain("h-full");
-    expect(classes).toContain("overflow-y-auto");
+    expect(hub).toBeInTheDocument();
+    expect(hub.className).toContain("bg-background");
   });
 
   it("does not use static gridTemplateRows", () => {

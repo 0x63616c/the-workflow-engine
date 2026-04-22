@@ -60,11 +60,11 @@ export function WidgetGrid() {
   const cards = getRegisteredCards();
 
   return (
-    <div data-testid="hub-container" className="relative h-full overflow-y-auto bg-background">
+    <div data-testid="hub-container" className="relative min-h-full bg-background">
       <div
         ref={gridRef}
         data-testid="widget-grid"
-        className="relative grid gap-3 p-5"
+        className="relative grid gap-3 p-5 min-h-full"
         style={{
           gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`,
           gridAutoRows: cellSize_PX > 0 ? `${cellSize_PX}px` : undefined,
