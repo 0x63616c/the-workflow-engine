@@ -1,6 +1,6 @@
 Here's the compressed version:
 
-# Project Vision: The Workflow Engine
+# Project Vision: Evee
 
 ## What It Is
 

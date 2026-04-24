@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import type { HaEntity } from "../../integrations/homeassistant/types";
 import { HaError } from "../../integrations/homeassistant/types";
 
 describe("HaError", () => {

@@ -59,7 +59,7 @@ export function SolarSystem() {
       const elapsed = Date.now() - startTimeRef.current;
       const simulatedNow =
         J2000_MS + (nowRef.current.getTime() - J2000_MS) + elapsed * SPEED_MULTIPLIER;
-      const { foreground: fg, foregroundAlpha: fgAlpha } = colorsRef.current;
+      const { foregroundAlpha: fgAlpha } = colorsRef.current;
 
       const cx = w / 2;
       const cy = h / 2;

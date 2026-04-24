@@ -1,7 +1,6 @@
 import { WebClient } from "@slack/web-api";
 import { and, asc, eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { NonRetriableError } from "inngest";
 import { newId } from "../db/id";
 import { conversations, images, llmCalls, messages, toolCalls } from "../db/schema";
 import { callLlm } from "../integrations/evee/llm";
@@ -342,9 +341,9 @@ export async function sendSlackResponse(
   } catch (error) {
     const slackError = (error as { data?: { error?: string } })?.data?.error;
     if (slackError === "channel_not_found" || slackError === "not_in_channel") {
-      throw new NonRetriableError(`Slack error: ${slackError}`);
+      throw new Error(`Slack error: ${slackError}`);
     }
-    throw error; // transient errors get retried
+    throw error;
   }
 }
 

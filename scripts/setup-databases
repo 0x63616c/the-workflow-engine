@@ -24,13 +24,13 @@ if [ -z "$DBS" ]; then
 fi
 
 PASS=$(op read "op://Homelab/Workflow Engine Postgres/password")
-BASE="postgresql://workflow:${PASS}@homelab:5432/postgres"
+BASE="postgresql://evee:${PASS}@homelab:5432/postgres"
 
 for db in $DBS; do
   if psql "$BASE" -tc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1; then
     echo "ok: database '$db' already exists"
   else
     echo "creating database '$db'..."
-    psql "$BASE" -c "CREATE DATABASE $db OWNER workflow"
+    psql "$BASE" -c "CREATE DATABASE $db OWNER evee"
   fi
 done

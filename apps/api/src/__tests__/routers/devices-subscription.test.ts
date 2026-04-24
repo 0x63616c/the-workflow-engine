@@ -1,4 +1,3 @@
-import { EventEmitter } from "node:events";
 import { describe, expect, it, vi } from "vitest";
 import type { HaStateChangedEvent } from "../../integrations/homeassistant/ws-relay";
 

@@ -13,11 +13,8 @@ set -e
 echo "Fetching secrets from 1Password..."
 export KAMAL_REGISTRY_PASSWORD=$(op read "op://Homelab/GitHub Personal Access Token/token")
 export HA_TOKEN=$(op read "op://Homelab/Home Assistant Token/credential")
-export INNGEST_EVENT_KEY=$(op read "op://Homelab/Workflow Engine Inngest/event-key")
-export INNGEST_SIGNING_KEY=$(op read "op://Homelab/Workflow Engine Inngest/signing-key")
-export POSTGRES_PASSWORD=$(op read "op://Homelab/Workflow Engine Postgres/password")
-export DATABASE_URL="postgresql://workflow:${POSTGRES_PASSWORD}@localhost:5432/workflow_engine"
-export INNGEST_POSTGRES_URI="postgresql://workflow:${POSTGRES_PASSWORD}@workflow-engine-postgres:5432/inngest"
+export POSTGRES_PASSWORD=$(op read "op://Homelab/Evee Postgres/password")
+export DATABASE_URL="postgresql://evee:${POSTGRES_PASSWORD}@localhost:5432/evee"
 
 echo "Deploying..."
 kamal deploy "$@"

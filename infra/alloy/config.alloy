@@ -61,7 +61,7 @@ faro.receiver "frontend" {
 
   extra_log_labels = {
     "source" = "faro",
-    "app"    = "workflow-engine-web",
+    "app"    = "evee-web",
   }
 
   log_format = "json"
@@ -75,6 +75,6 @@ faro.receiver "frontend" {
 
 loki.write "local" {
   endpoint {
-    url = "http://workflow-engine-loki:3100/loki/api/v1/push"
+    url = "http://evee-loki:3100/loki/api/v1/push"
   }
 }

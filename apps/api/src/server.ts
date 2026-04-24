@@ -1,12 +1,9 @@
 import { resolve } from "node:path";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { serve } from "inngest/bun";
 
 import { pool } from "./db/client";
 import { runMigrations } from "./db/migrate";
 import { EFFECTIVE_PORT, env } from "./env";
-import { inngest } from "./inngest/client";
-import { inngestFunctions } from "./inngest/functions";
 import { ha } from "./integrations/homeassistant";
 import { haRelay } from "./integrations/homeassistant/ws-relay";
 import { initSlack, stopSlack } from "./integrations/slack";
@@ -18,11 +15,6 @@ await runMigrations();
 await ha.init();
 haRelay.connect();
 await initSlack();
-
-const inngestHandler = serve({
-  client: inngest,
-  functions: inngestFunctions,
-});
 
 const isProduction = env.NODE_ENV === "production";
 const publicDir = resolve(import.meta.dir, "../public");
@@ -73,10 +65,6 @@ const server = Bun.serve({
         },
       });
       return respond(res);
-    }
-
-    if (url.pathname.startsWith("/api/inngest")) {
-      return respond(await inngestHandler(req));
     }
 
     // Faro telemetry proxy -> Alloy faro.receiver

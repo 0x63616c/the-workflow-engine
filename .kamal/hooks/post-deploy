@@ -18,14 +18,14 @@
 # exec to talk to the postgres container. Connects as the `workflow`
 # superuser over the unix socket, which pg_hba.conf's default `local
 # all all trust` rule accepts without a password. Don't switch to
-# `-U postgres` — our cluster was initialized with POSTGRES_USER=workflow,
+# `-U postgres` — our cluster was initialized with POSTGRES_USER=evee,
 # so there is no `postgres` role (the initial attempt at this hook failed
 # with "role 'postgres' does not exist").
 set -euo pipefail
 
 INITDB_DIR="infra/postgres/initdb"
-POSTGRES_CONTAINER="workflow-engine-postgres"
-POSTGRES_USER="workflow"
+POSTGRES_CONTAINER="evee-postgres"
+POSTGRES_USER="evee"
 SSH_TARGET="calum@homelab"
 
 # Extract "CREATE DATABASE <name>" from every declared init file.

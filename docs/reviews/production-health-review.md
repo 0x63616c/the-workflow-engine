@@ -123,7 +123,7 @@ The full Grafana/Loki/Alloy stack is present in `infra/logging/` and deployed as
 - No dashboards committed — Grafana data is in a Docker volume, so any configured dashboards live only on the host
 - Grafana anonymous access is `Viewer` role only, which is fine for a home network, but there's no auth at all
 - No alerting configured (no alert rules, no notification channels)
-- Alloy connects to Loki via container name `workflow-engine-loki:3100` — this relies on Kamal's container naming convention; worth verifying this resolves correctly (Kamal names accessories as `<service>-<accessory>` by default)
+- Alloy connects to Loki via container name `evee-loki:3100` — this relies on Kamal's container naming convention; worth verifying this resolves correctly (Kamal names accessories as `<service>-<accessory>` by default)
 - No Postgres-specific metrics (pg_stat, connection count, slow queries) — only container stdout logs
 
 ---

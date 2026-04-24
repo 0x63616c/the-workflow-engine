@@ -10,7 +10,7 @@ CLIENT_ID="$1"
 CLIENT_SECRET="$2"
 VAULT="Homelab"
 ITEM="Tailscale OAuth Client (CI)"
-REPO="0x63616c/the-workflow-engine"
+REPO="0x63616c/evee"
 
 echo "Saving to 1Password (vault: $VAULT)..."
 op item create \

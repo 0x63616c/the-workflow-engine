@@ -15,11 +15,11 @@ apiVersion: 1
 # a YAML diff, no Grafana-UI clicking.
 groups:
   - orgId: 1
-    name: Workflow Engine Errors
+    name: Evee Errors
     folder: Errors
     interval: 30s
     rules:
-      - uid: workflow-engine-backend-errors
+      - uid: evee-backend-errors
         title: backend error logs
         condition: C
         for: 0s
@@ -71,7 +71,7 @@ groups:
                     type: gt
               refId: C
 
-      - uid: workflow-engine-frontend-errors
+      - uid: evee-frontend-errors
         title: frontend error logs
         condition: C
         for: 0s

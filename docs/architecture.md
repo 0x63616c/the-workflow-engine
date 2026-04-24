@@ -168,7 +168,7 @@ flowchart LR
 ## Monorepo Structure
 
 ```
-the-workflow-engine/
+evee/
   apps/
     web/         React SPA (Vite, TanStack Router, tRPC client)
     api/         tRPC API server (Bun, Drizzle ORM, Inngest, Evee)

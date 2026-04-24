@@ -1,6 +1,6 @@
-service: workflow-engine
+service: evee
 
-image: 0x63616c/the-workflow-engine
+image: 0x63616c/evee
 
 ssh:
   user: calum
@@ -56,9 +56,9 @@ env:
     PORT: "4301"
     PORT_OFFSET: "0"
     INNGEST_DEV: "0"
-    INNGEST_BASE_URL: "http://workflow-engine-inngest:8288"
+    INNGEST_BASE_URL: "http://evee-inngest:8288"
     HA_URL: "http://host.docker.internal:8123"
-    ALLOY_URL: "http://workflow-engine-alloy:12346"
+    ALLOY_URL: "http://evee-alloy:12346"
   secret:
     - INNGEST_EVENT_KEY
     - INNGEST_SIGNING_KEY
@@ -77,13 +77,13 @@ accessories:
       secret:
         - POSTGRES_PASSWORD
       clear:
-        POSTGRES_USER: workflow
+        POSTGRES_USER: evee
         # POSTGRES_DB intentionally omitted. Databases are now declared
         # in infra/postgres/initdb/*.sql and mounted below, so a fresh
-        # volume creates workflow_engine + inngest automatically via
+        # volume creates evee + inngest automatically via
         # the postgres image's /docker-entrypoint-initdb.d hook.
     files:
-      - infra/postgres/initdb/01-workflow-engine.sql:/docker-entrypoint-initdb.d/01-workflow-engine.sql
+      - infra/postgres/initdb/01-evee.sql:/docker-entrypoint-initdb.d/01-evee.sql
       - infra/postgres/initdb/02-inngest.sql:/docker-entrypoint-initdb.d/02-inngest.sql
     directories:
       - postgres-data:/var/lib/postgresql/data
@@ -112,14 +112,14 @@ accessories:
         - INNGEST_POSTGRES_URI
 
   loki:
-    image: ghcr.io/0x63616c/workflow-engine-loki:latest
+    image: ghcr.io/0x63616c/evee-loki:latest
     host: homelab
     port: "3100:3100"
     directories:
       - loki-data:/loki
 
   alloy:
-    image: ghcr.io/0x63616c/workflow-engine-alloy:latest
+    image: ghcr.io/0x63616c/evee-alloy:latest
     host: homelab
     cmd: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
     options:
@@ -130,7 +130,7 @@ accessories:
         - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
   grafana:
-    image: ghcr.io/0x63616c/workflow-engine-grafana:latest
+    image: ghcr.io/0x63616c/evee-grafana:latest
     host: homelab
     port: "3000:3000"
     directories:

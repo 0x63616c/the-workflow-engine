@@ -23,9 +23,7 @@ type TestDB = ReturnType<typeof drizzle<typeof schema>>;
 
 function createTestPool() {
   return new Pool({
-    connectionString:
-      process.env.DATABASE_URL ??
-      "postgresql://workflow:workflow@localhost:5432/workflow_engine_test",
+    connectionString: process.env.DATABASE_URL ?? "postgresql://evee:evee@localhost:5432/evee_test",
   });
 }
 

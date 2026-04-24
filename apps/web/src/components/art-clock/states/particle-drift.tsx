@@ -46,7 +46,7 @@ export function ParticleDrift() {
       const dpr = window.devicePixelRatio;
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
       const speedMul = 0.3 + 0.9 * 0.5 * (1 + Math.sin((elapsed / SPEED_CYCLE_S) * 2 * Math.PI));
-      const { foreground: fg, foregroundAlpha: fgAlpha } = colorsRef.current;
+      const { foregroundAlpha: fgAlpha } = colorsRef.current;
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);

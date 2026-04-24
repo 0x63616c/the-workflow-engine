@@ -9,11 +9,7 @@ import { useAutoReload } from "@/hooks/use-auto-reload";
 import { initFaro } from "@/lib/faro";
 import { Outlet, createRootRoute } from "@tanstack/react-router";
 
-initFaro(
-  import.meta.env.VITE_FARO_URL ?? "",
-  "workflow-engine-web",
-  import.meta.env.VITE_BUILD_HASH ?? "dev",
-);
+initFaro(import.meta.env.VITE_FARO_URL ?? "", "evee-web", import.meta.env.VITE_BUILD_HASH ?? "dev");
 
 function RootLayout() {
   useAutoReload();
