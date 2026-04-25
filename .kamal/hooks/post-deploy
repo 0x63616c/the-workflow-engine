@@ -15,7 +15,7 @@
 #   reads from a laptop, no "did someone remember to run the script".
 #
 # Runs on the deploy machine (CI runner or laptop). Uses SSH + docker
-# exec to talk to the postgres container. Connects as the `workflow`
+# exec to talk to the postgres container. Connects as the `evee`
 # superuser over the unix socket, which pg_hba.conf's default `local
 # all all trust` rule accepts without a password. Don't switch to
 # `-U postgres` — our cluster was initialized with POSTGRES_USER=evee,

@@ -297,8 +297,6 @@ jobs:
       - name: Ensure accessories are running
         env:
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GHRC_TOKEN }}
-          INNGEST_EVENT_KEY: ${{ secrets.INNGEST_EVENT_KEY }}
-          INNGEST_SIGNING_KEY: ${{ secrets.INNGEST_SIGNING_KEY }}
           HA_TOKEN: ${{ secrets.HA_TOKEN }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
@@ -312,12 +310,9 @@ jobs:
       - name: Deploy with Kamal
         env:
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GHRC_TOKEN }}
-          INNGEST_EVENT_KEY: ${{ secrets.INNGEST_EVENT_KEY }}
-          INNGEST_SIGNING_KEY: ${{ secrets.INNGEST_SIGNING_KEY }}
           HA_TOKEN: ${{ secrets.HA_TOKEN }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          INNGEST_POSTGRES_URI: postgresql://evee:${{ secrets.POSTGRES_PASSWORD }}@evee-postgres:5432/inngest
           VITE_WIFI_SSID: ${{ secrets.WIFI_SSID }}
           VITE_WIFI_PASSWORD: ${{ secrets.WIFI_PASSWORD }}
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
@@ -329,10 +324,7 @@ jobs:
       - name: Reboot accessories whose infra changed
         env:
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GHRC_TOKEN }}
-          INNGEST_EVENT_KEY: ${{ secrets.INNGEST_EVENT_KEY }}
-          INNGEST_SIGNING_KEY: ${{ secrets.INNGEST_SIGNING_KEY }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          INNGEST_POSTGRES_URI: postgresql://evee:${{ secrets.POSTGRES_PASSWORD }}@evee-postgres:5432/inngest
           GRAFANA_ERRORS_SLACK_WEBHOOK_URL: ${{ secrets.GRAFANA_ERRORS_SLACK_WEBHOOK_URL }}
         # Convention: accessory <name> in config/deploy.yml owns infra/<name>/.
         # Any commit that touches infra/<name>/ (Dockerfile, provisioning files,
