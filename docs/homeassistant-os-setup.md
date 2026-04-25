@@ -302,6 +302,7 @@ docker ps
 | `~/homeassistant-os/haos.pid` | Running process ID |
 | `~/Library/LaunchAgents/com.homeassistant.os.plist` | Auto-start HAOS on login |
 | `/Library/LaunchDaemons/homebrew.mxcl.socket_vmnet.plist` | socket_vmnet bridged config (root service) |
+| `/etc/sudoers.d/evee-socket-vmnet` | Passwordless `launchctl kickstart` of socket_vmnet for the self-heal path in `start-haos.sh` |
 
 ## Management
 
