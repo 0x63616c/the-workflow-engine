@@ -128,17 +128,22 @@ echo "[4/6] Kickstarting HAOS"
 launchctl kickstart -k "gui/$(id -u)/${LABEL}"
 
 echo "[5/6] Adding OrbStack to Login Items"
-if [ -d "/Applications/OrbStack.app" ]; then
-  osascript <<'OSA' >/dev/null
+if [ ! -d "/Applications/OrbStack.app" ]; then
+  echo "  WARN: /Applications/OrbStack.app not found, skipping"
+elif [ -z "${SSH_TTY:-}${SSH_CONNECTION:-}" ] || [ -n "${TERM_PROGRAM:-}" ]; then
+  if osascript >/dev/null 2>&1 <<'OSA'; then
 tell application "System Events"
   if not (exists login item "OrbStack") then
     make login item at end with properties {path:"/Applications/OrbStack.app", hidden:false}
   end if
 end tell
 OSA
-  echo "  OrbStack login item present"
+    echo "  OrbStack login item present"
+  else
+    echo "  WARN: osascript failed; add OrbStack via System Settings > Login Items"
+  fi
 else
-  echo "  WARN: /Applications/OrbStack.app not found, skipping"
+  echo "  SKIP: System Events needs a GUI session. Run this script locally on the Mini, or add OrbStack via System Settings > Login Items."
 fi
 
 echo "[6/6] Enabling auto-power-on after power loss (sudo)"
