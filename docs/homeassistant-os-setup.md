@@ -259,6 +259,19 @@ Kamal accessories (postgres, loki, grafana, alloy, evee) run in OrbStack. OrbSta
 
 Containers in `config/deploy.yml` already have restart policies, so once Docker is up the Kamal stack returns on its own.
 
+## Self-Healing Behavior
+
+The hardened setup is designed to recover from a cold boot mid-network-outage without intervention:
+
+| Failure | Recovery |
+|---------|----------|
+| en1 not associated yet | `start-haos.sh` waits 60s, exits 1, launchd retries every 30s indefinitely |
+| `/opt/homebrew/var/run/socket_vmnet` missing | Same loop |
+| `socket_vmnet` running but `vmnet_start_interface` wedged (`Connection refused` to client) | `start-haos.sh` runs `sudo launchctl kickstart -k system/homebrew.mxcl.socket_vmnet` to restart the daemon, then retries QEMU once. Allowed via `/etc/sudoers.d/evee-socket-vmnet` (passwordless for this one command only) |
+| HAOS dies after starting | `KeepAlive { SuccessfulExit = false }` respawns on next non-zero exit |
+
+A network outage of any length should self-heal as soon as Wi-Fi comes back: launchd keeps retrying, the script keeps waiting for en1, and once it's back the chain succeeds.
+
 ## Recovery Cheatsheet
 
 After an unclean reboot, in order:
