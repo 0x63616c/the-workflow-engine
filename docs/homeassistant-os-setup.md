@@ -252,9 +252,10 @@ Boot order: socket_vmnet starts first (system-level launchd), then HAOS starts (
 
 Kamal accessories (postgres, loki, grafana, alloy, evee) run in OrbStack. OrbStack is a GUI app and **does not start at boot** unless you add it to Login Items.
 
-1. **Add to Login Items**: System Settings → General → Login Items & Extensions → Open at Login → `+` → `OrbStack`.
+`scripts/harden-autostart.sh` handles the OrbStack login item and `pmset autorestart` for you (it sudoes when needed). Auto-login is the one bit you still flip by hand:
+
+1. **Run** `bash scripts/harden-autostart.sh` on the Mini.
 2. **Auto-login as `calum`**: System Settings → Users & Groups → Automatically log in as → `calum`. Required because Login Items only fire on login.
-3. **Auto-power-on after outage**: `sudo pmset -a autorestart 1` (Mac restarts after a power loss so it can reach the login screen automatically).
 
 Containers in `config/deploy.yml` already have restart policies, so once Docker is up the Kamal stack returns on its own.
 

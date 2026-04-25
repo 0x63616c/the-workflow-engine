@@ -4,18 +4,22 @@
 # Updates:
 #   - ~/homeassistant-os/start-haos.sh (waits for en1 IP + socket_vmnet)
 #   - ~/Library/LaunchAgents/com.homeassistant.os.plist (KeepAlive retries)
+#   - OrbStack Login Item (so Docker/Kamal accessories start on login)
+#   - pmset -a autorestart 1 (Mac auto-powers-on after a power cut)
 #
 # Run on homelab as the user that owns ~/homeassistant-os (calum):
 #   bash scripts/harden-autostart.sh
 #
+# Will prompt for sudo password once (for pmset).
+#
 # Does NOT touch socket_vmnet plist (use scripts/fix-socket-vmnet.sh for that).
-# Does NOT enable auto-login or OrbStack login item - those are GUI settings;
-# see docs/homeassistant-os-setup.md.
+# Does NOT enable auto-login - that requires writing /etc/kcpassword and is
+# safer to flip via System Settings -> Users & Groups.
 
 set -euo pipefail
 
 if [ "$EUID" -eq 0 ]; then
-  echo "Run as your normal user, not root."
+  echo "Run as your normal user, not root. The script will sudo when needed."
   exit 1
 fi
 
@@ -116,12 +120,30 @@ cat >"$PLIST" <<PLIST_EOF
 </plist>
 PLIST_EOF
 
-echo "[3/4] Reloading LaunchAgent"
+echo "[3/6] Reloading LaunchAgent"
 launchctl bootout "gui/$(id -u)/${LABEL}" 2>/dev/null || true
 launchctl bootstrap "gui/$(id -u)" "$PLIST"
 
-echo "[4/4] Kickstarting"
+echo "[4/6] Kickstarting HAOS"
 launchctl kickstart -k "gui/$(id -u)/${LABEL}"
+
+echo "[5/6] Adding OrbStack to Login Items"
+if [ -d "/Applications/OrbStack.app" ]; then
+  osascript <<'OSA' >/dev/null
+tell application "System Events"
+  if not (exists login item "OrbStack") then
+    make login item at end with properties {path:"/Applications/OrbStack.app", hidden:false}
+  end if
+end tell
+OSA
+  echo "  OrbStack login item present"
+else
+  echo "  WARN: /Applications/OrbStack.app not found, skipping"
+fi
+
+echo "[6/6] Enabling auto-power-on after power loss (sudo)"
+sudo pmset -a autorestart 1
 
 echo
 echo "Done. Tail /tmp/haos-launch.log to watch retries."
+echo "Manual step still needed: System Settings > Users & Groups > auto-login as $USER."
