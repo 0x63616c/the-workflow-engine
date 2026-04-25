@@ -23,7 +23,7 @@ local_resource(
     serve_env={
         "PORT": str(4201),
         "PORT_OFFSET": str(port_offset),
-        "DATABASE_URL": "postgresql://workflow:workflow@localhost:%d/workflow_engine" % port_postgres,
+        "DATABASE_URL": "postgresql://evee:evee@localhost:%d/evee" % port_postgres,
         "INNGEST_DEV": "1",
         "HA_TOKEN": ha_token,
         "SLACK_BOT_TOKEN": slack_bot_token,

@@ -36,16 +36,16 @@ Open Grafana, go to **Explore** (compass icon in sidebar), select **Loki** datas
 {container=~".+"}
 
 # App logs only
-{container=~"workflow-engine-web.*"}
+{container=~"evee-web.*"}
 
 # Inngest logs
-{container=~"workflow-engine-inngest.*"}
+{container=~"evee-inngest.*"}
 
 # Errors across everything
 {container=~".+"} |~ "(?i)error"
 
 # tRPC request logs
-{container=~"workflow-engine-web.*"} |~ "trpc"
+{container=~"evee-web.*"} |~ "trpc"
 
 # Filter by time range
 # Use the time picker in the top-right of Grafana
@@ -54,7 +54,7 @@ Open Grafana, go to **Explore** (compass icon in sidebar), select **Loki** datas
 ### Label filters
 
 Alloy tags every log line with:
-- `container` - container name (e.g. `workflow-engine-web-1`)
+- `container` - container name (e.g. `evee-web-1`)
 - `container_id` - Docker container ID
 - `image` - Docker image name
 
@@ -91,13 +91,13 @@ Grafana ("Frontend Observability" dashboard)
 
 ```logql
 # All frontend events
-{source="faro", app="workflow-engine-web"} | json
+{source="faro", app="evee-web"} | json
 
 # Errors only
-{source="faro", app="workflow-engine-web"} | json | kind="error"
+{source="faro", app="evee-web"} | json | kind="error"
 
 # tRPC request errors
-{source="faro", app="workflow-engine-web"} | json | kind="error" |~ "tRPC"
+{source="faro", app="evee-web"} | json | kind="error" |~ "tRPC"
 ```
 
 ### Dashboard
@@ -114,9 +114,9 @@ Config files are baked into custom Docker images (GitOps, no manual host setup).
 
 | Component | Config location | Image |
 |-----------|----------------|-------|
-| Loki | `infra/loki/loki-config.yaml` | `ghcr.io/0x63616c/workflow-engine-loki` |
-| Alloy | `infra/alloy/config.alloy` | `ghcr.io/0x63616c/workflow-engine-alloy` |
-| Grafana | `infra/grafana/datasource.yaml` | `ghcr.io/0x63616c/workflow-engine-grafana` |
+| Loki | `infra/loki/loki-config.yaml` | `ghcr.io/0x63616c/evee-loki` |
+| Alloy | `infra/alloy/config.alloy` | `ghcr.io/0x63616c/evee-alloy` |
+| Grafana | `infra/grafana/datasource.yaml` | `ghcr.io/0x63616c/evee-grafana` |
 
 To change config: edit the file, push to main, CI rebuilds the image, `kamal deploy` picks it up.
 

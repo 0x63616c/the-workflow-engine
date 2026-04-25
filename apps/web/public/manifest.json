@@ -1,6 +1,6 @@
 {
-  "name": "The Workflow Engine",
-  "short_name": "Workflow Engine",
+  "name": "Evee",
+  "short_name": "Evee",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",

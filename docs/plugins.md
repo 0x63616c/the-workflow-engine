@@ -2,7 +2,7 @@
 
 ## Overview
 
-Integration plugins connect external services (APIs, databases, message brokers, etc.) to the workflow engine. Each plugin implements the `Integration` interface and is isolated from other API layers.
+Integration plugins connect external services (APIs, databases, message brokers, etc.) to the Evee. Each plugin implements the `Integration` interface and is isolated from other API layers.
 
 ## Interface
 

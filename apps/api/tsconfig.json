@@ -3,10 +3,7 @@
   "compilerOptions": {
     "types": ["bun-types"],
     "rootDir": "src",
-    "outDir": "dist",
-    "paths": {
-      "@repo/shared": ["../../libs/shared/src"]
-    }
+    "outDir": "dist"
   },
   "include": ["src"]
 }

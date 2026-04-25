@@ -50,8 +50,8 @@ op item create \
   "slack_signing_secret=$SLACK_SIGNING_SECRET" >/dev/null
 
 echo "Saving tokens to GitHub..."
-echo "$SLACK_BOT_TOKEN" | gh secret set SLACK_BOT_TOKEN --repo 0x63616c/the-workflow-engine
-echo "$SLACK_USER_TOKEN" | gh secret set SLACK_USER_TOKEN --repo 0x63616c/the-workflow-engine
+echo "$SLACK_BOT_TOKEN" | gh secret set SLACK_BOT_TOKEN --repo 0x63616c/evee
+echo "$SLACK_USER_TOKEN" | gh secret set SLACK_USER_TOKEN --repo 0x63616c/evee
 
 echo ""
 echo "Done."

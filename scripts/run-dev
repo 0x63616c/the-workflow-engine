@@ -18,8 +18,7 @@ range_free() {
   local offset=$1
   port_free $((4200 + offset)) &&
   port_free $((4201 + offset)) &&
-  port_free $((5432 + offset)) &&
-  port_free $((8288 + offset))
+  port_free $((5432 + offset))
 }
 
 find_offset() {
@@ -57,7 +56,6 @@ TILT_PORT=$(find_tilt_port)
 PORT_WEB=$((4200 + OFFSET))
 PORT_API=$((4201 + OFFSET))
 PORT_PG=$((5432 + OFFSET))
-PORT_INNGEST=$((8288 + OFFSET))
 
 cat > "$SESSION_FILE" <<EOF
 TILT_PORT=$TILT_PORT
@@ -65,7 +63,6 @@ PORT_OFFSET=$OFFSET
 PORT_WEB=$PORT_WEB
 PORT_API=$PORT_API
 PORT_PG=$PORT_PG
-PORT_INNGEST=$PORT_INNGEST
 REPO_ROOT=$REPO_ROOT
 EOF
 
@@ -75,7 +72,6 @@ echo "  Tilt UI:  http://localhost:$TILT_PORT"
 echo "  Web:      http://localhost:$PORT_WEB"
 echo "  API:      http://localhost:$PORT_API"
 echo "  Postgres: localhost:$PORT_PG"
-echo "  Inngest:  http://localhost:$PORT_INNGEST"
 echo ""
 echo "  To stop:  scripts/stop-dev"
 echo ""

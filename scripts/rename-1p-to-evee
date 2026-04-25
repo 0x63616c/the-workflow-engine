@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+# Rename 1Password items in the Homelab vault from "workflow engine" variants to "Evee".
+#
+# Dry-run by default. Pass --apply to actually rename.
+# Lists Inngest-related items separately for manual deletion (this script never auto-deletes).
+#
+# Requires the 1Password CLI (`op`) and an active session.
+#
+# Usage:
+#   scripts/rename-1p-to-evee              # dry run: print planned renames
+#   scripts/rename-1p-to-evee --apply      # perform renames
+set -euo pipefail
+
+VAULT="Homelab"
+APPLY=0
+if [ "${1:-}" = "--apply" ]; then
+  APPLY=1
+fi
+
+if ! command -v op >/dev/null 2>&1; then
+  echo "ERROR: 1Password CLI ('op') not found. Install with: brew install --cask 1password-cli"
+  exit 1
+fi
+
+# Compute the new title for a given input title.
+# Handles every variant of "workflow engine" we've used. Preserves surrounding context.
+rename_title() {
+  local t="$1"
+  t="${t//The Workflow Engine/Evee}"
+  t="${t//Workflow Engine/Evee}"
+  t="${t//the-workflow-engine/evee}"
+  t="${t//workflow-engine/evee}"
+  t="${t//workflow engine/Evee}"
+  t="${t//workflow_engine/evee}"
+  echo "$t"
+}
+
+should_rename() {
+  local t="$1"
+  case "$t" in
+    *"workflow engine"* | *"Workflow Engine"* | *"workflow-engine"* | *"workflow_engine"*)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+is_inngest() {
+  local t="$1"
+  case "$t" in
+    *Inngest* | *inngest* | *INNGEST*)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+echo "Fetching items from vault '$VAULT'..."
+ITEMS_JSON=$(op item list --vault "$VAULT" --format json)
+
+RENAME_PAIRS=()
+INNGEST_ITEMS=()
+
+# Parse titles + ids into parallel lists.
+# jq -r emits: "<id>\t<title>" per line.
+while IFS=$'\t' read -r ID TITLE; do
+  [ -z "$ID" ] && continue
+  if is_inngest "$TITLE"; then
+    INNGEST_ITEMS+=("$ID|$TITLE")
+    continue
+  fi
+  if should_rename "$TITLE"; then
+    NEW_TITLE=$(rename_title "$TITLE")
+    if [ "$NEW_TITLE" != "$TITLE" ]; then
+      RENAME_PAIRS+=("$ID|$TITLE|$NEW_TITLE")
+    fi
+  fi
+done < <(echo "$ITEMS_JSON" | jq -r '.[] | "\(.id)\t\(.title)"')
+
+echo ""
+if [ ${#RENAME_PAIRS[@]} -eq 0 ]; then
+  echo "No items to rename."
+else
+  echo "Planned renames (${#RENAME_PAIRS[@]}):"
+  printf '  %-40s  ->  %s\n' "OLD TITLE" "NEW TITLE"
+  printf '  %-40s      %s\n' "----------------------------------------" "----------------------------------------"
+  for pair in "${RENAME_PAIRS[@]}"; do
+    IFS='|' read -r ID OLD NEW <<<"$pair"
+    printf '  %-40s  ->  %s\n' "$OLD" "$NEW"
+  done
+fi
+
+echo ""
+if [ ${#INNGEST_ITEMS[@]} -eq 0 ]; then
+  echo "No Inngest items found."
+else
+  echo "Inngest items flagged for MANUAL deletion (${#INNGEST_ITEMS[@]}):"
+  for entry in "${INNGEST_ITEMS[@]}"; do
+    IFS='|' read -r ID TITLE <<<"$entry"
+    echo "  $TITLE  (id: $ID)"
+  done
+  echo ""
+  echo "To delete each:"
+  echo "  op item delete <id> --vault $VAULT"
+fi
+
+echo ""
+if [ "$APPLY" -eq 1 ] && [ ${#RENAME_PAIRS[@]} -gt 0 ]; then
+  echo "Applying renames..."
+  for pair in "${RENAME_PAIRS[@]}"; do
+    IFS='|' read -r ID OLD NEW <<<"$pair"
+    if op item edit "$ID" --vault "$VAULT" --title "$NEW" >/dev/null; then
+      echo "  renamed: $OLD -> $NEW"
+    else
+      echo "  FAILED: $OLD  (id: $ID)"
+    fi
+  done
+  echo "Done."
+elif [ "$APPLY" -eq 0 ] && [ ${#RENAME_PAIRS[@]} -gt 0 ]; then
+  echo "(dry run — re-run with --apply to perform these renames)"
+fi

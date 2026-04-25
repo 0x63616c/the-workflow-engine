@@ -380,7 +380,7 @@ interface Building {
   windowPhase: number;
 }
 
-function generateBuildings(seed: number, count: number, maxH: number, maxW: number): Building[] {
+function generateBuildings(seed: number, count: number, maxH: number, _maxW: number): Building[] {
   const rng = (n: number) => {
     const x = Math.sin(n + seed) * 43758.5453123;
     return x - Math.floor(x);

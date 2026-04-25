@@ -1,10 +1,10 @@
-# Claude Design Prompt — The Workflow Engine
+# Claude Design Prompt — Evee
 
 > Paste this into claude.ai's design tool for a ground-up redesign.
 
 ---
 
-I want you to design a wall-mounted smart home iPad panel app called **The Workflow Engine**. This runs 24/7 on an iPad Pro 12.9" in landscape mode, mounted on a wall in my apartment. It's always on — it's living art as much as it is a control panel.
+I want you to design a wall-mounted smart home iPad panel app called **Evee**. This runs 24/7 on an iPad Pro 12.9" in landscape mode, mounted on a wall in my apartment. It's always on — it's living art as much as it is a control panel.
 
 **Please design 3 distinct visual concepts** — each with a different aesthetic direction. Show the main dashboard view for each concept.
 

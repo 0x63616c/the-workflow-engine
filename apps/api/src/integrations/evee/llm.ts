@@ -35,8 +35,8 @@ function getOpenRouter() {
       // IMPORTANT: appName is sent as the X-OpenRouter-Title HTTP header,
       // which must be Latin-1. No em-dashes, smart quotes, or other non-ASCII
       // punctuation, or undici throws `TypeError: Header has invalid value`.
-      appName: "The Workflow Engine - Evee",
-      appUrl: "https://github.com/0x63616c/the-workflow-engine",
+      appName: "Evee",
+      appUrl: "https://github.com/0x63616c/evee",
     });
   }
   return _openrouter;
@@ -81,7 +81,7 @@ export async function callLlm(messages: ModelMessage[], botUserId: string): Prom
     "evee llm request",
   );
 
-  // Intentionally no maxSteps - Inngest orchestrator handles the tool-call loop externally
+  // Intentionally no maxSteps - the conversation service handles the tool-call loop externally
   const result = await generateText({
     model: getOpenRouter()(EVEE_MODEL, { provider: PROVIDER_ROUTING }),
     system: buildSystemPrompt(botUserId),

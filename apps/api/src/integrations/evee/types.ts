@@ -2,7 +2,7 @@ import type { ModelMessage } from "ai";
 
 /**
  * Typed boundaries between Evee pipeline stages.
- * These types define the contracts between: Slack handler -> Inngest -> LLM -> Tools -> Slack
+ * These types define the contracts between: Slack handler -> Conversation service -> LLM -> Tools -> Slack
  */
 
 /** The LLM model used for Evee conversations */

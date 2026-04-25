@@ -1,4 +1,4 @@
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig } from "@playwright/test";
 
 const VITE_PORT = Number(process.env.VITE_PORT) || 4210;
 

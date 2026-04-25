@@ -16,11 +16,11 @@ op item create \
   --category "API Credential" \
   --title "Home Assistant Token" \
   "credential=$HA_TOKEN" \
-  "notesPlain=Long-lived access token for Workflow Engine API"
+  "notesPlain=Long-lived access token for Evee API"
 
 echo ""
 echo "Saving to GitHub repo secrets..."
-echo "$HA_TOKEN" | gh secret set HA_TOKEN --repo 0x63616c/the-workflow-engine
+echo "$HA_TOKEN" | gh secret set HA_TOKEN --repo 0x63616c/evee
 
 echo ""
 echo "Done. Token saved to:"

@@ -12,7 +12,25 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "suspicious": {
+        "noExplicitAny": "error",
+        "noConsole": {
+          "level": "error",
+          "options": { "allow": ["error", "warn"] }
+        }
+      },
+      "correctness": {
+        "noUnusedImports": "error",
+        "noUnusedVariables": "error"
+      },
+      "style": {
+        "useImportType": "error",
+        "useExportType": "error"
+      },
+      "complexity": {
+        "noBannedTypes": "error"
+      }
     }
   },
   "files": {
@@ -20,7 +38,6 @@
       "node_modules",
       "dist",
       "*.gen.ts",
-      ".inngest",
       ".tilt",
       "coverage",
       ".claude/settings.json",
@@ -29,5 +46,11 @@
       ".claude/skills/writing-skills",
       ".claude/skills/systematic-debugging"
     ]
-  }
+  },
+  "overrides": [
+    {
+      "include": ["scripts/**"],
+      "linter": { "rules": { "suspicious": { "noConsole": "off" } } }
+    }
+  ]
 }

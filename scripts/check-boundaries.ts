@@ -3,11 +3,11 @@
  * Enforces clean architecture import rules from CLAUDE.md.
  *
  * Rules:
- * - db/        → only drizzle-orm, pg, @repo/shared
- * - services/  → db/, integrations/evee/, integrations/slack/format, @repo/shared, @slack/web-api, env, lib/
- * - trpc/routers/ → services/, @repo/shared, ../init, ../context
- * - inngest/functions/ → services/, inngest, @repo/shared, ../client, env (prefer services/ over direct db/integration imports)
- * - integrations/slack/ → @repo/shared, @slack/, db/, inngest/, lib/, env, services/ (thin adapter pattern)
+ * - db/        → drizzle-orm, pg, relative
+ * - services/  → db/, integrations/evee/, integrations/slack/format, drizzle-orm, @slack/web-api, ai, @ai-sdk/provider, lib/, env
+ * - trpc/routers/ → services/, @trpc/, zod, ../init, ../context
+ * - integrations/evee/ → @openrouter/, ai, zod, db/, env
+ * - integrations/slack/ → @slack/, slackify-markdown, drizzle-orm, db/, services/, lib/, env
  */
 
 import { Glob } from "bun";
@@ -24,96 +24,49 @@ const rules: Rule[] = [
   {
     pattern: `${API_SRC}/db/**/*.ts`,
     label: "db/",
-    allowed: [
-      /^drizzle-orm/,
-      /^pg$/,
-      /^node:/,
-      /^nanoid/,
-      /^@repo\/shared/,
-      /^\./, // relative imports within db/
-    ],
+    allowed: [/^drizzle-orm/, /^pg$/, /^node:/, /^nanoid/, /^\./],
   },
   {
     pattern: `${API_SRC}/services/**/*.ts`,
     label: "services/",
     allowed: [
       /^\./, // relative imports
-      /^@repo\/shared/,
-      /^drizzle-orm/, // query operators (asc, desc, gte, lt, sql, eq)
-      /^@slack\/web-api/, // for Slack messaging (sendSlackResponse)
-      /^inngest/, // NonRetriableError for permanent Slack errors in sendSlackResponse
-      /^yahoo-finance2$/, // stock quote fetching
-      /^ai$/, // ModelMessage type for isHealthCheckMessage
+      /^drizzle-orm/,
+      /^@slack\/web-api/,
+      /^yahoo-finance2$/,
+      /^ai$/,
+      /^@ai-sdk\/provider/,
       /\.\.\/db\//,
-      /\.\.\/integrations\/types/, // existing integration type boundaries
-      /\.\.\/integrations\/evee\//, // evee LLM, messages, tools, types
-      /\.\.\/integrations\/slack\/format/, // toSlackMrkdwn
-      /\.\.\/lib\//, // logger
-      /\.\.\/env/, // env config
+      /\.\.\/integrations\/types/,
+      /\.\.\/integrations\/evee\//,
+      /\.\.\/integrations\/slack\/constants/,
+      /\.\.\/integrations\/slack\/format/,
+      /\.\.\/lib\//,
+      /\.\.\/env/,
     ],
   },
   {
     pattern: `${API_SRC}/trpc/routers/**/*.ts`,
     label: "trpc/routers/",
-    allowed: [
-      /^\./, // relative imports
-      /^@repo\/shared/,
-      /^@trpc\//,
-      /^zod/,
-      /\.\.\/init/,
-      /\.\.\/context/,
-      /\.\.\/\.\.\/services\//,
-    ],
-  },
-  {
-    pattern: `${API_SRC}/inngest/functions/**/*.ts`,
-    label: "inngest/functions/",
-    allowed: [
-      /^\.\//, // intra-directory imports (same folder)
-      /^@repo\/shared/,
-      /^inngest/,
-      /^@ai-sdk\/provider/,
-      /^ai$/,
-      /^@slack\/web-api/,
-      /^drizzle-orm/,
-      /\.\.\/client/,
-      /\.\.\/\.\.\/services\//,
-      /\.\.\/\.\.\/db\//,
-      /\.\.\/\.\.\/integrations\/evee\//,
-      /\.\.\/\.\.\/integrations\/slack\/constants/,
-      /\.\.\/\.\.\/integrations\/slack\/format/,
-      /\.\.\/\.\.\/env/,
-    ],
+    allowed: [/^\./, /^@trpc\//, /^zod/, /\.\.\/init/, /\.\.\/context/, /\.\.\/\.\.\/services\//],
   },
   {
     pattern: `${API_SRC}/integrations/evee/**/*.ts`,
     label: "integrations/evee/",
-    allowed: [
-      /^\./, // relative imports
-      /^@repo\/shared/,
-      /^@openrouter\//,
-      /^ai$/,
-      /^zod/,
-      /\.\.\/\.\.\/env/,
-      /\.\.\/\.\.\/db\//,
-    ],
+    allowed: [/^\./, /^@openrouter\//, /^ai$/, /^zod/, /\.\.\/\.\.\/env/, /\.\.\/\.\.\/db\//],
   },
   {
     pattern: `${API_SRC}/integrations/slack/**/*.ts`,
     label: "integrations/slack/",
     allowed: [
-      /^\./, // relative imports
-      /^@repo\/shared/,
+      /^\./,
       /^@slack\//,
       /^slackify-markdown/,
       /^drizzle-orm/,
       /\.\.\/\.\.\/env/,
       /\.\.\/\.\.\/db\//,
-      /\.\.\/\.\.\/inngest\//,
       /\.\.\/\.\.\/lib\//,
       // Slack handler is a thin adapter that delegates to the service layer.
-      // Importing services/ here is intentional: the handler upserts conversations,
-      // persists messages, and downloads images via evee-service before firing Inngest events.
       /\.\.\/\.\.\/services\//,
     ],
   },

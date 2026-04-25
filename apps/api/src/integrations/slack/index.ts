@@ -4,8 +4,8 @@ import { and, eq } from "drizzle-orm";
 import { db } from "../../db/client";
 import { conversations } from "../../db/schema";
 import { env } from "../../env";
-import { inngest } from "../../inngest/client";
 import { log } from "../../lib/logger";
+import { runEveeConversation } from "../../services/evee-conversation-service";
 import * as eveeService from "../../services/evee-service";
 import { eveeAssistant } from "./assistant";
 
@@ -50,21 +50,20 @@ async function processMessage(params: ProcessMessageParams): Promise<void> {
     },
   });
 
-  await inngest.send({
-    name: "slack/message.received",
-    data: {
-      conversationId,
-      threadId: threadTs,
-      channel,
-      userId,
-      displayName,
-      text: cleanText,
-      imageIds: [],
-      botUserId: botUserId ?? "unknown",
-    },
-  });
+  log.info(
+    { conversationId, channel, threadTs },
+    "Slack thread synced, starting Evee conversation",
+  );
 
-  log.info({ conversationId, channel, threadTs }, "Slack thread synced, Inngest event fired");
+  void runEveeConversation({
+    conversationId,
+    botUserId: botUserId ?? "unknown",
+    threadId: threadTs,
+    channel,
+    text: cleanText,
+  }).catch((err) => {
+    log.error({ err, conversationId, channel, threadTs }, "Evee conversation handler crashed");
+  });
 }
 
 export async function initSlack(): Promise<void> {

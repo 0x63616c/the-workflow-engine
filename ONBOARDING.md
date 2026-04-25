@@ -1,4 +1,4 @@
-# Welcome to The Workflow Engine
+# Welcome to Evee
 
 ## How We Use Claude
 
@@ -27,7 +27,7 @@ Top MCP Servers:
 ## Your Setup Checklist
 
 ### Codebases
-- [ ] the-workflow-engine — https://github.com/0x63616c/the-workflow-engine
+- [ ] evee — https://github.com/0x63616c/evee
 
 ### MCP Servers to Activate
 - [ ] computer-use — Visual testing and browser interaction for the iPad PWA UI. Ask Calum for the setup command or check `.claude/settings.json` in the repo.

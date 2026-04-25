@@ -33,7 +33,7 @@ op item create \
 
 echo ""
 echo "Saving to GitHub repo secrets..."
-echo "$WEBHOOK_URL" | gh secret set GRAFANA_ERRORS_SLACK_WEBHOOK_URL --repo 0x63616c/the-workflow-engine
+echo "$WEBHOOK_URL" | gh secret set GRAFANA_ERRORS_SLACK_WEBHOOK_URL --repo 0x63616c/evee
 
 echo ""
 echo "Done. Webhook URL saved to:"

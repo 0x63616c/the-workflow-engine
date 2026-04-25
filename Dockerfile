@@ -5,7 +5,6 @@ RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt
 COPY package.json bun.lock ./
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
-COPY libs/shared/package.json libs/shared/
 RUN bun install --frozen-lockfile
 
 # Stage 2: Build web static files
@@ -21,7 +20,6 @@ ENV VITE_WIFI_PASSWORD=${VITE_WIFI_PASSWORD}
 ENV VITE_FARO_URL=${VITE_FARO_URL}
 ENV VITE_BUILD_HASH=${VITE_BUILD_HASH}
 
-COPY libs/shared libs/shared
 COPY apps/api/src apps/api/src
 COPY apps/api/tsconfig.json apps/api/
 COPY apps/web apps/web
@@ -36,7 +34,6 @@ ARG BUILD_HASH=dev
 ENV BUILD_HASH=${BUILD_HASH}
 
 COPY --from=deps /app/node_modules node_modules
-COPY libs/shared libs/shared
 COPY apps/api apps/api
 COPY --from=web-build /app/apps/web/dist apps/api/public
 

@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+# Scrub "the-workflow-engine" references from ~/.claude after the repo rename to evee.
+#
+# What it does (in --apply mode):
+#   1. Renames every directory under ~/.claude whose path contains "the-workflow-engine"
+#      to the "evee" equivalent. Deepest-first so parent renames don't break child paths.
+#   2. In-place edits text files (*.md, *.json, *.txt, *.yaml, *.yml) under ~/.claude,
+#      replacing: the-workflow-engine -> evee, "The Workflow Engine" -> Evee, workflow_engine -> evee.
+#   3. Skips *.jsonl files (frozen conversation transcripts, not worth churning).
+#   4. Removes stale ~/.claude/ide/*.lock files referencing old the-workflow-engine paths.
+#
+# Dry-run by default. Pass --apply to actually mutate.
+#
+# Usage:
+#   scripts/migrate-claude-home              # dry run
+#   scripts/migrate-claude-home --apply      # execute
+set -euo pipefail
+
+CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
+APPLY=0
+if [ "${1:-}" = "--apply" ]; then
+  APPLY=1
+fi
+
+if [ ! -d "$CLAUDE_HOME" ]; then
+  echo "ERROR: $CLAUDE_HOME not found"
+  exit 1
+fi
+
+log() { printf '%s\n' "$*"; }
+
+# --- Phase 1: directory renames (deepest first) ---
+log "Phase 1: directory renames"
+mapfile -t DIRS < <(find "$CLAUDE_HOME" -type d -name '*the-workflow-engine*' | awk '{ print length, $0 }' | sort -rn | cut -d' ' -f2-)
+
+if [ ${#DIRS[@]} -eq 0 ]; then
+  log "  (no directories to rename)"
+else
+  for d in "${DIRS[@]}"; do
+    new="${d//the-workflow-engine/evee}"
+    if [ "$d" = "$new" ]; then continue; fi
+    if [ "$APPLY" -eq 1 ]; then
+      if [ -e "$new" ]; then
+        log "  SKIP (target exists): $d"
+      else
+        mkdir -p "$(dirname "$new")"
+        mv "$d" "$new"
+        log "  renamed: $d -> $new"
+      fi
+    else
+      log "  would rename: $d -> $new"
+    fi
+  done
+fi
+
+# --- Phase 2: in-place text edits ---
+log ""
+log "Phase 2: text file content edits"
+mapfile -t FILES < <(find "$CLAUDE_HOME" -type f \
+  \( -name '*.md' -o -name '*.json' -o -name '*.txt' -o -name '*.yaml' -o -name '*.yml' \) \
+  -not -name '*.jsonl')
+
+EDIT_COUNT=0
+for f in "${FILES[@]}"; do
+  if grep -lqE 'the-workflow-engine|The Workflow Engine|workflow_engine|workflow-engine|Workflow Engine' "$f" 2>/dev/null; then
+    EDIT_COUNT=$((EDIT_COUNT + 1))
+    if [ "$APPLY" -eq 1 ]; then
+      sed -i '' \
+        -e 's|the-workflow-engine|evee|g' \
+        -e 's|workflow-engine-|evee-|g' \
+        -e 's|workflow-engine|evee|g' \
+        -e 's|workflow_engine|evee|g' \
+        -e 's|The Workflow Engine|Evee|g' \
+        -e 's|Workflow Engine|Evee|g' \
+        "$f"
+      log "  edited: $f"
+    else
+      log "  would edit: $f"
+    fi
+  fi
+done
+
+if [ "$EDIT_COUNT" -eq 0 ]; then
+  log "  (no files need edits)"
+fi
+
+# --- Phase 3: stale IDE lock cleanup ---
+log ""
+log "Phase 3: stale IDE lock files"
+mapfile -t LOCKS < <(find "$CLAUDE_HOME/ide" -type f -name '*.lock' 2>/dev/null || true)
+LOCK_COUNT=0
+for lock in "${LOCKS[@]}"; do
+  if grep -q "the-workflow-engine" "$lock" 2>/dev/null; then
+    LOCK_COUNT=$((LOCK_COUNT + 1))
+    if [ "$APPLY" -eq 1 ]; then
+      rm "$lock"
+      log "  removed: $lock"
+    else
+      log "  would remove: $lock"
+    fi
+  fi
+done
+if [ "$LOCK_COUNT" -eq 0 ]; then
+  log "  (no stale locks)"
+fi
+
+log ""
+if [ "$APPLY" -eq 0 ]; then
+  log "dry run complete — re-run with --apply to execute"
+else
+  log "migration complete"
+fi

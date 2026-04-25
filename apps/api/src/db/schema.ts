@@ -105,7 +105,6 @@ export const llmCalls = pgTable("llm_calls", {
   conversationId: text("conversation_id")
     .notNull()
     .references(() => conversations.id, { onDelete: "cascade" }),
-  inngestRunId: text("inngest_run_id"),
   stepName: text("step_name").notNull(),
   model: text().notNull(),
   inputTokens: integer("input_tokens").notNull(),

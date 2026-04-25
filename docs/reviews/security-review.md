@@ -138,7 +138,7 @@ Authentication, API security, frontend security, secrets/env handling, dependenc
 
 **Location:** `.github/workflows/ci.yml:19-21`, `.github/workflows/deploy.yml:52-54`
 
-**Description:** Both CI workflows start a Postgres service with `POSTGRES_PASSWORD: workflow` and connect via `postgresql://workflow:workflow@localhost:5432/workflow_engine_test`.
+**Description:** Both CI workflows start a Postgres service with `POSTGRES_PASSWORD: workflow` and connect via `postgresql://evee:workflow@localhost:5432/evee_test`.
 
 **Impact:** Low risk (ephemeral CI containers, not reachable externally), but represents a pattern of hardcoded credentials that should not bleed into other environments.
 
@@ -200,7 +200,7 @@ Authentication, API security, frontend security, secrets/env handling, dependenc
 
 **Location:** `apps/api/src/env.ts:7-10`
 
-**Description:** `DATABASE_URL` defaults to `postgresql://workflow:workflow@localhost:5432/workflow_engine`. This default is harmless in dev but risky if `NODE_ENV=production` is set without injecting a real `DATABASE_URL`.
+**Description:** `DATABASE_URL` defaults to `postgresql://evee:workflow@localhost:5432/evee`. This default is harmless in dev but risky if `NODE_ENV=production` is set without injecting a real `DATABASE_URL`.
 
 **Impact:** If a production deploy accidentally runs without the secret injected, the API will attempt to connect with the default credential. Unlikely given Kamal's secret injection, but it's a silent failure mode.
 

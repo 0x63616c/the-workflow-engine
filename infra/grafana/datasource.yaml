@@ -5,6 +5,6 @@ datasources:
     type: loki
     uid: loki
     access: proxy
-    url: http://workflow-engine-loki:3100
+    url: http://evee-loki:3100
     isDefault: true
     editable: false

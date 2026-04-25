@@ -1,6 +1,6 @@
 # Product Features
 
-Current feature inventory for The Workflow Engine, a wall-mounted iPad Pro smart home panel.
+Current feature inventory for Evee, a wall-mounted iPad Pro smart home panel.
 
 ## Dashboard
 

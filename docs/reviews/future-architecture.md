@@ -1,6 +1,6 @@
 # Future Architecture & Next-Level Tech Planning
 
-**The Workflow Engine** — wall-mounted iPad Pro smart home panel
+**Evee** — wall-mounted iPad Pro smart home panel
 
 *Document date: 2026-04-12*
 

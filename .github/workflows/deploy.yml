@@ -50,9 +50,9 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: workflow
-          POSTGRES_PASSWORD: workflow
-          POSTGRES_DB: workflow_engine_test
+          POSTGRES_USER: evee
+          POSTGRES_PASSWORD: evee
+          POSTGRES_DB: evee_test
         ports:
           - 5432:5432
         options: >-
@@ -61,7 +61,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://workflow:workflow@localhost:5432/workflow_engine_test
+      DATABASE_URL: postgresql://evee:evee@localhost:5432/evee_test
     strategy:
       fail-fast: false
       matrix:
@@ -182,7 +182,7 @@ jobs:
           context: infra/loki
           platforms: linux/arm64
           push: true
-          tags: ghcr.io/0x63616c/workflow-engine-loki:latest
+          tags: ghcr.io/0x63616c/evee-loki:latest
           cache-from: type=gha,scope=loki
           cache-to: type=gha,mode=max,scope=loki
 
@@ -192,7 +192,7 @@ jobs:
           context: infra/alloy
           platforms: linux/arm64
           push: true
-          tags: ghcr.io/0x63616c/workflow-engine-alloy:latest
+          tags: ghcr.io/0x63616c/evee-alloy:latest
           cache-from: type=gha,scope=alloy
           cache-to: type=gha,mode=max,scope=alloy
 
@@ -202,7 +202,7 @@ jobs:
           context: infra/grafana
           platforms: linux/arm64
           push: true
-          tags: ghcr.io/0x63616c/workflow-engine-grafana:latest
+          tags: ghcr.io/0x63616c/evee-grafana:latest
           cache-from: type=gha,scope=grafana
           cache-to: type=gha,mode=max,scope=grafana
 
@@ -297,8 +297,6 @@ jobs:
       - name: Ensure accessories are running
         env:
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GHRC_TOKEN }}
-          INNGEST_EVENT_KEY: ${{ secrets.INNGEST_EVENT_KEY }}
-          INNGEST_SIGNING_KEY: ${{ secrets.INNGEST_SIGNING_KEY }}
           HA_TOKEN: ${{ secrets.HA_TOKEN }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
@@ -312,12 +310,9 @@ jobs:
       - name: Deploy with Kamal
         env:
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GHRC_TOKEN }}
-          INNGEST_EVENT_KEY: ${{ secrets.INNGEST_EVENT_KEY }}
-          INNGEST_SIGNING_KEY: ${{ secrets.INNGEST_SIGNING_KEY }}
           HA_TOKEN: ${{ secrets.HA_TOKEN }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          INNGEST_POSTGRES_URI: postgresql://workflow:${{ secrets.POSTGRES_PASSWORD }}@workflow-engine-postgres:5432/inngest
           VITE_WIFI_SSID: ${{ secrets.WIFI_SSID }}
           VITE_WIFI_PASSWORD: ${{ secrets.WIFI_PASSWORD }}
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
@@ -329,10 +324,7 @@ jobs:
       - name: Reboot accessories whose infra changed
         env:
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GHRC_TOKEN }}
-          INNGEST_EVENT_KEY: ${{ secrets.INNGEST_EVENT_KEY }}
-          INNGEST_SIGNING_KEY: ${{ secrets.INNGEST_SIGNING_KEY }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          INNGEST_POSTGRES_URI: postgresql://workflow:${{ secrets.POSTGRES_PASSWORD }}@workflow-engine-postgres:5432/inngest
           GRAFANA_ERRORS_SLACK_WEBHOOK_URL: ${{ secrets.GRAFANA_ERRORS_SLACK_WEBHOOK_URL }}
         # Convention: accessory <name> in config/deploy.yml owns infra/<name>/.
         # Any commit that touches infra/<name>/ (Dockerfile, provisioning files,

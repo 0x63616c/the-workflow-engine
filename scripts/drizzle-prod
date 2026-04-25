@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-DATABASE_URL="postgresql://workflow:$(op read 'op://Homelab/Workflow Engine Postgres/password')@homelab:5432/workflow_engine"
+DATABASE_URL="postgresql://evee:$(op read 'op://Homelab/Evee Postgres/password')@homelab:5432/evee"
 
 cd "$REPO_ROOT/apps/api"
 DATABASE_URL="$DATABASE_URL" bunx drizzle-kit studio
