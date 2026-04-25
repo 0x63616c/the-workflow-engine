@@ -101,16 +101,39 @@ aarch64 VMs need UEFI to boot. Copy the firmware so the VM gets its own writable
 
 ## Create Launch Script
 
+The script must exit non-zero if `socket_vmnet` isn't ready yet. Wi-Fi association can lag behind launchd at boot, so the LaunchAgent's `KeepAlive` retries until the bridge is up.
+
 ```bash
 cat > ~/homeassistant-os/start-haos.sh << 'SCRIPT'
 #!/bin/bash
 HAOS_DIR="$HOME/homeassistant-os"
 PIDFILE="$HAOS_DIR/haos.pid"
+SOCKET="/opt/homebrew/var/run/socket_vmnet"
 
-# Check if already running
+# Already running?
 if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
     echo "HAOS already running (PID $(cat "$PIDFILE"))"
     exit 0
+fi
+
+# Wait for Wi-Fi (en1) to have an IP. socket_vmnet can't bridge until then.
+for _ in $(seq 1 30); do
+    ipconfig getifaddr en1 >/dev/null 2>&1 && break
+    sleep 2
+done
+if ! ipconfig getifaddr en1 >/dev/null 2>&1; then
+    echo "en1 has no IP after 60s; exiting so launchd retries"
+    exit 1
+fi
+
+# Wait for socket_vmnet daemon socket
+for _ in $(seq 1 30); do
+    [ -S "$SOCKET" ] && break
+    sleep 2
+done
+if [ ! -S "$SOCKET" ]; then
+    echo "socket_vmnet socket missing after 60s; exiting so launchd retries"
+    exit 1
 fi
 
 /opt/homebrew/opt/socket_vmnet/bin/socket_vmnet_client \
@@ -187,6 +210,8 @@ chmod +x ~/homeassistant-os/stop-haos.sh
 
 ## Auto-Start on Boot
 
+`KeepAlive` with `SuccessfulExit=false` retries the script when it exits non-zero (Wi-Fi/socket not ready). `ThrottleInterval=30` caps retry rate at every 30s. Once HAOS is up the script exits 0 and launchd stops respawning.
+
 ```bash
 cat > ~/Library/LaunchAgents/com.homeassistant.os.plist << 'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -204,7 +229,12 @@ cat > ~/Library/LaunchAgents/com.homeassistant.os.plist << 'PLIST'
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
-    <false/>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
     <key>StandardOutPath</key>
     <string>/tmp/haos-launch.log</string>
     <key>StandardErrorPath</key>
@@ -216,7 +246,36 @@ PLIST
 launchctl load ~/Library/LaunchAgents/com.homeassistant.os.plist
 ```
 
-Boot order: socket_vmnet starts first (system-level launchd), then HAOS starts (user-level LaunchAgent).
+Boot order: socket_vmnet starts first (system-level launchd), then HAOS starts (user-level LaunchAgent on login). Wi-Fi (en1) often isn't associated when launchd fires. The wait loops in `start-haos.sh` plus `KeepAlive` retries handle that.
+
+## Auto-Start: OrbStack (Docker / Kamal accessories)
+
+Kamal accessories (postgres, loki, grafana, alloy, evee) run in OrbStack. OrbStack is a GUI app and **does not start at boot** unless you add it to Login Items.
+
+1. **Add to Login Items**: System Settings → General → Login Items & Extensions → Open at Login → `+` → `OrbStack`.
+2. **Auto-login as `calum`**: System Settings → Users & Groups → Automatically log in as → `calum`. Required because Login Items only fire on login.
+3. **Auto-power-on after outage**: `sudo pmset -a autorestart 1` (Mac restarts after a power loss so it can reach the login screen automatically).
+
+Containers in `config/deploy.yml` already have restart policies, so once Docker is up the Kamal stack returns on its own.
+
+## Recovery Cheatsheet
+
+After an unclean reboot, in order:
+
+```bash
+# 1. Verify socket_vmnet bound to en1 successfully
+tail /opt/homebrew/var/log/socket_vmnet/stderr
+# If you see VMNET_FAILURE, run scripts/fix-socket-vmnet.sh
+
+# 2. Kick HAOS LaunchAgent (KeepAlive should already retry, this forces it)
+launchctl kickstart -k "gui/$(id -u)/com.homeassistant.os"
+
+# 3. Confirm HA responds
+curl -s -o /dev/null -w '%{http_code}\n' http://homeassistant.local:8123/
+
+# 4. Confirm Docker / Kamal stack
+docker ps
+```
 
 ## Files on Homelab
 
