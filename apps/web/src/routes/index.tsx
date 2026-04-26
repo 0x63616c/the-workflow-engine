@@ -1,4 +1,3 @@
-import { WidgetGrid } from "@/components/hub/widget-grid";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
@@ -7,8 +6,8 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   return (
-    <div className="relative min-h-full">
-      <WidgetGrid />
+    <div className="flex h-full w-full items-center justify-center bg-black text-white">
+      <h1 className="text-6xl font-semibold tracking-tight">Hello, World!</h1>
     </div>
   );
 }

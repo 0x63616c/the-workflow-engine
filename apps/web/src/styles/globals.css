@@ -1,13 +1,7 @@
 @import "tailwindcss";
 
+@import "@fontsource-variable/geist";
 @import "@fontsource-variable/geist-mono";
-@import "@fontsource-variable/inter";
-@import "@fontsource-variable/space-grotesk";
-@import "@fontsource-variable/sora";
-@import "@fontsource-variable/outfit";
-@import "@fontsource-variable/plus-jakarta-sans";
-@import "@fontsource-variable/manrope";
-@import url("https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700&f[]=general-sans@300,400,500,700&f[]=cabinet-grotesk@300,400,500,700&f[]=clash-display@300,400,500,700&display=swap");
 
 @theme {
   /* Semantic colors (defaults = dark/midnight, overridden by ThemeProvider) */
@@ -100,9 +94,9 @@
   --radius-2xl: 18px;
 
   /* Fonts */
-  --font-sans: "Sora Variable", "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Geist Variable", "Geist", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", "Geist Mono", ui-monospace, monospace;
-  --font-active: "Satoshi", sans-serif;
+  --font-active: var(--font-sans);
 }
 
 html,
@@ -116,7 +110,7 @@ body {
 
 body {
   font-family: var(--font-active);
-  background-color: var(--color-background);
+  background-color: #000;
   color: var(--color-foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -128,16 +122,19 @@ body {
 
 #root {
   position: relative;
-  width: 100%;
-  height: 100%;
-  max-width: 1366px;
-  max-height: 1024px;
+  width: 1366px;
+  height: 1024px;
+  flex-shrink: 0;
   background-color: var(--color-background);
   border-radius: 18px;
   outline: 5px solid var(--color-foreground);
   outline-offset: 0px;
   overflow: hidden;
-  transition: outline-color 300ms ease;
+  transition: outline-color 300ms ease, outline-width 200ms ease;
+}
+
+html[data-outline="off"] #root {
+  outline-width: 0;
 }
 
 @keyframes pulse-colon {
