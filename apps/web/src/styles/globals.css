@@ -3,100 +3,29 @@
 @import "@fontsource-variable/geist";
 @import "@fontsource-variable/geist-mono";
 
+/*
+ * Semantic token system.
+ *
+ * Components MUST consume only these tokens (via Tailwind utilities like
+ * bg-background, text-foreground). Raw colors and palette utilities
+ * (bg-red-500, bg-[#fff], etc.) are blocked by scripts/check-tokens.ts.
+ *
+ * Themes will swap these values via [data-theme="..."] selectors. Values
+ * here are the "night" defaults; other themes override below.
+ */
 @theme {
-  /* Semantic colors (defaults = dark/midnight, overridden by ThemeProvider) */
-  --color-background: #111113;
-  --color-foreground: #edeef0;
-  --color-muted: #212225;
-  --color-muted-foreground: #b0b4ba;
-  --color-border: #363a3f;
-  --color-input: #363a3f;
-  --color-ring: #5a6169;
-  --color-primary: #edeef0;
-  --color-primary-foreground: #111113;
-  --color-secondary: #212225;
-  --color-secondary-foreground: #edeef0;
-  --color-accent: #d4a574;
-  --color-accent-foreground: #1a1a1a;
-  --color-destructive: #e5484d;
-  --color-destructive-foreground: #ffffff;
-  --color-card: #18191b;
-  --color-card-foreground: #edeef0;
-  --color-popover: #18191b;
-  --color-popover-foreground: #edeef0;
+  --color-background: #0a0a0b;
+  --color-surface: #141418;
+  --color-foreground: #f5f5f7;
+  --color-foreground-muted: #8a8a92;
+  --color-accent: #ffd84d;
+  --color-border: rgba(255, 255, 255, 0.08);
 
-  /* Card palette colors (Radix Colors, dark defaults, overridden by ThemeProvider) */
-  --color-card-purple-tint: #301c3b;
-  --color-card-purple-accent: #8e4ec6;
-  --color-card-purple-border: #8457aa;
-  --color-card-purple-text: #d19dff;
+  --radius-card: 18px;
+  --radius-pill: 9999px;
 
-  --color-card-blue-tint: #0d2847;
-  --color-card-blue-accent: #0090ff;
-  --color-card-blue-border: #2870bd;
-  --color-card-blue-text: #70b8ff;
-
-  --color-card-cyan-tint: #082c36;
-  --color-card-cyan-accent: #00a2c7;
-  --color-card-cyan-border: #11809c;
-  --color-card-cyan-text: #4ccce6;
-
-  --color-card-teal-tint: #0d2d2a;
-  --color-card-teal-accent: #12a594;
-  --color-card-teal-border: #207e73;
-  --color-card-teal-text: #0bd8b6;
-
-  --color-card-green-tint: #132d21;
-  --color-card-green-accent: #30a46c;
-  --color-card-green-border: #2f7c57;
-  --color-card-green-text: #3dd68c;
-
-  --color-card-amber-tint: #302008;
-  --color-card-amber-accent: #ffc53d;
-  --color-card-amber-border: #8f6424;
-  --color-card-amber-text: #ffca16;
-
-  --color-card-orange-tint: #331e0b;
-  --color-card-orange-accent: #f76b15;
-  --color-card-orange-border: #a35829;
-  --color-card-orange-text: #ffa057;
-
-  --color-card-red-tint: #3b1219;
-  --color-card-red-accent: #e5484d;
-  --color-card-red-border: #b54548;
-  --color-card-red-text: #ff9592;
-
-  --color-card-pink-tint: #37172f;
-  --color-card-pink-accent: #d6409f;
-  --color-card-pink-border: #a84885;
-  --color-card-pink-text: #ff8dcc;
-
-  --color-card-iris-tint: #202248;
-  --color-card-iris-accent: #5b5bd6;
-  --color-card-iris-border: #5958b1;
-  --color-card-iris-text: #b1a9ff;
-
-  --color-card-crimson-tint: #381525;
-  --color-card-crimson-accent: #e93d82;
-  --color-card-crimson-border: #b0436e;
-  --color-card-crimson-text: #ff92ad;
-
-  --color-card-slate-tint: #212225;
-  --color-card-slate-accent: #696e77;
-  --color-card-slate-border: #5a6169;
-  --color-card-slate-text: #b0b4ba;
-
-  /* Radii */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
-  --radius-2xl: 18px;
-
-  /* Fonts */
   --font-sans: "Geist Variable", "Geist", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", "Geist Mono", ui-monospace, monospace;
-  --font-active: var(--font-sans);
 }
 
 html,
@@ -109,8 +38,8 @@ body {
 }
 
 body {
-  font-family: var(--font-active);
-  background-color: #000;
+  font-family: var(--font-sans);
+  background-color: var(--color-background);
   color: var(--color-foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -126,7 +55,7 @@ body {
   height: 1024px;
   flex-shrink: 0;
   background-color: var(--color-background);
-  border-radius: 18px;
+  border-radius: var(--radius-card);
   outline: 5px solid var(--color-foreground);
   outline-offset: 0px;
   overflow: hidden;
@@ -137,42 +66,22 @@ html[data-outline="off"] #root {
   outline-width: 0;
 }
 
-@keyframes pulse-colon {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.2;
-  }
+/* Themed scrollbar — tracks the active theme via tokens. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
 }
-
-@keyframes equalizer {
-  0%,
-  100% {
-    height: 3px;
-  }
-  50% {
-    height: 16px;
-  }
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.92);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+*::-webkit-scrollbar-track {
+  background: transparent;
 }
-
-@keyframes timer-flash {
-  0% {
-    background-color: rgba(255, 255, 255, 0.8);
-  }
-  100% {
-    background-color: rgba(220, 38, 38, 0.6);
-  }
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: var(--radius-pill);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-foreground-muted);
 }

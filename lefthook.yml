@@ -21,6 +21,8 @@ pre-commit:
       run: bunx vitest run --changed
     boundaries:
       run: bun run check:boundaries
+    tokens:
+      run: bun run check:tokens
     swiftformat:
       glob: "*.swift"
       run: swiftformat {staged_files}

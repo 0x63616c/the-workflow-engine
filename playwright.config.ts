@@ -17,7 +17,7 @@ export default defineConfig({
     {
       name: "iPad Pro 12.9",
       use: {
-        viewport: { width: 1024, height: 1366 },
+        viewport: { width: 1366, height: 1024 },
         deviceScaleFactor: 2,
       },
     },

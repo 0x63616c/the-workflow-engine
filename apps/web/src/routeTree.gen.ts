@@ -9,8 +9,44 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WifiRouteImport } from './routes/wifi'
+import { Route as TeslaRouteImport } from './routes/tesla'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as MusicRouteImport } from './routes/music'
+import { Route as LightsRouteImport } from './routes/lights'
+import { Route as ClimateRouteImport } from './routes/climate'
 import { Route as IndexRouteImport } from './routes/index'
 
+const WifiRoute = WifiRouteImport.update({
+  id: '/wifi',
+  path: '/wifi',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeslaRoute = TeslaRouteImport.update({
+  id: '/tesla',
+  path: '/tesla',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MusicRoute = MusicRouteImport.update({
+  id: '/music',
+  path: '/music',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LightsRoute = LightsRouteImport.update({
+  id: '/lights',
+  path: '/lights',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClimateRoute = ClimateRouteImport.update({
+  id: '/climate',
+  path: '/climate',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +55,109 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/climate': typeof ClimateRoute
+  '/lights': typeof LightsRoute
+  '/music': typeof MusicRoute
+  '/settings': typeof SettingsRoute
+  '/tesla': typeof TeslaRoute
+  '/wifi': typeof WifiRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/climate': typeof ClimateRoute
+  '/lights': typeof LightsRoute
+  '/music': typeof MusicRoute
+  '/settings': typeof SettingsRoute
+  '/tesla': typeof TeslaRoute
+  '/wifi': typeof WifiRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/climate': typeof ClimateRoute
+  '/lights': typeof LightsRoute
+  '/music': typeof MusicRoute
+  '/settings': typeof SettingsRoute
+  '/tesla': typeof TeslaRoute
+  '/wifi': typeof WifiRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/climate'
+    | '/lights'
+    | '/music'
+    | '/settings'
+    | '/tesla'
+    | '/wifi'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/climate' | '/lights' | '/music' | '/settings' | '/tesla' | '/wifi'
+  id:
+    | '__root__'
+    | '/'
+    | '/climate'
+    | '/lights'
+    | '/music'
+    | '/settings'
+    | '/tesla'
+    | '/wifi'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ClimateRoute: typeof ClimateRoute
+  LightsRoute: typeof LightsRoute
+  MusicRoute: typeof MusicRoute
+  SettingsRoute: typeof SettingsRoute
+  TeslaRoute: typeof TeslaRoute
+  WifiRoute: typeof WifiRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/wifi': {
+      id: '/wifi'
+      path: '/wifi'
+      fullPath: '/wifi'
+      preLoaderRoute: typeof WifiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tesla': {
+      id: '/tesla'
+      path: '/tesla'
+      fullPath: '/tesla'
+      preLoaderRoute: typeof TeslaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/music': {
+      id: '/music'
+      path: '/music'
+      fullPath: '/music'
+      preLoaderRoute: typeof MusicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lights': {
+      id: '/lights'
+      path: '/lights'
+      fullPath: '/lights'
+      preLoaderRoute: typeof LightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/climate': {
+      id: '/climate'
+      path: '/climate'
+      fullPath: '/climate'
+      preLoaderRoute: typeof ClimateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,6 +170,12 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ClimateRoute: ClimateRoute,
+  LightsRoute: LightsRoute,
+  MusicRoute: MusicRoute,
+  SettingsRoute: SettingsRoute,
+  TeslaRoute: TeslaRoute,
+  WifiRoute: WifiRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

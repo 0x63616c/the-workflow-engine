@@ -40,6 +40,8 @@ jobs:
             command: bun run test
           - name: Boundaries
             command: bun run check:boundaries
+          - name: Tokens
+            command: bun run check:tokens
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
