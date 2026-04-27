@@ -8,21 +8,25 @@ export function Header() {
   const date = formatDate(now);
 
   return (
-    <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between bg-background px-9 pt-8 pb-6">
+    <header className="flex items-start justify-between bg-background px-9 py-6">
       <div>
         <h1 className="font-semibold text-5xl text-foreground tracking-tight">{greeting}</h1>
-        <p className="mt-2 font-mono text-foreground-muted text-xs tracking-widest uppercase">
+        <p className="mt-1 font-mono text-foreground-muted text-xs tracking-widest uppercase">
           Los Angeles · 72&deg;F Clear
         </p>
       </div>
-      <div className="grid grid-cols-[auto_auto] items-start gap-x-1 leading-none">
-        <span className="font-semibold text-5xl text-foreground tabular-nums tracking-tight">
-          {time}
-        </span>
-        <span className="font-mono text-foreground-muted text-xs">{suffix}</span>
-        <p className="mt-2 text-right font-mono text-foreground-muted text-xs tracking-widest uppercase">
-          {date}
-        </p>
+      <div className="flex items-start gap-1">
+        <div className="flex flex-col items-end leading-none">
+          <div className="font-semibold text-5xl text-foreground leading-none tabular-nums tracking-tight">
+            {time}
+          </div>
+          <p className="mt-1 font-mono text-foreground-muted text-xs tracking-widest uppercase">
+            {date}
+          </p>
+        </div>
+        <div className="mt-[3px] font-mono text-foreground-muted text-2xl leading-none">
+          {suffix}
+        </div>
       </div>
     </header>
   );

@@ -4,9 +4,9 @@ import { Outlet, createRootRoute } from "@tanstack/react-router";
 
 function RootLayout() {
   return (
-    <div className="relative h-full w-full">
+    <div className="relative flex h-full w-full flex-col">
       <Header />
-      <main data-testid="page-scroll" className="h-full w-full overflow-y-auto px-9 pt-30 pb-32">
+      <main data-testid="page-scroll" className="flex-1 overflow-y-auto px-9">
         <Outlet />
       </main>
       <Nav />
