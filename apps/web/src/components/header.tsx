@@ -10,7 +10,7 @@ export function Header() {
   return (
     <header className="flex items-start justify-between bg-background px-9 py-6">
       <div>
-        <h1 className="font-semibold text-5xl text-foreground tracking-tight">{greeting}</h1>
+        <h1 className="font-semibold text-5xl text-foreground tracking-tight">{greeting}.</h1>
         <p className="mt-1 font-mono text-foreground-muted text-xs tracking-widest uppercase">
           Los Angeles · 72&deg;F Clear
         </p>

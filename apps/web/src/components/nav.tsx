@@ -40,10 +40,15 @@ export function Nav() {
                 to={to}
                 aria-current={active ? "page" : undefined}
                 data-active={active ? "true" : "false"}
-                className="flex items-center gap-2 whitespace-nowrap rounded-pill px-4 py-2.5 font-medium text-foreground-muted text-sm transition-colors duration-200 data-[active=true]:bg-foreground data-[active=true]:text-background hover:text-foreground"
+                className="flex items-center gap-2 whitespace-nowrap rounded-pill px-4 py-2.5 font-medium text-foreground-muted text-sm transition-colors duration-200 data-[active=true]:bg-foreground data-[active=true]:font-bold data-[active=true]:text-background hover:text-foreground"
               >
                 <Icon className="size-5" strokeWidth={1.75} />
-                <span>{label}</span>
+                <span className="grid">
+                  <span aria-hidden className="invisible col-start-1 row-start-1 font-bold">
+                    {label}
+                  </span>
+                  <span className="col-start-1 row-start-1">{label}</span>
+                </span>
               </Link>
             </li>
           );

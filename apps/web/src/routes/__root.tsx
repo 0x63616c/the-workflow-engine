@@ -1,3 +1,4 @@
+import { ChatButton } from "@/components/chat-button";
 import { Header } from "@/components/header";
 import { Nav } from "@/components/nav";
 import { Outlet, createRootRoute } from "@tanstack/react-router";
@@ -10,6 +11,7 @@ function RootLayout() {
         <Outlet />
       </main>
       <Nav />
+      <ChatButton />
     </div>
   );
 }

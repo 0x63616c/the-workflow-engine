@@ -1,14 +1,20 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-export function OutlineToggle() {
-  const [on, setOn] = useState(true);
+const STORAGE_KEY = "outline-toggle";
 
-  const toggle = () => {
-    const next = !on;
-    setOn(next);
-    document.documentElement.dataset.outline = next ? "on" : "off";
-  };
+export function OutlineToggle() {
+  const [on, setOn] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.localStorage.getItem(STORAGE_KEY) !== "off";
+  });
+
+  useEffect(() => {
+    document.documentElement.dataset.outline = on ? "on" : "off";
+    window.localStorage.setItem(STORAGE_KEY, on ? "on" : "off");
+  }, [on]);
+
+  const toggle = () => setOn((prev) => !prev);
 
   return createPortal(
     <button

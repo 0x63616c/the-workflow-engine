@@ -3,18 +3,18 @@ import { describe, expect, it } from "vitest";
 
 describe("greetingForHour", () => {
   it("returns morning between 5 and 11", () => {
-    expect(greetingForHour(5)).toBe("Good morning.");
-    expect(greetingForHour(11)).toBe("Good morning.");
+    expect(greetingForHour(5)).toBe("Good morning");
+    expect(greetingForHour(11)).toBe("Good morning");
   });
   it("returns afternoon between 12 and 16", () => {
-    expect(greetingForHour(12)).toBe("Good afternoon.");
-    expect(greetingForHour(16)).toBe("Good afternoon.");
+    expect(greetingForHour(12)).toBe("Good afternoon");
+    expect(greetingForHour(16)).toBe("Good afternoon");
   });
   it("returns evening from 17 onwards and before 5", () => {
-    expect(greetingForHour(17)).toBe("Good evening.");
-    expect(greetingForHour(23)).toBe("Good evening.");
-    expect(greetingForHour(0)).toBe("Good evening.");
-    expect(greetingForHour(4)).toBe("Good evening.");
+    expect(greetingForHour(17)).toBe("Good evening");
+    expect(greetingForHour(23)).toBe("Good evening");
+    expect(greetingForHour(0)).toBe("Good evening");
+    expect(greetingForHour(4)).toBe("Good evening");
   });
 });
 
